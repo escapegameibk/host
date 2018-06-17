@@ -23,54 +23,38 @@
 
 int println(char* output, int type){
 
-        char * pre = log_generate_prestring(type);
+        char *pre = log_generate_prestring(type);
         printf("%s %s\n",pre,output);
 
-        free(pre);
         return 0;
 }
 
-char* log_generate_prestring(int type){
+char* log_typestr[] = {
+        "DEBUG",
+        "INFO",
+        "WARNING",
+        "ERROR"
+};
+
+
+char * log_generate_prestring(int type){
         
-#define INTERMEDIATE_MAX 30
-        char* raw = malloc(INTERMEDIATE_MAX);
-        memset(raw,0,INTERMEDIATE_MAX);
-#if defined __linux__ || defined __AVR_ARCH__
-        time_t t;
-        struct tm *tmp;
-         t = time(NULL);
-           tmp = localtime(&t);
-           if (tmp == NULL) {
-               printf("failed to get time");
-               return NULL;
-           }
+        char* pre;
 
-        strftime(raw,INTERMEDIATE_MAX,"[%Y/%m/%d %T ",tmp);
+#if __linux__
+
+#define BUFFERLENGTH 256
+        pre = malloc(BUFFERLENGTH);
+        memset(pre,0,BUFFERLENGTH);
+        
+        time_t t = time(NULL);
+        struct tm tim = *localtime(&t);
+
+        sprintf(pre, "[ %i-%i-%i %i:%i:%i  %s\t] ", tim.tm_year+1900, tim.tm_mon+1, 
+                        tim.tm_mday, tim.tm_hour, tim.tm_min, tim.tm_sec,
+                        log_typestr[type]);
+        pre = realloc(pre,strlen(pre));
+
 #endif
-        switch (type) {
-
-                case DEBUG:
-                        strcat(raw,"DEBUG] ");
-                        break;
-                case INFO:
-                        strcat(raw,"INFO] ");
-                        break;
-                case WARNING:
-                        strcat(raw,"WARNING] ");
-                        break;
-                case ERROR:
-                        strcat(raw,"ERROR] ");
-                        break;
-                default:
-                        strcat(raw,"WUT?] ");        
-                        break;
-                        
-        }
-
-        char* fin = malloc(strlen(raw));
-        strcpy(fin,raw);
-        free(raw);
-
-#undef INTERMEDIATE_MAX
-        return fin;
+        return pre;
 }

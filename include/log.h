@@ -18,7 +18,10 @@
 #ifndef LOG_H
 #define LOG_H
 
-/* Specifies the logger output type*/
+/* Specifies the logger output type
+ * This enum IS REQUIRED to start at 0in order to make the array where the
+ * actual string representation is stored work
+ */
 enum log_type { DEBUG=0, INFO, WARNING, ERROR };
 
 int println(char* output, int type);
