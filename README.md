@@ -35,3 +35,18 @@ As of now, the program has the following dependencies:
 LibVLC: https://wiki.videolan.org/LibVLC/
 
 JSON-C: https://json-c.github.io/json-c/
+
+# ERRATA
+
+# Raspberry Pi
+
+If the host is a raspberry pi and the native USART connection is used, it is
+known that it won't work, unless you change the following things:
+
+- Enable uart in the config.txt with the enable_uart=1 option
+- Disable bluetooth with the dtoverlay=pi3-disable-bt option
+- Remove the uart parameter from the kernel command line
+
+If you forget to disable bluetooth you will be able to send stuff via uart, but
+you are unable to controll the clock speed and if bluetooth changes clock speed,
+so does your connection. This is probably not what you want.

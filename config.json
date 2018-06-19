@@ -1,0 +1,15 @@
+{
+        "name" : "unspecified",
+        "depends":
+        [
+                {
+                        "id" : 0
+                        "type" : "gpio",
+                        "register" : "L",
+                        "bit" : 0
+                        
+                }
+
+
+        ]
+}

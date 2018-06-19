@@ -21,6 +21,8 @@
 #include "game.h"
 #include "serial.h"
 #include "sound.h"
+#include "config.h"
+#include "mtsp.h"
 
 #include <unistd.h>
 #include <pthread.h>
@@ -28,7 +30,7 @@
 
 void catch_signal(int sig);
 
-int main(int argc, const char *argv[]){
+int main(int argc, char * const argv[]){
         
         println("INIT",DEBUG);
 
@@ -40,6 +42,27 @@ int main(int argc, const char *argv[]){
         /* initialize global variables */
         exit_code = 0;
         shutting_down = 0;
+
+        char* config = NULL;
+
+        int opt;
+
+        while ((opt = getopt (argc, argv, "c:")) != -1){
+                switch(opt){
+                case 'c':
+                        config = optarg;
+                        break;
+                
+                default:
+                        break;
+                }
+
+
+        }
+
+        if(load_config() < 0){
+                goto shutdown;
+        }
 
         /* initiate modules */
 #ifndef HEADLESS
@@ -57,6 +80,11 @@ int main(int argc, const char *argv[]){
         if(init_serial(DEFAULT_SERIAL_PORT) < 0){
                 println("failed to init serial connection!!",ERROR);
                 goto shutdown;
+        }
+
+        if(init_modbus("/dev/ttyUSB0", 460800)){
+
+
         }
 #endif
 
