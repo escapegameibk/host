@@ -16,15 +16,25 @@
  */
 #include "sound.h"
 #include <stdlib.h>
+#include "config.h"
 
 int init_sound(){
 
         vlc_inst = libvlc_new (0, NULL);
         vlc_mp = malloc(0);
-        libvlc_media_t *m = libvlc_media_new_location (vlc_inst, "http://ironmaiden/data/win95boot.ogg");
-        vlc_mp = realloc(vlc_mp,++playercnt);
-        vlc_mp[0] = libvlc_media_player_new_from_media (m);
-        libvlc_media_release(m);
-        libvlc_media_player_play(vlc_mp[0]);
+
+        /* If available play startup sound */
+        const char* boot_snd = json_object_get_string(
+                                json_object_object_get(config_glob,
+                                        "boot_sound"));
+        if(boot_snd != NULL){
+
+                libvlc_media_t *m = libvlc_media_new_location (vlc_inst, boot_snd);
+                vlc_mp = realloc(vlc_mp,++playercnt);
+                vlc_mp[0] = libvlc_media_player_new_from_media (m);
+                libvlc_media_release(m);
+                libvlc_media_player_play(vlc_mp[0]);
+        }
+
         return 0;
 }

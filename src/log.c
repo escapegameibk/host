@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int println(char* output, int type){
+int println(const char* output, int type){
 
         char *pre = log_generate_prestring(type);
         printf("%s %s\n",pre,output);

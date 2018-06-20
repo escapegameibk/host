@@ -51,6 +51,8 @@ int main(int argc, char * const argv[]){
                 switch(opt){
                 case 'c':
                         config = optarg;
+                        println("updating config file from parameter: ", DEBUG);
+                        println(optarg,DEBUG);
                         break;
                 
                 default:
@@ -60,9 +62,11 @@ int main(int argc, char * const argv[]){
 
         }
 
-        if(load_config() < 0){
+        if(load_config(config) < 0){
+                println("failed to load config!!",ERROR);
                 goto shutdown;
         }
+
 
         /* initiate modules */
 #ifndef HEADLESS

@@ -19,6 +19,9 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
 
 #include "config.h"
 #include "log.h"
@@ -27,21 +30,33 @@ int load_config(const char* location){
 
         int fd;
 
+        char * config_path;
+        
         if(location == NULL){
                 
                 /* the default location is a file in the same directory called
                  * config.json
                  */
-                fd = open("config.txt",O_RDONLY);
+                config_path = "config.json";
         }else{
-                fd = open(location,O_RDONLY);
+                config_path = (char*)location;
         }
-        
-        config_glob = json_object_from_fd(fd);
+
+        size_t intlen = strlen(config_path) + 50; 
+        char * debug = malloc(intlen);
+        memset(debug,0,intlen);
+        snprintf(debug,intlen,"parsing config from file: %s", config_path);
+        println(debug,DEBUG);
+
+        config_glob = json_object_from_file(config_path);
+
         if(config_glob == NULL){
                 println("FAILED TO PARSE CONFIG!",ERROR);
-                return -1;
+                println(json_util_get_last_err(),ERROR);
+                return -2;
         }
+
+        free(debug);
 
         return 0;
 }

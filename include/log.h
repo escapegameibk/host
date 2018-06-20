@@ -24,7 +24,7 @@
  */
 enum log_type { DEBUG=0, INFO, WARNING, ERROR };
 
-int println(char* output, int type);
+int println(const char* output, int type);
 char* log_generate_prestring(int type);
 
 #endif

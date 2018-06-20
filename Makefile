@@ -14,7 +14,7 @@ SRCDIR := $(CWD)/src
 INCLUDEDIR := $(CWD)/include
 
 # flags
-CFLAGS := -I$(INCLUDEDIR) -D HEADLESS
+CFLAGS := -I$(INCLUDEDIR) -D HEADLESS -D NOSER
 LDFLAGS := -pthread -ljson-c -lvlc -lmodbus
 
 # target files
