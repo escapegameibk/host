@@ -31,7 +31,6 @@
 
 #define SHUTDOWN_DELAY 5
 
-#define GAME "painter"
 int exit_code;
 
 int shutting_down;

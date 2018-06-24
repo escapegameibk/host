@@ -63,6 +63,7 @@ int init_serial(char* port){
         return 0;
 }
 
+int serial_ready = 0;
 int start_serial(){
         
         println("starting serial connection handler",DEBUG);
@@ -72,6 +73,14 @@ int start_serial(){
                 return -1;
         }
 
+        /* Stand by for a bit until the receiver is ready and send a init 
+         * request to the µc
+         */
+
+        while(!serial_ready){/* NOOP*/}
+        
+        char ini[] = {'2',CMD_DELIMITER};
+        write(serial_fd, ini,2);
         return 0;
 
 }
@@ -79,6 +88,8 @@ int start_serial(){
 void* loop_serial(){
        
         println("serial connection entering operational state",DEBUG);
+        serial_ready = 1;
+
         while(!shutting_down){
                 /* Read input char by char and wait for the termination char */
                 char in;
@@ -95,10 +106,18 @@ void* loop_serial(){
                         serial_buf[serial_buflen-1] = in;
                         
                         if(in == CMD_DELIMITER){
+                                
                                 /* command completely received */
-                                serial_buf[serial_buflen-1] = 0;
+                                /* remove cmd delimiter char */
+                                serial_buf[serial_buflen-1] = 0; 
                                 println("received command:",DEBUG);
                                 println(serial_buf,DEBUG);
+                                
+                                /* process the command */
+                                if(process_cmd(serial_buf) < 0){
+                                        println("Failed to process command!",
+                                                        ERROR);
+                                }
                                 /* clean the buffer */
                                 free(serial_buf);
                                 serial_buflen = 0;
@@ -158,4 +177,29 @@ int set_interface_attribs(int fd, int speed){
 #undef INT_LEN
 
         return 0;
+}
+
+
+int process_cmd(char* cmd){
+        
+        char* delimf = strchr(cmd,PARAM_DELIMITER);
+        int action = 0;
+        if (delimf == NULL){
+                /* A parameterless command... interresting */
+        }else{
+                *delimf = '\0';
+        }
+
+        action = atoi(cmd);
+
+        switch (action) {
+        case 0:
+              /* If compiled for debug, ignore, otherwise throw error */          
+                break;
+        default:
+                println("Invalid action received via serial: %i",ERROR, action);
+        }
+
+        return 0;
+
 }

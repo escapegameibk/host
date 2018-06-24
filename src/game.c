@@ -16,18 +16,29 @@
  */
 
 #include "game.h"
+#include "config.h"
 #include "log.h"
 #include "data.h"
 
 #include <stddef.h>
+#include <stdio.h>
 #include <time.h>
 #include <pthread.h>
 #include <string.h>
 
 int init_game(){
 
+        const char* name = json_object_get_string(json_object_object_get(
+                                config_glob, "name"));
+        if(name == NULL){
+                
+                println("Initializing game: %s",DEBUG, "UNSPECIFIED!");
+        }else{
 
-        memset(&game_thread, 0, sizeof(game_thread));
+                println("Initializing game: %s",DEBUG , name);
+        }
+
+                memset(&game_thread, 0, sizeof(game_thread));
         return 0;
 }
 

@@ -20,13 +20,27 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 
-int println(const char* output, int type){
+int println(const char* output, int type, ...){
+        
+        va_list arg;
+        va_start (arg, type);
+        char* pre = log_generate_prestring(type);
+        
+        size_t len = strlen(output) + strlen(pre);
+        
+        char* fino = malloc(len+1); /* Me wants a newline! */
+        strcpy(fino,pre);
+        strcat(fino,output);
+        strcat(fino,"\n");
+        
+        vprintf(fino,arg);
 
-        char *pre = log_generate_prestring(type);
-        printf("%s %s\n",pre,output);
-
+        free(pre);
+        va_end (arg);
         return 0;
+
 }
 
 char* log_typestr[] = {

@@ -18,23 +18,31 @@
 #include <stddef.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <modbus/modbus.h>
 #include <stdint.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
 
 #include "mtsp.h"
 #include "log.h"
 #include "data.h"
+#include "serial.h"
 
-int init_modbus(char* device, int baud){
+int init_mtps(char* device, int baud){
 
         
-        mdb_ctx = modbus_new_rtu(device, 460800, 'N', 8, 1);
-        modbus_rtu_set_serial_mode(mdb_ctx,MODBUS_RTU_RS485);
-        modbus_set_debug(mdb_ctx,1);
+        mtsp_fd = open(device,O_RDWR);
+        if(mtsp_fd < 0){
+                println("Failed to open device at %s!",ERROR,device);
+                return -1;
+        }
 
-        if(modbus_connect(mdb_ctx) < 0){
-                println("Failed to connect to modbus!", ERROR);
+        if(set_interface_attribs(mtsp_fd,baud) < 0){
+
+                println("Failed to set interface attribs for device at %s!",
+                                ERROR,device);
+                close(mtsp_fd);
                 return -1;
         }
 

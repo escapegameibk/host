@@ -27,7 +27,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <signal.h>
-
+#include <termios.h>
 void catch_signal(int sig);
 
 int main(int argc, char * const argv[]){
@@ -51,8 +51,9 @@ int main(int argc, char * const argv[]){
                 switch(opt){
                 case 'c':
                         config = optarg;
-                        println("updating config file from parameter: ", DEBUG);
-                        println(optarg,DEBUG);
+                        println("updating config file from parameter: %s", 
+                                        DEBUG, optarg);
+
                         break;
                 
                 default:
@@ -86,12 +87,16 @@ int main(int argc, char * const argv[]){
                 goto shutdown;
         }
 
-        if(init_modbus("/dev/ttyUSB0", 460800)){
+#endif
+
+#ifndef NOMTSP
+        
+        if(init_mtsp("/dev/ttyUSB0", B460800)){
 
 
         }
-#endif
 
+#endif
         if(init_sound() < 0){
                 println("failed to init sound!!",ERROR);
                 goto shutdown;
@@ -116,7 +121,7 @@ shutdown:
         println("SHUTTING DOWN",WARNING);
         
         sleep(SHUTDOWN_DELAY);
-        println("SHUT DOWN",INFO);
+        println("terminating with code %i", INFO, exit_code);
 
         return exit_code;
 }

@@ -19,6 +19,7 @@
 #include "log.h"
 #include "data.h"
 #include "tools.h"
+#include "config.h"
 
 #include <json-c/json.h>
 #include <sys/socket.h>
@@ -269,8 +270,9 @@ int print_debug(int sock_fd){
              return -1;
         }
 
-        n |= json_object_object_add(obj,"VERSION",version);
-        n |= json_object_object_add(obj,"GAME",json_object_new_string(GAME));
+        n |= json_object_object_add(obj,"version",version);
+        n |= json_object_object_add(obj,"game",json_object_object_get(
+                                config_glob,"name"));
        
 
         json_object_to_fd(sock_fd, obj, JSON_C_TO_STRING_PRETTY);

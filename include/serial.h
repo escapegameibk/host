@@ -19,17 +19,19 @@
 #define SERIAL_H
 
 #include <pthread.h>
+#include <termios.h>
 
 #define CMD_DELIMITER 0x0a
 #define PARAM_DELIMITER 0x3B
 
-#define SERIAL_BAUD 115200
+#define SERIAL_BAUD B115200
 #define DEFAULT_SERIAL_PORT "/dev/ttyACM0"
 
 int init_serial(char* port);
 int start_serial();
 void* loop_serial();
 int set_interface_attribs(int fd, int speed);
+int process_cmd(char* cmd);
 
 char * serial_buf;
 size_t serial_buflen;

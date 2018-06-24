@@ -18,9 +18,6 @@
 #ifndef MTSP_H
 #define MTSP_H
 
-#include <modbus/modbus.h>
-
-int init_modbus(char* device, int baud);
-modbus_t* mdb_ctx;
-
+int init_mtsp(char* device, int baud);
+int mtsp_fd;
 #endif
