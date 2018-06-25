@@ -55,6 +55,8 @@ int start_game(){
 int patrol(){
 
         
+
+        
         return 0;
 }
 
@@ -70,14 +72,14 @@ void* loop_game(){
                         println("interupt in game loop! sleep failed",ERROR);
                 }
 
-                if(patrol()){
-                        println("failed to patrol",ERROR);
+                if(patrol() < 0){
+                        println("failed to patrol!!",ERROR);
                         continue;
                 }
         }
 
         println("TERMINATING WATCHER", INFO);
-        println("bailing out. you're on your own. good luck.",INFO);
+        println("bailing out. you're on your own. good luck.",DEBUG);
 
         return NULL;
 }

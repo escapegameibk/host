@@ -231,8 +231,16 @@ int execute_command(int sock_fd, char* command){
                 // TODO
                 break;
         case 2:
-                /*request update */
-                // TODO
+                /* request update */
+                /* this requests an update of a register */
+
+                
+
+                break;
+
+        case 3: 
+                /* Return a complete list of states to the client */
+                
                 break;
         default:
                 /* OOPS */

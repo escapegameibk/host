@@ -14,12 +14,12 @@ SRCDIR := $(CWD)/src
 INCLUDEDIR := $(CWD)/include
 
 # flags
-CFLAGS := -I$(INCLUDEDIR) -D HEADLESS -D NOSER -D NOMTSP
+CFLAGS := -I$(INCLUDEDIR) -D NOSER -D NOMTSP -D HEADLESS
 LDFLAGS := -pthread -ljson-c -lvlc -lmodbus
 
 # target files
 DIRS_TARGET := $(BINDIR) $(BUILDDIR)
-TARGET := $(BINDIR)/painter
+TARGET := $(BINDIR)/host
 SRCFILES := $(wildcard $(SRCDIR)/*.c)
 OBJFILES := $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(SRCFILES))
 

@@ -1,4 +1,7 @@
 {
         "name" : "generic",
-        "boot_sound" : "http://escapegame.ddns.net/gamedat/win95boot.ogg"
+        "boot_sound" : "http://escapegame.ddns.net/gamedat/win95boot.ogg",
+        "dependencies" : [
+
+        ]
 }

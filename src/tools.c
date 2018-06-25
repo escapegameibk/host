@@ -18,6 +18,7 @@
 #include "tools.h"
 #include <stdlib.h>
 #include <limits.h>
+#include <string.h>
 
 int* remove_array_element(size_t array_length, int* array,int element){
 

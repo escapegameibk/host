@@ -20,7 +20,7 @@
 
 #include <pthread.h>
 #include <termios.h>
-
+#include <stdint.h>
 #define CMD_DELIMITER 0x0a
 #define PARAM_DELIMITER 0x3B
 
@@ -32,6 +32,7 @@ int start_serial();
 void* loop_serial();
 int set_interface_attribs(int fd, int speed);
 int process_cmd(char* cmd);
+int update_register(char* params);
 
 char * serial_buf;
 size_t serial_buflen;
@@ -39,4 +40,12 @@ int serial_fd;
 char* serial_port;
 
 pthread_t serial_thread;
+
+uint8_t* ser_registers;
+size_t ser_regcnt;
+
+/* A null-pointer terminated string array */
+char* regmap[] = {
+        "A","B","C","D","E","F","G","H","J","K","L",NULL
+};    
 #endif

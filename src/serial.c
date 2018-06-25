@@ -23,6 +23,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <stdint.h>
 
 #include "log.h"
 #include "serial.h"
@@ -60,6 +61,16 @@ int init_serial(char* port){
                 return -2;
         }
         
+        /* count the registers */
+        for(size_t i = 0;;i++){
+                if(regmap[i] == NULL){
+                        ser_regcnt = i;
+                        break;
+                }
+        }
+
+        ser_registers = malloc(sizeof(uint8_t) * ser_regcnt);
+
         return 0;
 }
 
@@ -194,7 +205,17 @@ int process_cmd(char* cmd){
 
         switch (action) {
         case 0:
-              /* If compiled for debug, ignore, otherwise throw error */          
+              /* If compiled for debug, ignore, otherwise throw error */
+#ifndef DEBUG
+                println("Recieved debug without debug option %i ", ERROR, action);
+#endif
+                break;
+        case 3:
+                
+                println("Received update statement.",DEBUG);
+                if(update_register < 0){
+                        println("Failed to process update!!", ERROR);
+                }
                 break;
         default:
                 println("Invalid action received via serial: %i",ERROR, action);
@@ -202,4 +223,44 @@ int process_cmd(char* cmd){
 
         return 0;
 
+}
+
+int update_register(char* params){
+
+        *strchr(params,PARAM_DELIMITER) = '\0';
+        size_t reg = 0;
+        
+        for(size_t i = 0; i < ser_regcnt; i++){
+                if(strcmp(params,regmap[i]) == 0){
+                        reg = i;
+                        break;
+                }else if(i == ser_regcnt){
+                        /* This shouldn't really happen. */
+                        return -1;
+                }
+        }
+
+        if(reg == ser_regcnt){
+                println("Received invalid register!",ERROR);
+                return -1;
+        }
+        
+        char* end_of_bit = strchr(params + (strlen(params) + 1),PARAM_DELIMITER);
+        *end_of_bit= '\0';
+        int bit = atoi(params + (strlen(params)+1));
+        int value = atoi(end_of_bit + 1);
+        
+        println("Updated register %s bit %i to value %i",DEBUG, params, bit, value);
+        
+        uint8_t* target = &ser_registers[reg];
+
+        if(value == 0){
+                value &= ~(0x1 << bit);
+        }else{
+                value |= 0x1 << bit ;
+        }
+       
+
+
+        return 0;
 }
