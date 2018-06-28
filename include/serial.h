@@ -44,8 +44,4 @@ pthread_t serial_thread;
 uint8_t* ser_registers;
 size_t ser_regcnt;
 
-/* A null-pointer terminated string array */
-char* regmap[] = {
-        "A","B","C","D","E","F","G","H","J","K","L",NULL
-};    
 #endif

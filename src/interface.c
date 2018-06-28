@@ -226,20 +226,25 @@ int execute_command(int sock_fd, char* command){
         case 1:
                 /* return debug info to the client*/
 
-                print_debug(sock_fd);
+                print_debug_interface(sock_fd);
 
-                // TODO
                 break;
         case 2:
                 /* request update */
                 /* this requests an update of a register */
 
-                
-
                 break;
 
         case 3: 
-                /* Return a complete list of states to the client */
+                /* Return a complete list of states to the client.
+                 * This ONLY returns an array of values, rather than the
+                 * actual values.
+                 */
+                json_object_to_fd(sock_fd, 
+                                json_object_object_get(config_glob, 
+                                        "dependencies"), 
+                                JSON_C_TO_STRING_PRETTY);
+
                 
                 break;
         default:
@@ -260,7 +265,7 @@ int execute_command(int sock_fd, char* command){
 
 }
 
-int print_debug(int sock_fd){
+int print_debug_interface(int sock_fd){
 
 
         json_object* obj = json_object_new_object();
@@ -289,3 +294,4 @@ int print_debug(int sock_fd){
         return 0;
 
 }
+

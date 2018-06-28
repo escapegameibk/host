@@ -29,6 +29,10 @@
 #include "serial.h"
 #include "data.h"
 
+ char* regmap[] = {
+         "A","B","C","D","E","F","G","H","J","K","L",NULL
+ };
+
 int init_serial(char* port){
 
 #define INT_LEN 256
@@ -145,6 +149,10 @@ void* loop_serial(){
 
 }
 
+/* Basically diables all the tty stuff you don't want on a data-connection,
+ * because you don't want escape sequences inside of a fucking serial data
+ * connection!
+ */
 int set_interface_attribs(int fd, int speed){
 
         struct termios tty;
@@ -264,3 +272,4 @@ int update_register(char* params){
 
         return 0;
 }
+

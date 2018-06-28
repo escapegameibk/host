@@ -91,8 +91,10 @@ int main(int argc, char * const argv[]){
 
 #ifndef NOMTSP
         
-        if(init_mtsp("/dev/ttyUSB0", B460800)){
+        if(init_mtsp(MTSP_DEFAULT_PORT, MTSP_DEFAULT_BAUD)){
 
+                println("failed to init serial connection!!",ERROR);
+                goto shutdown;
 
         }
 
@@ -112,6 +114,10 @@ int main(int argc, char * const argv[]){
         start_game();
 #ifndef NOSER
         start_serial();
+#endif
+
+#ifndef NOMTSP
+        start_mtsp();
 #endif
         println("STARTUP DONE",INFO);
         println("ENTERING REGULAR OPERATION",INFO);

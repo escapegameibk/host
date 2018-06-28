@@ -2,6 +2,66 @@
         "name" : "generic",
         "boot_sound" : "http://escapegame.ddns.net/gamedat/win95boot.ogg",
         "dependencies" : [
+                {
+			"module" : "mtsp",
+                        "name" : "Closet",
+                        "type" : "register",
+			"deice" : 33,
+			"register" : 1,
+			"trigger" : [
+				{
+					"type" : "register" ,
+					"module" : "mtsp" ,
+					"device" : 1 ,
+					"register" : ""
+				}
+			]
+                },
+                {
+			"module" : "mtsp",
+                        "name" : "Roll Hideout",
+                        "type" : "register"
+                },
+                {
+			"module" : "mtsp",
+                        "name" : "Drawer",
+                        "type" : "register"
+                },
+                {
+			"module" : "mtsp",
+                        "name" : "Mirror",
+                        "type" : "register"
+                },
+                {
+			"module" : "mtsp",
+                        "name" : "Book",
+                        "type" : "register"
+                },
+                {
+			"module" : "mtsp",
+                        "name" : "Ingredients",
+                        "type" : "register"
+                },
+                {
+			"module" : "mtsp",
+                        "name" : "Candle",
+                        "type" : "register"
+                },
+                {
+			"module" : "mtsp",
+                        "name" : "Furnance hideout",
+                        "type" : "register"
+                },
+                {
+			"module" : "mtsp",
+                        "name" : "Furnance smoke",
+                        "type" : "register"
+                },
+                {
+			"module" : "mtsp",
+                        "name" : "Exit",
+                        "type" : "register"
+                }
 
         ]
 }

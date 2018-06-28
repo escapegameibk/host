@@ -18,6 +18,21 @@
 #ifndef MTSP_H
 #define MTSP_H
 
+#include <pthread.h>
+#include <stdint.h>
+
+#define MTSP_DEFAULT_BAUD B460800
+#define MTSP_DEFAULT_PORT "/dev/ttyUSB0"
+#define MTSP_START_BYTE 0xBB
+
+uint16_t crc_modbus(const char* in, size_t len);
 int init_mtsp(char* device, int baud);
+void* loop_mtsp();
+int start_mtsp();
+int update_mtsp_states();
+uint8_t* mtsp_receive_message();
+
+pthread_t mtsp_thread;
 int mtsp_fd;
+
 #endif
