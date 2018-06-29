@@ -43,13 +43,21 @@ int println(const char* output, int type, ...){
 
 }
 
+#ifndef COLOR
 char* log_typestr[] = {
-        "DEBUG",
-        "INFO",
-        "WARNING",
-        "ERROR"
+        "DEBUG\t",
+        "INFO\t",
+        "WARNING\t",
+        "ERROR\t"
 };
-
+#else
+char* log_typestr[] = {
+        "DEBUG\e[0m\t",
+        "\e[0;32mINFO\e[0m\t",
+        "\e[0;33mWARNING\e[0m\t",
+        "\e[0;31mERROR\e[0m\t"
+};
+#endif
 
 char * log_generate_prestring(int type){
         
@@ -64,7 +72,7 @@ char * log_generate_prestring(int type){
         time_t t = time(NULL);
         struct tm tim = *localtime(&t);
 
-        sprintf(pre, "[ %i-%i-%i %i:%i:%i  %s\t] ", tim.tm_year+1900, tim.tm_mon+1, 
+        sprintf(pre, "[ %i-%i-%i %i:%i:%i  %s] ", tim.tm_year+1900, tim.tm_mon+1, 
                         tim.tm_mday, tim.tm_hour, tim.tm_min, tim.tm_sec,
                         log_typestr[type]);
         pre = realloc(pre,strlen(pre));

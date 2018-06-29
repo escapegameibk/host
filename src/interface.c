@@ -242,7 +242,7 @@ int execute_command(int sock_fd, char* command){
                  */
                 json_object_to_fd(sock_fd, 
                                 json_object_object_get(config_glob, 
-                                        "dependencies"), 
+                                        "states"), 
                                 JSON_C_TO_STRING_PRETTY);
 
                 

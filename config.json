@@ -1,13 +1,14 @@
 {
         "name" : "generic",
-        "boot_sound" : "http://escapegame.ddns.net/gamedat/win95boot.ogg",
-        "dependencies" : [
+        "duration" : 3600,
+        "states" : [
                 {
 			"module" : "mtsp",
                         "name" : "Closet",
                         "type" : "register",
 			"deice" : 33,
 			"register" : 1,
+                        "initial" : 0,
 			"trigger" : [
 				{
 					"type" : "register" ,
