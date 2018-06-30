@@ -31,5 +31,7 @@ int unix_fd;
 pthread_t interface_thread; 
 
 int execute_command(int sock_fd,char* command);
-int print_debug_interface(int sockfd);
+int print_info_interface(int sockfd);
+int print_changeables_interface(int sockfd);
+
 #endif

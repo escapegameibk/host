@@ -75,7 +75,7 @@ char * log_generate_prestring(int type){
         sprintf(pre, "[ %i-%i-%i %i:%i:%i  %s] ", tim.tm_year+1900, tim.tm_mon+1, 
                         tim.tm_mday, tim.tm_hour, tim.tm_min, tim.tm_sec,
                         log_typestr[type]);
-        pre = realloc(pre,strlen(pre));
+        pre = realloc(pre,strlen(pre) + 1);
 
 #endif
         return pre;

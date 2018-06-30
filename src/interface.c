@@ -20,6 +20,7 @@
 #include "data.h"
 #include "tools.h"
 #include "config.h"
+#include "game.h"
 
 #include <json-c/json.h>
 #include <sys/socket.h>
@@ -224,15 +225,17 @@ int execute_command(int sock_fd, char* command){
                 {};
                 break;
         case 1:
-                /* return debug info to the client*/
+                /* return info to the client*/
 
-                print_debug_interface(sock_fd);
+                print_info_interface(sock_fd);
 
                 break;
         case 2:
                 /* request update */
-                /* this requests an update of a register */
-
+                /* this requestan update statement. all variables will be
+                 * dumped, if they may change throughout the game.
+                 */
+                print_changeables_interface(sock_fd);
                 break;
 
         case 3: 
@@ -265,7 +268,7 @@ int execute_command(int sock_fd, char* command){
 
 }
 
-int print_debug_interface(int sock_fd){
+int print_info_interface(int sock_fd){
 
 
         json_object* obj = json_object_new_object();
@@ -286,12 +289,32 @@ int print_debug_interface(int sock_fd){
         n |= json_object_object_add(obj,"version",version);
         n |= json_object_object_add(obj,"game",json_object_object_get(
                                 config_glob,"name"));
-       
+        n|= json_object_object_add(obj, "duration",
+                json_object_new_int64(timer_length));
 
         json_object_to_fd(sock_fd, obj, JSON_C_TO_STRING_PRETTY);
 
         free(obj);
-        return 0;
+        return n;
 
 }
 
+int print_changeables_interface(int sockfd){
+
+
+        json_object* obj = json_object_new_object();
+        json_object* stats = json_object_new_array();
+        int n = 0;
+        for(size_t i = 0; i < state_cnt; i ++){
+                n |= json_object_array_add(stats, json_object_new_int64(
+                        states[i]));
+        }
+        json_object_object_add(obj, "states", stats);
+        json_object_object_add(obj, "start_time", 
+                json_object_new_int64(timer_start));
+
+        json_object_to_fd(sockfd, obj, JSON_C_TO_STRING_PRETTY);
+        
+        free(obj);
+        return n;
+}

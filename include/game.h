@@ -32,7 +32,8 @@ int patrol();
 void* loop_game();
 
 pthread_t game_thread;
-unsigned long long int timer_start, timer_length;
+long long int timer_start, timer_length;
 unsigned long long * states;
 size_t state_cnt;
+
 #endif
