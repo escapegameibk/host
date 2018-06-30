@@ -221,7 +221,7 @@ int process_cmd(char* cmd){
         case 3:
                 
                 println("Received update statement.",DEBUG);
-                if(update_register < 0){
+                if(update_register(cmd) < 0){
                         println("Failed to process update!!", ERROR);
                 }
                 break;
@@ -268,7 +268,7 @@ int update_register(char* params){
                 value |= 0x1 << bit ;
         }
        
-
+        *target = value;
 
         return 0;
 }

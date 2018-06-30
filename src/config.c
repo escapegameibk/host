@@ -28,8 +28,6 @@
 
 int load_config(const char* location){
 
-        int fd;
-
         char * config_path;
         
         if(location == NULL){

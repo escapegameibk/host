@@ -119,7 +119,7 @@ void * loop_interface(){
                 int* cp = malloc(sizeof(int));
                 *cp = cl;
                 pthread_t th;
-                if(pthread_create(&interface_thread,NULL,handle_comm,cp)){
+                if(pthread_create(&th,NULL,handle_comm,cp)){
                         println("error at interface comm handle \
                                         thread creation",ERROR);
                 }

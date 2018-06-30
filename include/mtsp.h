@@ -25,7 +25,7 @@
 #define MTSP_DEFAULT_PORT "/dev/ttyUSB0"
 #define MTSP_START_BYTE 0xBB
 
-uint16_t crc_modbus(const char* in, size_t len);
+uint16_t crc_modbus(uint8_t * in, size_t len);
 int init_mtsp(char* device, int baud);
 void* loop_mtsp();
 int start_mtsp();

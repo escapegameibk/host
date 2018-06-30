@@ -31,7 +31,7 @@
 #include "game.h"
 
 
-uint16_t crc_modbus (const char *in, size_t len){
+uint16_t crc_modbus (uint8_t *in, size_t len){
 
         static const uint16_t crc_table[] = {
         0X0000, 0XC0C1, 0XC181, 0X0140, 0XC301, 0X03C0, 0X0280, 0XC241,
@@ -134,13 +134,14 @@ int mtsp_start(){
                  println("failed to create thread", ERROR);                      
                  return -1;                                                      
          }
+        return 0;
 }
 
 int update_mtsp_states(){
 
         uint8_t* request = malloc(7 * sizeof(uint8_t));
 
-
+        /* TODO */
 
         return 0;
 
@@ -198,7 +199,7 @@ uint8_t* mtsp_receive_message(){
         /* Cut off everything beyond 8 bit and write it to the lower half */
         crcsum_is |= finmsg[head[2-1]] & 0x11111111; 
         /* Left shift everything 8 bits and write lower half to the sum */
-        crcsum_is << 8;
+        crcsum_is = crcsum_is << 8;
         crcsum_is |= finmsg[head[2-2]] & 0x11111111; 
         if(crcsum_is != crcsum_should){
                 /* FUCK. CRC mismatch */
