@@ -28,7 +28,7 @@ int println(const char* output, int type, ...){
         va_start (arg, type);
         char* pre = log_generate_prestring(type);
         
-        size_t len = strlen(output) + strlen(pre);
+        size_t len = strlen(output) + strlen(pre) + 2;
         
         char* fino = malloc(len+1); /* Me wants a newline! */
         strcpy(fino,pre);
