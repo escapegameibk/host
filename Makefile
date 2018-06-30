@@ -15,7 +15,7 @@ INCLUDEDIR := $(CWD)/include
 
 # flags
 CFLAGS := -I$(INCLUDEDIR) -D NOSER -D NOMTSP -D HEADLESS -D COLOR
-LDFLAGS := -pthread -ljson-c -lvlc -lmodbus
+LDFLAGS := -pthread -ljson-c -lvlc
 
 # target files
 DIRS_TARGET := $(BINDIR) $(BUILDDIR)
