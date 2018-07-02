@@ -134,6 +134,7 @@ int start_mtsp(){
                  println("failed to create thread", ERROR);                      
                  return -1;                                                      
          }
+        println("MTSP startet",DEBUG);
         return 0;
 }
 
