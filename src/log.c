@@ -38,6 +38,7 @@ int println(const char* output, int type, ...){
         vprintf(fino,arg);
 
         free(pre);
+        free(fino);
         va_end (arg);
         return 0;
 

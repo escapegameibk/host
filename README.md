@@ -28,7 +28,7 @@ so it doesn't really matter.
 As of now, the program has the following dependencies:
 
 - json-c
-- libvlc
+- libvlc >= 0.12
 
 ## Links
 

@@ -139,12 +139,52 @@ int mtsp_start(){
 
 int update_mtsp_states(){
 
-        uint8_t* request = malloc(7 * sizeof(uint8_t));
-
-        /* TODO */
+        for(uint8_t i = 0; i < 256; i ++){
+                uint8_t* frame = mtsp_assemble_frame(0x21, 2, &i, 1);
+                mtsp_write(frame,7);
+                
+                free(frame);
+        }
 
         return 0;
 
+}
+
+/* Assembles a message from the given parameters */
+uint8_t* mtsp_assemble_frame(uint8_t slave_id, uint8_t command_id, 
+        uint8_t* payload, size_t payload_length){
+        
+        size_t lentot = payload_length + 6;
+        uint8_t * frame = malloc(lentot * sizeof(uint8_t));
+
+        frame[0] = MTSP_START_BYTE;
+        frame[1] = slave_id; /* The address of the slave to be addressed */
+        frame[2] = lentot; /* The length of the entire frame */
+        frame[3] = command_id; /* I would call it action, but whatever */
+        memcpy(&frame[4], payload, (sizeof(uint8_t) * payload_length));
+        
+        uint16_t checksum = crc_modbus(frame, lentot - 2); 
+        frame[lentot - 2] = 0b11111111 & checksum;
+        frame[lentot - 1] = 0b11111111 & (checksum >> 8);
+
+        return frame;
+}
+
+/* Locks the write command and writes to the fd */
+int mtsp_write(uint8_t* frame, size_t length){
+        
+        static int lock = 0;
+        while(lock){ /* NOOP */}
+        lock = 1;
+        int n  = write(mtsp_fd, frame, length * sizeof(uint8_t));
+        if (n < length){
+                println("Failed to write %i bytes to mtsp device! Returned %i!",
+                                ERROR, length, n);
+                lock = 0;
+                return -1;
+        }
+        
+        return 0;
 }
 
 uint8_t* mtsp_receive_message(){
