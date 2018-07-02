@@ -128,7 +128,7 @@ void* loop_mtsp(){
 
 }
 
-int mtsp_start(){
+int start_mtsp(){
         
         if(pthread_create(&mtsp_thread,NULL,loop_mtsp,NULL)){               
                  println("failed to create thread", ERROR);                      
