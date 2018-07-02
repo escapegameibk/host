@@ -133,7 +133,13 @@ int start_mtsp(){
         if(pthread_create(&mtsp_thread,NULL,loop_mtsp,NULL)){               
                  println("failed to create thread", ERROR);                      
                  return -1;                                                      
-         }
+        }
+        
+        pthread_t listen_thread;
+        if(pthread_create(&listen_thread,NULL,mtsp_listen,NULL)){               
+                 println("failed to create thread", ERROR);                      
+                 return -1;                                                      
+        }
         println("MTSP startet",DEBUG);
         return 0;
 }
@@ -186,6 +192,16 @@ int mtsp_write(uint8_t* frame, size_t length){
         }
         
         return 0;
+}
+
+void* mtsp_listen(){
+
+        while(!shutting_down){
+                free(mtsp_receive_message());
+        }
+        println("stopped listening for mtsp messages", DEBUG);
+
+        return NULL;
 }
 
 uint8_t* mtsp_receive_message(){

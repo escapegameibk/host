@@ -33,8 +33,8 @@ int update_mtsp_states();
 uint8_t* mtsp_assemble_frame(uint8_t slave_id, uint8_t command_id, 
         uint8_t* payload, size_t palyoad_length);
 int mtsp_write(uint8_t* frame, size_t length);
+void* mtsp_listen();
 uint8_t* mtsp_receive_message();
-
 pthread_t mtsp_thread;
 int mtsp_fd;
 
