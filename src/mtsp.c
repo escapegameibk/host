@@ -16,6 +16,7 @@
  */
 
 #include <stddef.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -23,6 +24,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <stdbool.h>
+#include <endian.h>
 
 #include "mtsp.h"
 #include "log.h"
@@ -30,6 +33,12 @@
 #include "serial.h"
 #include "game.h"
 
+uint8_t htobe8(uint8_t b) {                                                     
+   b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;                                       
+   b = (b & 0xCC) >> 2 | (b & 0x33) << 2;                                       
+   b = (b & 0xAA) >> 1 | (b & 0x55) << 1;                                       
+   return b;                                                                    
+}     
 
 uint16_t crc_modbus (uint8_t *in, size_t len){
 
@@ -70,9 +79,9 @@ uint16_t crc_modbus (uint8_t *in, size_t len){
         uint8_t temp;
         uint16_t crc_word = 0xFFFF;
 
-        while (len--){
+        for(size_t i = 0; i < len; i++){
 
-                temp = *in++ ^ crc_word;
+                temp = (in[i] ^ crc_word) & 0b11111111;
                 crc_word >>= 8;
                 crc_word ^= crc_table[temp];
         }
@@ -148,7 +157,7 @@ int update_mtsp_states(){
 
         for(uint8_t i = 0; i < 256; i ++){
                 uint8_t* frame = mtsp_assemble_frame(0x21, 2, &i, 1);
-                mtsp_write(frame,7);
+                //mtsp_write(frame,7);
                 
                 free(frame);
         }
@@ -180,16 +189,17 @@ uint8_t* mtsp_assemble_frame(uint8_t slave_id, uint8_t command_id,
 /* Locks the write command and writes to the fd */
 int mtsp_write(uint8_t* frame, size_t length){
         
-        static int lock = 0;
+        static bool lock = false;
         while(lock){ /* NOOP */}
-        lock = 1;
+        lock = true;
         int n  = write(mtsp_fd, frame, length * sizeof(uint8_t));
         if (n < length){
                 println("Failed to write %i bytes to mtsp device! Returned %i!",
                                 ERROR, length, n);
-                lock = 0;
+                lock = false;
                 return -1;
         }
+        lock = false;
         
         return 0;
 }
@@ -197,8 +207,7 @@ int mtsp_write(uint8_t* frame, size_t length){
 void* mtsp_listen(){
 
         while(!shutting_down){
-                uint8_t* mtsp_frame = mtsp_receive_message();
-                free(mtsp_frame);
+                mtsp_receive_message();
         }
         println("stopped listening for mtsp messages", DEBUG);
 
@@ -207,64 +216,48 @@ void* mtsp_listen(){
 
 uint8_t* mtsp_receive_message(){
 
-        uint8_t* head,* body;
-        head = malloc(3*sizeof(uint8_t));
-       
-        /* Wait for new message to begin */
-        for(int i = 0; i < 200; i++){
-                read(mtsp_fd,&head[0],sizeof(uint8_t));
-                if(head[0] == MTSP_START_BYTE){
-                        /* Found start of new message */
-                        break;
-                }
 
+        uint8_t start = 0;
+        for (int i = 0; !((i > 1000) || (start == MTSP_START_BYTE)); i ++){
+                read(mtsp_fd, &start, sizeof(uint8_t));
         }
-        
-        if(head[0] != MTSP_START_BYTE){
-                println("Failed to read MTSP",ERROR);
+
+        if(start == 0){
+                println("MTSP failed to receive ANYTHING!",DEBUG);
+                return NULL;
+
+        }else if(start != MTSP_START_BYTE){
+                println("MTSP reached timeout!",DEBUG);
                 return NULL;
         }
+
+        uint8_t slave_id = 0, frame_length = 0;
+        read(mtsp_fd, &slave_id,sizeof(uint8_t));
+        read(mtsp_fd, &frame_length,sizeof(uint8_t));
         
-        read(mtsp_fd,&head[1],1); /* Slave address */
-        read(mtsp_fd,&head[2],1); /* Number of total bytes */
+        uint8_t frame[frame_length];
+        frame[0] = start;
+        frame[1] = slave_id;
+        frame[2] = frame_length;
         
-        if(head[2] > 256){
-                /* WTF? */
-                println("MTSP received way too large count of bytes!!! %i", 
-                                ERROR, head[2]);
-                free(head);
-                return NULL;
+        for(size_t i = 3; i < (frame_length - 3); i++){
+                uint8_t recv  = 0;
+                read(mtsp_fd, &recv, sizeof(uint8_t));
+                frame[i] = recv;
         }
-        
-        body = malloc((head[2] - 3) * sizeof(uint8_t));
-        for(uint8_t i = 0; i < (head[2] - 3); i++){
-                
-                read(mtsp_fd, &body[i], 1);
-
+        uint16_t crcsum_should = crc_modbus(frame, frame_length - 3);
+        uint16_t crcsum_is = ((frame[frame_length - 2] & 0b11111111) << 8) |
+                (frame[frame_length - 1] & 0b11111111);
+        char frame_printable[(frame_length * 5) + 3];
+        frame_printable[0] = 0;
+        for(size_t i = 0; i < (frame_length); i++){
+                char tmp[6];
+                snprintf(tmp,54,"<%x>",frame[i]);
+                strcat(frame_printable,tmp);
         }
 
-        uint8_t* finmsg = malloc((head[2] + 3) * sizeof(uint8_t));
-        
-        memcpy(finmsg, head, sizeof(uint8_t) * 3);
-        memcpy(finmsg, body, sizeof(uint8_t) *  ( head[2] - 3 ) );
-
-        free(head);
-        free(body);
-
-        /* validate CRC sum, if invalid return NULL, but print error message */
-        uint16_t crcsum_should = crc_modbus(finmsg,(head[2] - 2));
-        uint16_t crcsum_is = 0x0;
-        /* Cut off everything beyond 8 bit and write it to the lower half */
-        crcsum_is |= finmsg[head[2-1]] & 0x11111111; 
-        /* Left shift everything 8 bits and write lower half to the sum */
-        crcsum_is = crcsum_is << 8;
-        crcsum_is |= finmsg[head[2-2]] & 0x11111111; 
-        if(crcsum_is != crcsum_should){
-                /* FUCK. CRC mismatch */
-                println("CRC MISSMATCH IN MTSP! SHOULD: %x IS: %x... GARBAGE", 
-                                crcsum_should, crcsum_is);
-                free(finmsg);
-                return NULL;
-        }
-        return finmsg;
+        println("received message for slave %x length %x crc-compare: %x-%x ",
+                DEBUG, frame[1], frame_length, crcsum_should, crcsum_is);
+        println(frame_printable,DEBUG);
+        return frame; 
 }

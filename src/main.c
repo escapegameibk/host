@@ -93,7 +93,7 @@ int main(int argc, char * const argv[]){
         
         if(init_mtsp(MTSP_DEFAULT_PORT, MTSP_DEFAULT_BAUD)){
 
-                println("failed to init serial connection!!",ERROR);
+                println("failed to init mtsp connection!!",ERROR);
                 goto shutdown;
 
         }
