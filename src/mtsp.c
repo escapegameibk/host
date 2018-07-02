@@ -197,7 +197,8 @@ int mtsp_write(uint8_t* frame, size_t length){
 void* mtsp_listen(){
 
         while(!shutting_down){
-                free(mtsp_receive_message());
+                uint8_t* mtsp_frame = mtsp_receive_message();
+                free(mtsp_frame);
         }
         println("stopped listening for mtsp messages", DEBUG);
 
