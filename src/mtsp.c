@@ -40,9 +40,7 @@ uint8_t htobe8(uint8_t b) {
    return b;                                                                    
 }     
 
-uint16_t crc_modbus (uint8_t *in, size_t len){
-
-        static const uint16_t crc_table[] = {
+static const uint16_t crc_table[] = {
         0X0000, 0XC0C1, 0XC181, 0X0140, 0XC301, 0X03C0, 0X0280, 0XC241,
         0XC601, 0X06C0, 0X0780, 0XC741, 0X0500, 0XC5C1, 0XC481, 0X0440,
         0XCC01, 0X0CC0, 0X0D80, 0XCD41, 0X0F00, 0XCFC1, 0XCE81, 0X0E40,
@@ -74,16 +72,23 @@ uint16_t crc_modbus (uint8_t *in, size_t len){
         0X8801, 0X48C0, 0X4980, 0X8941, 0X4B00, 0X8BC1, 0X8A81, 0X4A40,
         0X4E00, 0X8EC1, 0X8F81, 0X4F40, 0X8D01, 0X4DC0, 0X4C80, 0X8C41,
         0X4400, 0X84C1, 0X8581, 0X4540, 0X8701, 0X47C0, 0X4680, 0X8641,
-        0X8201, 0X42C0, 0X4380, 0X8341, 0X4100, 0X81C1, 0X8081, 0X4040 };
+        0X8201, 0X42C0, 0X4380, 0X8341, 0X4100, 0X81C1, 0X8081, 0X4040
+};
+
+/* I testet this. It is no longer a modbus crc function, but it calculates the
+ * correct "checksum" for communication with other mtsp devices, so i guess 
+ * it's fine… fuck those russina guys, they are idiots. use the same 
+ * polynominal
+ */
+uint16_t crc_modbus (uint8_t *in, size_t len){
         
-        uint8_t temp;
+        uint16_t temp;
         uint16_t crc_word = 0xFFFF;
 
         for(size_t i = 0; i < len; i++){
-
-                temp = (in[i] ^ crc_word) & 0b11111111;
-                crc_word >>= 8;
-                crc_word ^= crc_table[temp];
+                temp = ((in[i] & 0xFF) ^ crc_word);
+                crc_word = (crc_word >> 8);
+                crc_word ^= crc_table[(htobe16(temp) >> 8) & 0xFF];
         }
 
         return crc_word;

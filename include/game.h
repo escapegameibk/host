@@ -19,6 +19,7 @@
 #define GAME_H
 
 #include <pthread.h>
+#include <stdbool.h>
 
 #define PATROL_INTERVAL_NS 5000000
 #define DEFAULT_GAME_TIME 3600
@@ -32,8 +33,8 @@ int patrol();
 void* loop_game();
 
 pthread_t game_thread;
-long long int timer_start, timer_length;
-unsigned long long * states;
+long long int game_timer_start, game_duration;
+bool * state_trigger_status;
 size_t state_cnt;
 
 #endif
