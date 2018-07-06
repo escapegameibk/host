@@ -32,13 +32,7 @@
 #include "data.h"
 #include "serial.h"
 #include "game.h"
-
-uint8_t htobe8(uint8_t b) {                                                     
-   b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;                                       
-   b = (b & 0xCC) >> 2 | (b & 0x33) << 2;                                       
-   b = (b & 0xAA) >> 1 | (b & 0x55) << 1;                                       
-   return b;                                                                    
-}     
+#include "config.h"
 
 static const uint16_t crc_table[] = {
         0X0000, 0XC0C1, 0XC181, 0X0140, 0XC301, 0X03C0, 0X0280, 0XC241,
@@ -80,6 +74,7 @@ static const uint16_t crc_table[] = {
  * it's fine… fuck those russina guys, they are idiots. use the same 
  * polynominal
  */
+
 uint16_t crc_modbus (uint8_t *in, size_t len){
         
         uint16_t temp;
@@ -95,9 +90,98 @@ uint16_t crc_modbus (uint8_t *in, size_t len){
 
 }
 
+/* Add a register to the update pool */
+int mtsp_register_register(uint8_t device, uint8_t reg){
+        size_t row = 0, column = 0;
+        bool found = false;
+        
+        for(; row <  mtsp_regmap_length; row++){
+                if(mtsp_device_register_map[row].id == device){
+                        found = true;
+                        break;
+                }
+        }
+        mtsp_device_t* entry = NULL;
+        if(!found){
+                /* New device! Append it to the end */
+                mtsp_device_register_map = 
+                        realloc(mtsp_device_register_map, ++mtsp_regmap_length
+                        * sizeof(mtsp_device_t));
+                row = mtsp_regmap_length - 1;
+                entry = &mtsp_device_register_map[row];
+                entry->regcnt = 0;
+                entry->id = device;
+                entry->registers = malloc(0);
+
+        }else{
+                entry = &mtsp_device_register_map[row];
+        }
+
+        found = false;
+        for(; column < entry->regcnt; column++){
+                if(entry->registers[column] == reg){
+                        found = true;
+                        break;
+                }
+        }
+
+        if(!found){
+                /* New register! Append it to the end */
+                entry->registers = 
+                        realloc(entry->registers,
+                         ++entry->regcnt);
+                entry->registers[entry->regcnt - 1] = reg;
+        }
+        
+        return 0;
+}
+
 int init_mtsp(char* device, int baud){
 
         
+        /* Look for all mtsp things declared to be input and write them to their
+         * designated location in the register_device_map */
+        
+        mtsp_regmap_length = 0;
+        mtsp_device_register_map = malloc(0);
+ 
+        /* Iterate through all states in the config file */
+        for(size_t iterator1 = 0;  iterator1 < json_object_array_length(
+                json_object_object_get(config_glob,"states")); iterator1++){
+                json_object* dependencies= json_object_object_get(
+                        json_object_array_get_idx(json_object_object_get(
+                        config_glob,"states"),iterator1), "dependencies");
+                if(dependencies == NULL){
+                        continue;
+                }
+                /* Iterate through the dependencies*/
+                for(size_t iterator2 = 0; iterator2 < json_object_array_length(
+                        dependencies); iterator2++){
+                                
+                         json_object* dependency = 
+                                json_object_array_get_idx(dependencies,
+                                        iterator2);
+                        const char* module = json_object_get_string(
+                                json_object_object_get( dependency, "module"));
+                        if(module == NULL){
+                                continue;
+                        }
+                         /* Check wether i am concerned or not */
+                        if(strncasecmp(module,"mtsp",strlen(module)) == 0){
+                                uint8_t device = json_object_get_int(
+                                        json_object_object_get(dependency,
+                                                "device"));
+                                uint8_t reg = json_object_get_int(
+                                        json_object_object_get(dependency,
+                                                "register"));
+                                if(mtsp_register_register(device, reg) < 0){
+                                        println("Failed to add MTSP state",
+                                                ERROR);
+                                }
+                        }
+                }
+        }
+
         mtsp_fd = open(device,O_RDWR);
         if(mtsp_fd < 0){
                 println("Failed to open device at %s!",ERROR,device);
@@ -154,18 +238,13 @@ int start_mtsp(){
                  println("failed to create thread", ERROR);                      
                  return -1;                                                      
         }
-        println("MTSP startet",DEBUG);
+        println("MTSP started",DEBUG);
         return 0;
 }
 
 int update_mtsp_states(){
 
-        for(uint8_t i = 0; i < 256; i ++){
-                uint8_t* frame = mtsp_assemble_frame(0x21, 2, &i, 1);
-                //mtsp_write(frame,7);
-                
-                free(frame);
-        }
+       /* TODO */ 
 
         return 0;
 
@@ -181,10 +260,10 @@ uint8_t* mtsp_assemble_frame(uint8_t slave_id, uint8_t command_id,
         frame[0] = MTSP_START_BYTE;
         frame[1] = slave_id; /* The address of the slave to be addressed */
         frame[2] = lentot; /* The length of the entire frame */
-        frame[3] = command_id; /* I would call it action, but whatever */
+        frame[3] = command_id; /* I would call it action, but whatever*/
         memcpy(&frame[4], payload, (sizeof(uint8_t) * payload_length));
         
-        uint16_t checksum = crc_modbus(frame, lentot - 2); 
+        uint16_t checksum = crc_modbus(frame, lentot - 2);
         frame[lentot - 2] = 0b11111111 & checksum;
         frame[lentot - 1] = 0b11111111 & (checksum >> 8);
 
@@ -219,8 +298,12 @@ void* mtsp_listen(){
         return NULL;
 }
 
+/* This function is thread save, by locking itself when called */
 uint8_t* mtsp_receive_message(){
-
+        
+        static bool recv_lock = false;
+        while(recv_lock){ /* NOP */}
+        recv_lock = true;
 
         uint8_t start = 0;
         for (int i = 0; !((i > 1000) || (start == MTSP_START_BYTE)); i ++){
@@ -229,10 +312,12 @@ uint8_t* mtsp_receive_message(){
 
         if(start == 0){
                 println("MTSP failed to receive ANYTHING!",DEBUG);
+                recv_lock = false;
                 return NULL;
 
         }else if(start != MTSP_START_BYTE){
-                println("MTSP reached timeout!",DEBUG);
+                println("MTSP received too much garbage!",DEBUG);
+                recv_lock = true;
                 return NULL;
         }
 
@@ -240,7 +325,7 @@ uint8_t* mtsp_receive_message(){
         read(mtsp_fd, &slave_id,sizeof(uint8_t));
         read(mtsp_fd, &frame_length,sizeof(uint8_t));
         
-        uint8_t frame[frame_length];
+        uint8_t *frame = malloc(frame_length * sizeof(uint8_t));
         frame[0] = start;
         frame[1] = slave_id;
         frame[2] = frame_length;
@@ -253,16 +338,13 @@ uint8_t* mtsp_receive_message(){
         uint16_t crcsum_should = crc_modbus(frame, frame_length - 3);
         uint16_t crcsum_is = ((frame[frame_length - 2] & 0b11111111) << 8) |
                 (frame[frame_length - 1] & 0b11111111);
-        char frame_printable[(frame_length * 5) + 3];
-        frame_printable[0] = 0;
-        for(size_t i = 0; i < (frame_length); i++){
-                char tmp[6];
-                snprintf(tmp,54,"<%x>",frame[i]);
-                strcat(frame_printable,tmp);
+        
+        if(crcsum_is != crcsum_should){
+                println("MTSP CRC missmatch! should be %x is %x. dropping frame"
+                        ,WARNING);
+                free(frame);
         }
-
-        println("received message for slave %x length %x crc-compare: %x-%x ",
-                DEBUG, frame[1], frame_length, crcsum_should, crcsum_is);
-        println(frame_printable,DEBUG);
+        
+        recv_lock = false;
         return frame; 
 }

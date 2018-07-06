@@ -43,7 +43,7 @@ int init_game(){
         game_timer_start = 0;
         game_duration = json_object_get_int64(
                 json_object_object_get(config_glob,"duration"));
-        if(timer_length == 0){
+        if(game_duration == 0){
                 println("game duration not specified! defaulting to %i",WARNING,
                         DEFAULT_GAME_TIME);
                 game_duration = DEFAULT_GAME_TIME;
@@ -53,8 +53,9 @@ int init_game(){
         /* Allocate space for states */
         state_cnt = json_object_array_length(json_object_object_get(
                 config_glob,"states"));
-        states = malloc(state_cnt * sizeof(bool));
-
+        state_trigger_status = malloc(state_cnt * sizeof(bool));
+        memset(state_trigger_status, 0, state_cnt * sizeof(bool));
+        
         println("a total of %i states has been loaded", DEBUG, state_cnt);
         return 0;
 }

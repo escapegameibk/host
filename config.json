@@ -3,65 +3,101 @@
         "duration" : 3600,
         "states" : [
                 {
-			"module" : "mtsp",
+                        "name" : "Start",
+                        "dependencies" : [
+                                {
+                                        "module" : "mtsp",
+                                        "type" : "input",
+                                        "device" : 65,
+                                        "register" : 1,
+                                        "target" : 1,
+                                        "name" : "start input"
+                                }
+                        ]
+                },
+                {
                         "name" : "Closet",
-                        "type" : "register",
-			"deice" : 33,
-			"register" : 1,
-                        "initial" : 0,
-			"trigger" : [
+			"dependencies" : [
 				{
-					"type" : "register" ,
 					"module" : "mtsp" ,
 					"device" : 1 ,
-					"register" : ""
+                                        "target" : 3287747339,
+					"register" : 1,
+                                        "name" : "owl"
+				},
+				{
+					"module" : "mtsp" ,
+					"device" : 2 ,
+                                        "target" : 2199826094,
+					"register" : 1,
+                                        "name" : "unicorn"
+				},
+				{
+					"module" : "mtsp" ,
+					"device" : 3 ,
+                                        "target" : 3601657582,
+					"register" : 1,
+                                        "name" : "dragon"
+				},
+				{
+					"module" : "mtsp" ,
+					"device" : 4,
+                                        "target" : 2515536651,
+					"register" : 1,
+                                        "name" : "Ship"
+				},
+				{
+					"module" : "mtsp" ,
+					"device" : 5 ,
+                                        "target" : 585763595,
+					"register" : 1,
+                                        "name" : "lightning"
 				}
 			]
                 },
                 {
-			"module" : "mtsp",
-                        "name" : "Roll Hideout",
-                        "type" : "register"
+                        "name" : "Roll Hideout", 
+                        "dependencies": [
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 65,
+                                        "register" : 3,
+                                        "target" : 1,
+                                        "name" : "Books"
+                                },
+                                {
+                                        "type" : "state",
+                                        "module" : "config",
+                                        "state" : 1,
+                                        "target" : 1,
+                                        "name" : "Previous State"
+                                }
+
+                        ]
                 },
                 {
-			"module" : "mtsp",
-                        "name" : "Drawer",
-                        "type" : "register"
+                        "name" : "Drawer"
                 },
                 {
-			"module" : "mtsp",
-                        "name" : "Mirror",
-                        "type" : "register"
+                        "name" : "Mirror"
                 },
                 {
-			"module" : "mtsp",
-                        "name" : "Book",
-                        "type" : "register"
+                        "name" : "Book"
                 },
                 {
-			"module" : "mtsp",
-                        "name" : "Ingredients",
-                        "type" : "register"
+                        "name" : "Ingredients"
                 },
                 {
-			"module" : "mtsp",
-                        "name" : "Candle",
-                        "type" : "register"
+                        "name" : "Candle"
                 },
                 {
-			"module" : "mtsp",
-                        "name" : "Furnance hideout",
-                        "type" : "register"
+                        "name" : "Furnance hideout"
                 },
                 {
-			"module" : "mtsp",
-                        "name" : "Furnance smoke",
-                        "type" : "register"
+                        "name" : "Furnance smoke"
                 },
                 {
-			"module" : "mtsp",
-                        "name" : "Exit",
-                        "type" : "register"
+                        "name" : "Exit"
                 }
 
         ]

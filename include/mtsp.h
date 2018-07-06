@@ -38,4 +38,20 @@ uint8_t* mtsp_receive_message();
 pthread_t mtsp_thread;
 int mtsp_fd;
 
+typedef struct{
+        uint8_t id;
+        size_t regcnt;
+        uint8_t* registers;
+} mtsp_device_t;
+
+/* Even though this seems idiotic, i have to do this to speed things up. this
+ * array contains all devices and their registers needed in the entire program.
+ * It is allocated in the init process and is never altered afterwards. The
+ * first dimension contains pointers 
+ * The length tells you, how many devices exist. The first int in every row
+ * represents the amount of registers existant, the second one is the device id,
+ * which is followed by the registers.*/
+size_t mtsp_regmap_length;
+mtsp_device_t* mtsp_device_register_map;
+
 #endif

@@ -50,7 +50,11 @@ int load_config(const char* location){
 
         if(config_glob == NULL){
                 println("FAILED TO PARSE CONFIG!",ERROR);
-                println(json_util_get_last_err(),ERROR);
+                const char* error = json_util_get_last_err();
+                if(error != NULL){
+
+                        println(json_util_get_last_err(),ERROR);
+                }
                 return -2;
         }
 

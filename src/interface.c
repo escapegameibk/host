@@ -49,7 +49,7 @@ int init_interface(){
                 return -1;
         }
 
-         memset(&addr, 0, sizeof(addr));
+        memset(&addr, 0, sizeof(addr));
         addr.sun_family = AF_UNIX;
         strncpy(addr.sun_path, SOCKET_LOCATION, sizeof(addr.sun_path)-1);
         
@@ -197,7 +197,7 @@ int execute_command(int sock_fd, char* command){
                 free(debug);
                 return -1;
         }
-        free(tok);
+        json_tokener_free(tok);
 
         /* every valid comand is required to have a action */
         struct json_object* act = json_object_object_get(parsed,"action");
@@ -247,7 +247,14 @@ int execute_command(int sock_fd, char* command){
                                 json_object_object_get(config_glob, 
                                         "states"), 
                                 JSON_C_TO_STRING_PRETTY);
+                break;
 
+        case 4:
+                        /* Force-triggers the incoming state and ignores all
+                         * dependencies. It will not be triggerable until the
+                         * the game is reset to the start state.
+                         */
+                        
                 
                 break;
         default:
@@ -263,7 +270,7 @@ int execute_command(int sock_fd, char* command){
 
 #undef INT_LEN
         /* cleanup */
-        free(parsed);
+        json_object_put(parsed);
         return 0;
 
 }
@@ -290,11 +297,11 @@ int print_info_interface(int sock_fd){
         n |= json_object_object_add(obj,"game",json_object_object_get(
                                 config_glob,"name"));
         n|= json_object_object_add(obj, "duration",
-                json_object_new_int64(timer_length));
+                json_object_new_int64(game_duration));
 
         json_object_to_fd(sock_fd, obj, JSON_C_TO_STRING_PRETTY);
 
-        free(obj);
+        json_object_put(obj);
         return n;
 
 }
@@ -307,14 +314,14 @@ int print_changeables_interface(int sockfd){
         int n = 0;
         for(size_t i = 0; i < state_cnt; i ++){
                 n |= json_object_array_add(stats, json_object_new_int64(
-                        states[i]));
+                        state_trigger_status[i]));
         }
         json_object_object_add(obj, "states", stats);
         json_object_object_add(obj, "start_time", 
-                json_object_new_int64(timer_start));
+                json_object_new_int64(game_timer_start));
 
         json_object_to_fd(sockfd, obj, JSON_C_TO_STRING_PRETTY);
         
-        free(obj);
+        json_object_put(obj);
         return n;
 }
