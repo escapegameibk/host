@@ -140,17 +140,19 @@ int init_mtsp(char* device, int baud){
 
         
         /* Look for all mtsp things declared to be input and write them to their
-         * designated location in the register_device_map */
+         * designated location in the register_device_map. This is a bit dirty
+         * and will probably be replaced in the not too far away future.
+         */
         
         mtsp_regmap_length = 0;
         mtsp_device_register_map = malloc(0);
  
-        /* Iterate through all states in the config file */
+        /* Iterate through all events in the config file */
         for(size_t iterator1 = 0;  iterator1 < json_object_array_length(
-                json_object_object_get(config_glob,"states")); iterator1++){
+                json_object_object_get(config_glob,"events")); iterator1++){
                 json_object* dependencies= json_object_object_get(
                         json_object_array_get_idx(json_object_object_get(
-                        config_glob,"states"),iterator1), "dependencies");
+                        config_glob,"events"),iterator1), "dependencies");
                 if(dependencies == NULL){
                         continue;
                 }
@@ -242,15 +244,30 @@ int start_mtsp(){
         return 0;
 }
 
+/* This sends update requests to all nodes on the bus to send their input
+ * states back to me, reads their messages and processes them.
+ */
 int update_mtsp_states(){
 
-       /* TODO */ 
-
+        for(size_t i = 0; i < mtsp_regmap_length; i++){
+                mtsp_device_t *dev = &mtsp_device_register_map[i];
+                uint8_t* frame = mtsp_assemble_frame(dev->id, 1, dev->registers
+                        , dev->regcnt);
+                while(mtsp_fd_lock){}
+                mtsp_fd_lock = true;
+                mtsp_write(frame,dev->regcnt + MTSP_FRAME_OVERHEAD);
+                free(frame);
+                uint8_t* reply = mtsp_receive_message();
+                mtsp_process_frame(reply);
+                free(reply);
+        }
+        
         return 0;
 
 }
 
-/* Assembles a message from the given parameters */
+/* Assembles a message from the given parameters. the length is always the
+ * payload length + MTSP_FRAME_OVERHEAD */
 uint8_t* mtsp_assemble_frame(uint8_t slave_id, uint8_t command_id, 
         uint8_t* payload, size_t payload_length){
         
@@ -347,4 +364,10 @@ uint8_t* mtsp_receive_message(){
         
         recv_lock = false;
         return frame; 
+}
+
+int mtsp_process_frame(uint8_t* frame){
+        /* TODO */
+
+        return 0;
 }

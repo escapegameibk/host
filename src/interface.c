@@ -239,22 +239,23 @@ int execute_command(int sock_fd, char* command){
                 break;
 
         case 3: 
-                /* Return a complete list of states to the client.
+                /* Return a complete list of events to the client.
                  * This ONLY returns an array of values, rather than the
                  * actual values.
                  */
                 json_object_to_fd(sock_fd, 
                                 json_object_object_get(config_glob, 
-                                        "states"), 
+                                        "events"), 
                                 JSON_C_TO_STRING_PRETTY);
                 break;
 
         case 4:
-                        /* Force-triggers the incoming state and ignores all
+                        /* Force-triggers the incoming event and ignores all
                          * dependencies. It will not be triggerable until the
                          * the game is reset to the start state.
                          */
-                        
+                        trigger_event(json_object_get_int(
+                                json_object_object_get(parsed,"event")));
                 
                 break;
         default:
@@ -294,8 +295,10 @@ int print_info_interface(int sock_fd){
         }
 
         n |= json_object_object_add(obj,"version",version);
-        n |= json_object_object_add(obj,"game",json_object_object_get(
-                                config_glob,"name"));
+        n |= json_object_object_add(obj,"game",json_object_new_string(
+                json_object_get_string(json_object_object_get(
+                config_glob,"name"))));
+                
         n|= json_object_object_add(obj, "duration",
                 json_object_new_int64(game_duration));
 
@@ -316,7 +319,7 @@ int print_changeables_interface(int sockfd){
                 n |= json_object_array_add(stats, json_object_new_int64(
                         state_trigger_status[i]));
         }
-        json_object_object_add(obj, "states", stats);
+        json_object_object_add(obj, "events", stats);
         json_object_object_add(obj, "start_time", 
                 json_object_new_int64(game_timer_start));
 

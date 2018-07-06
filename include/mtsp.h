@@ -20,11 +20,12 @@
 
 #include <pthread.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #define MTSP_DEFAULT_BAUD B460800
 #define MTSP_DEFAULT_PORT "/dev/ttyUSB0"
 #define MTSP_START_BYTE 0xBB
-
+#define MTSP_FRAME_OVERHEAD 6
 uint16_t crc_modbus(uint8_t * in, size_t len);
 int init_mtsp(char* device, int baud);
 void* loop_mtsp();
@@ -35,22 +36,19 @@ uint8_t* mtsp_assemble_frame(uint8_t slave_id, uint8_t command_id,
 int mtsp_write(uint8_t* frame, size_t length);
 void* mtsp_listen();
 uint8_t* mtsp_receive_message();
+int mtsp_process_frame(uint8_t* frame);
+
 pthread_t mtsp_thread;
+bool mtsp_fd_lock;
 int mtsp_fd;
 
+/* Be glad this struct exists, before it came to life, there was chaos... */
 typedef struct{
         uint8_t id;
         size_t regcnt;
         uint8_t* registers;
 } mtsp_device_t;
 
-/* Even though this seems idiotic, i have to do this to speed things up. this
- * array contains all devices and their registers needed in the entire program.
- * It is allocated in the init process and is never altered afterwards. The
- * first dimension contains pointers 
- * The length tells you, how many devices exist. The first int in every row
- * represents the amount of registers existant, the second one is the device id,
- * which is followed by the registers.*/
 size_t mtsp_regmap_length;
 mtsp_device_t* mtsp_device_register_map;
 

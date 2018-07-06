@@ -52,7 +52,7 @@ int init_game(){
         
         /* Allocate space for states */
         state_cnt = json_object_array_length(json_object_object_get(
-                config_glob,"states"));
+                config_glob,"events"));
         state_trigger_status = malloc(state_cnt * sizeof(bool));
         memset(state_trigger_status, 0, state_cnt * sizeof(bool));
         
@@ -108,3 +108,19 @@ void* loop_game(){
 
         return NULL;
 }
+
+int trigger_event(size_t event_id){
+        
+        if((state_cnt <= event_id) | (state_trigger_status[event_id])){
+                println("Tried to trigger invalid event %i", WARNING, event_id);
+                return -1;
+        }
+        
+        state_trigger_status[event_id] = 1;
+        
+        json_object
+        
+
+        return 0;
+}
+

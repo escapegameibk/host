@@ -29,8 +29,9 @@ int start_game();
 
 /* checks for changes and act accordingly */
 int patrol();
-
 void* loop_game();
+
+int trigger_event(size_t event_id);
 
 pthread_t game_thread;
 long long int game_timer_start, game_duration;

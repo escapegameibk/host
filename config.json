@@ -1,7 +1,7 @@
 {
         "name" : "generic",
         "duration" : 3600,
-        "states" : [
+        "events" : [
                 {
                         "name" : "Start",
                         "dependencies" : [
