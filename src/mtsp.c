@@ -184,6 +184,9 @@ int init_mtsp(char* device, int baud){
                 }
         }
 
+        mtsp_device_states = malloc(0);
+        mtsp_device_count = 0;
+
         mtsp_fd = open(device,O_RDWR);
         if(mtsp_fd < 0){
                 println("Failed to open device at %s!",ERROR,device);
@@ -235,11 +238,6 @@ int start_mtsp(){
                  return -1;                                                      
         }
         
-        pthread_t listen_thread;
-        if(pthread_create(&listen_thread,NULL,mtsp_listen,NULL)){               
-                 println("failed to create thread", ERROR);                      
-                 return -1;                                                      
-        }
         println("MTSP started",DEBUG);
         return 0;
 }
@@ -258,7 +256,16 @@ int update_mtsp_states(){
                 mtsp_write(frame,dev->regcnt + MTSP_FRAME_OVERHEAD);
                 free(frame);
                 uint8_t* reply = mtsp_receive_message();
-                mtsp_process_frame(reply);
+                if(reply == NULL){
+                        println("MTSP failed to get reply from device at %i",
+                                WARNING, i);
+                        i--;
+                        continue;
+                }
+                
+                if(mtsp_process_frame(reply) < 0){
+                        
+                }
                 free(reply);
         }
         
@@ -279,7 +286,7 @@ uint8_t* mtsp_assemble_frame(uint8_t slave_id, uint8_t command_id,
         frame[2] = lentot; /* The length of the entire frame */
         frame[3] = command_id; /* I would call it action, but whatever*/
         memcpy(&frame[4], payload, (sizeof(uint8_t) * payload_length));
-        
+        f
         uint16_t checksum = crc_modbus(frame, lentot - 2);
         frame[lentot - 2] = 0b11111111 & checksum;
         frame[lentot - 1] = 0b11111111 & (checksum >> 8);
@@ -303,16 +310,6 @@ int mtsp_write(uint8_t* frame, size_t length){
         lock = false;
         
         return 0;
-}
-
-void* mtsp_listen(){
-
-        while(!shutting_down){
-                mtsp_receive_message();
-        }
-        println("stopped listening for mtsp messages", DEBUG);
-
-        return NULL;
 }
 
 /* This function is thread save, by locking itself when called */
@@ -347,18 +344,25 @@ uint8_t* mtsp_receive_message(){
         frame[1] = slave_id;
         frame[2] = frame_length;
         
-        for(size_t i = 3; i < (frame_length - 3); i++){
+        for(size_t i = 3; i < frame_length; i++){
                 uint8_t recv  = 0;
                 read(mtsp_fd, &recv, sizeof(uint8_t));
                 frame[i] = recv;
         }
-        uint16_t crcsum_should = crc_modbus(frame, frame_length - 3);
+        uint16_t crcsum_should = crc_modbus(frame, frame_length - 2);
         uint16_t crcsum_is = ((frame[frame_length - 2] & 0b11111111) << 8) |
                 (frame[frame_length - 1] & 0b11111111);
-        
+        char* mtsp_printable = malloc(frame_length * 4 + 4);
+        mtsp_printable[0] = 0;
+        for(int i = 0; i < frame_length; i++){
+                char tmp[5];
+                sprintf(tmp, "<%x>", frame[i]);
+                strcat(mtsp_printable,tmp);
+        }
+        println(mtsp_printable,DEBUG);
         if(crcsum_is != crcsum_should){
                 println("MTSP CRC missmatch! should be %x is %x. dropping frame"
-                        ,WARNING);
+                        ,WARNING, crcsum_should,crcsum_is);
                 free(frame);
         }
         
@@ -367,7 +371,27 @@ uint8_t* mtsp_receive_message(){
 }
 
 int mtsp_process_frame(uint8_t* frame){
-        /* TODO */
+       
+        /* Find the right device status from the array */
+        mtsp_device_state* device = NULL;
+        bool found = false;
+        size_t iterator;
+        for(iterator = 0; iterator < mtsp_device_count; iterator++){
+                if(mtsp_device_states[iterator].device_id == frame[1]){
+                        found = true;
+                        break;
+                }
+        }
+        if(!found){
+                mtsp_device_states = realloc(mtsp_device_states,
+                        (mtsp_device_count + 1) * sizeof(mtsp_device_state));
+                device = &mtsp_device_states[mtsp_device_count++];
+                device->device_id = frame[1];
+        }else{
 
+                device = &mtsp_device_states[iterator];
+                
+        }
+        
         return 0;
 }

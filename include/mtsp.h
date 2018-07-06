@@ -38,6 +38,7 @@ void* mtsp_listen();
 uint8_t* mtsp_receive_message();
 int mtsp_process_frame(uint8_t* frame);
 
+
 pthread_t mtsp_thread;
 bool mtsp_fd_lock;
 int mtsp_fd;
@@ -51,5 +52,26 @@ typedef struct{
 
 size_t mtsp_regmap_length;
 mtsp_device_t* mtsp_device_register_map;
+
+/* The stuff from before was only for non-active storage of stuff. Now we get
+ * to the more funny part where things begin to change
+ */
+
+typedef struct{
+
+        uint8_t reg_id;
+        unsigned long long int reg_state;
+         
+} mtsp_register_state;
+
+typedef struct{
+
+        uint8_t device_id;
+        size_t register_count;
+        mtsp_register_state* register_states;
+} mtsp_device_state;
+
+mtsp_device_state* mtsp_device_states;
+size_t mtsp_device_count;
 
 #endif

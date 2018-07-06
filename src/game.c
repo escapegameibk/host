@@ -117,8 +117,18 @@ int trigger_event(size_t event_id){
         }
         
         state_trigger_status[event_id] = 1;
-        
-        json_object
+        /* Iterate through triggers */
+        json_object* triggers = json_object_object_get(
+                json_object_array_get_idx(json_object_object_get(config_glob,
+                 "events"),event_id),"triggers");
+for(size_t triggercnt = 0; json_object_array_length(triggers); 
+                triggercnt++){
+                json_object* trigger = json_object_array_get_idx(triggers,
+                        triggercnt);
+                println("Executing trigger for event %i: %s",DEBUG, event_id,
+                        json_object_get_string(json_object_object_get(trigger,
+                        "name")));
+        }
         
 
         return 0;
