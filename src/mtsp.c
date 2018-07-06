@@ -286,7 +286,7 @@ uint8_t* mtsp_assemble_frame(uint8_t slave_id, uint8_t command_id,
         frame[2] = lentot; /* The length of the entire frame */
         frame[3] = command_id; /* I would call it action, but whatever*/
         memcpy(&frame[4], payload, (sizeof(uint8_t) * payload_length));
-        f
+        
         uint16_t checksum = crc_modbus(frame, lentot - 2);
         frame[lentot - 2] = 0b11111111 & checksum;
         frame[lentot - 1] = 0b11111111 & (checksum >> 8);
