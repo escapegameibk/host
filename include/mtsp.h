@@ -26,6 +26,8 @@
 #define MTSP_DEFAULT_PORT "/dev/ttyUSB0"
 #define MTSP_START_BYTE 0xBB
 #define MTSP_FRAME_OVERHEAD 6
+#define MTSP_TIMEOUT_US 5000000 // the read timeout in µs
+
 uint16_t crc_modbus(uint8_t * in, size_t len);
 int init_mtsp(char* device, int baud);
 void* loop_mtsp();

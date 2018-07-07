@@ -26,6 +26,7 @@
 #include <fcntl.h>
 #include <stdbool.h>
 #include <endian.h>
+#include <sys/select.h>
 
 #include "mtsp.h"
 #include "log.h"
@@ -183,6 +184,12 @@ int init_mtsp(char* device, int baud){
                         }
                 }
         }
+        println("Added a total of %i mtsp input devices:",DEBUG, 
+                mtsp_regmap_length);
+        for(size_t i = 0; i < mtsp_regmap_length; i++){
+                println("\t%i: %x",DEBUG, i, mtsp_device_register_map[i].id);
+        }
+        
 
         mtsp_device_states = malloc(0);
         mtsp_device_count = 0;
@@ -200,7 +207,14 @@ int init_mtsp(char* device, int baud){
                 close(mtsp_fd);
                 return -1;
         }
-
+#if 1
+        /* Set the timeout for the mtsp devices to reply*/
+        struct termios termios;
+        tcgetattr(mtsp_fd, &termios);
+        termios.c_lflag &= ~ICANON; /* Set non-canonical mode */
+        termios.c_cc[VTIME] = 1; /* Set timeout of 0.1 seconds */
+        tcsetattr(mtsp_fd, TCSANOW, &termios);
+#endif   
         return 0;
 }
 
@@ -247,25 +261,37 @@ int start_mtsp(){
  */
 int update_mtsp_states(){
 
+        struct timespec tim, tim2;
+        tim.tv_sec = 0;
+        tim.tv_nsec = 50;
         for(size_t i = 0; i < mtsp_regmap_length; i++){
                 mtsp_device_t *dev = &mtsp_device_register_map[i];
                 uint8_t* frame = mtsp_assemble_frame(dev->id, 1, dev->registers
                         , dev->regcnt);
+                if(nanosleep(&tim , &tim2) < 0 ){
+                        
+                } 
                 while(mtsp_fd_lock){}
                 mtsp_fd_lock = true;
                 mtsp_write(frame,dev->regcnt + MTSP_FRAME_OVERHEAD);
                 free(frame);
+                println("Awaiting response from %x", DEBUG, dev->id);
                 uint8_t* reply = mtsp_receive_message();
                 if(reply == NULL){
-                        println("MTSP failed to get reply from device at %i",
-                                WARNING, i);
+                        println("MTSP failed to get reply from device %x",
+                                WARNING, dev->id);
                         i--;
+                        mtsp_fd_lock = false;
                         continue;
+                }else{
+                        println("Received healthy reply from mtsp device %x",
+                                DEBUG, reply[1]);
                 }
                 
-                if(mtsp_process_frame(reply) < 0){
+                /*if(mtsp_process_frame(reply) < 0){
                         
-                }
+                }*/
+                mtsp_fd_lock = false;
                 free(reply);
         }
         
@@ -288,8 +314,10 @@ uint8_t* mtsp_assemble_frame(uint8_t slave_id, uint8_t command_id,
         memcpy(&frame[4], payload, (sizeof(uint8_t) * payload_length));
         
         uint16_t checksum = crc_modbus(frame, lentot - 2);
-        frame[lentot - 2] = 0b11111111 & checksum;
-        frame[lentot - 1] = 0b11111111 & (checksum >> 8);
+        /* Please note that the checksum is inverted! These idiots and byte
+         * ordering... */
+        frame[lentot - 2] = 0b11111111 & (checksum >> 8);
+        frame[lentot - 1] = 0b11111111 & checksum;
 
         return frame;
 }
@@ -321,7 +349,14 @@ uint8_t* mtsp_receive_message(){
 
         uint8_t start = 0;
         for (int i = 0; !((i > 1000) || (start == MTSP_START_BYTE)); i ++){
-                read(mtsp_fd, &start, sizeof(uint8_t));
+                  
+                int rd = read(mtsp_fd, &start, sizeof(uint8_t));
+                if(rd < 1){
+                        println("Failed to read for mtsp! possibly timeout",
+                                WARNING);
+                        recv_lock = false;
+                        return NULL;
+                }
         }
 
         if(start == 0){
@@ -352,18 +387,11 @@ uint8_t* mtsp_receive_message(){
         uint16_t crcsum_should = crc_modbus(frame, frame_length - 2);
         uint16_t crcsum_is = ((frame[frame_length - 2] & 0b11111111) << 8) |
                 (frame[frame_length - 1] & 0b11111111);
-        char* mtsp_printable = malloc(frame_length * 4 + 4);
-        mtsp_printable[0] = 0;
-        for(int i = 0; i < frame_length; i++){
-                char tmp[5];
-                sprintf(tmp, "<%x>", frame[i]);
-                strcat(mtsp_printable,tmp);
-        }
-        println(mtsp_printable,DEBUG);
         if(crcsum_is != crcsum_should){
                 println("MTSP CRC missmatch! should be %x is %x. dropping frame"
                         ,WARNING, crcsum_should,crcsum_is);
                 free(frame);
+                frame = NULL;
         }
         
         recv_lock = false;
