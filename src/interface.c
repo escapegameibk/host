@@ -116,13 +116,8 @@ void * loop_interface(){
                         continue;
                         
                 }
-                int* cp = malloc(sizeof(int));
-                *cp = cl;
-                pthread_t th;
-                if(pthread_create(&th,NULL,handle_comm,cp)){
-                        println("error at interface comm handle \
-                                        thread creation",ERROR);
-                }
+                
+                handle_comm(cl);
 
         } while (!shutting_down);
         
@@ -134,45 +129,27 @@ void * loop_interface(){
         return NULL;
 }
 
-void * handle_comm(void* fd){
-
-        int fdi = *(int*)fd;
-
-#define INT_LEN 64
-        char* intermediate = malloc(INT_LEN);
-        memset(intermediate,0,INT_LEN);
-        sprintf(intermediate, "handling connection for fd %i",fdi);
-        println(intermediate,DEBUG);
-        free(intermediate);
+int handle_comm(int fd){
 
 #define BUFFERLENGTH 2560
 
-        char* buffer = malloc(BUFFERLENGTH);
+        char buffer[BUFFERLENGTH];;
 
         while(!shutting_down){
                 
                 memset(buffer,0,BUFFERLENGTH);
-                if(read(fdi,buffer,BUFFERLENGTH) <= 0){
+                if(read(fd,buffer,BUFFERLENGTH) <= 0){
                         
-                        intermediate = malloc(INT_LEN);
-                        memset(intermediate,0,INT_LEN);
-                        sprintf(intermediate,"closing unix socket for fd %i",
-                                        fdi);
-                        println(intermediate,DEBUG);
-                        free(intermediate);
                         break;
-#undef INT_LEN
                 }else{
-                        execute_command(fdi,buffer);
+                        execute_command(fd,buffer);
                 }
         }
 
-        free(buffer);
-        close (fdi);
-        free(fd);
+        close (fd);
 #undef BUFFERLENGTH
 
-        return NULL;
+        return 0;
 }
 
 /*
@@ -243,10 +220,7 @@ int execute_command(int sock_fd, char* command){
                  * This ONLY returns an array of values, rather than the
                  * actual values.
                  */
-                json_object_to_fd(sock_fd, 
-                                json_object_object_get(config_glob, 
-                                        "events"), 
-                                JSON_C_TO_STRING_PRETTY);
+                print_events_interface(sock_fd);
                 break;
 
         case 4:
@@ -333,4 +307,19 @@ int print_changeables_interface(int sockfd){
         
         json_object_put(obj);
         return n;
+}
+
+int print_events_interface(int sockfd){
+
+        json_object* eventarr = json_object_object_get(config_glob, "events");
+        json_object* arr_names = json_object_new_array();
+        for(size_t i = 0; i < json_object_array_length(eventarr); i ++){
+                json_object_array_add(arr_names, json_object_new_string(
+                json_object_get_string(json_object_object_get(
+                json_object_array_get_idx(eventarr,i),"name"))));
+        }
+        json_object_to_fd(sockfd, arr_names, JSON_C_TO_STRING_PRETTY);
+        json_object_put(arr_names);
+
+        return 0;
 }

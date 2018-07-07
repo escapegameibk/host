@@ -25,7 +25,7 @@ int init_interface();
 int start_interface();
 
 void * loop_interface();
-void * handle_comm(void* fd);
+int handle_comm(int fd);
 
 int unix_fd;
 pthread_t interface_thread; 
@@ -33,5 +33,6 @@ pthread_t interface_thread;
 int execute_command(int sock_fd,char* command);
 int print_info_interface(int sockfd);
 int print_changeables_interface(int sockfd);
+int print_events_interface(int sockfd);
 
 #endif

@@ -354,6 +354,12 @@ uint8_t* mtsp_receive_message(){
         read(mtsp_fd, &slave_id,sizeof(uint8_t));
         read(mtsp_fd, &frame_length,sizeof(uint8_t));
         
+        if(frame_length < MTSP_FRAME_OVERHEAD){
+                recv_lock = false;
+                println("too small frame length %i",DEBUG, frame_length);
+                return NULL;
+        }
+
         uint8_t *frame = malloc(frame_length * sizeof(uint8_t));
         frame[0] = start;
         frame[1] = slave_id;

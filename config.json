@@ -185,7 +185,42 @@
                                         "target" : 0,
 					"register" : 1,
                                         "name" : "open hat hideout / closet"
-				}
+				},
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 1,
+                                        "register" : 7,
+                                        "target" : 0,
+                                        "name" : "disable dragon sound"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 2,
+                                        "register" : 7,
+                                        "target" : 0,
+                                        "name" : "disable owl sound"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 3,
+                                        "register" : 7,
+                                        "target" : 0,
+                                        "name" : "disable ship sound"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 4,
+                                        "register" : 7,
+                                        "target" : 0,
+                                        "name" : "disable unicorn sound"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 5,
+                                        "register" : 7,
+                                        "target" : 0,
+                                        "name" : "disable thunder"
+                                }
                                 
                         ]
                 },
@@ -338,7 +373,128 @@
                         ]
                 },
                 {
-                        "name" : "Cleanup"
+                        "name" : "Cleanup",
+                        "triggers" : [
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 33,
+                                        "register" : 1,
+                                        "target" : 1,
+                                        "name" : "close cupboard"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 33,
+                                        "register" : 2,
+                                        "target" : 1,
+                                        "name" : "roll hideout close"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 33,
+                                        "register" : 3,
+                                        "target" : 1,
+                                        "name" : "close wand hideout"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 33,
+                                        "register" : 4,
+                                        "target" : 1,
+                                        "name" : "close mirror"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 33,
+                                        "register:" : 5,
+                                        "target" : 0,
+                                        "name" : "close book cage"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 33,
+                                        "register" : 7,
+                                        "target" : 1,
+                                        "name" : "close ingredients hideout"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 33,
+                                        "register" : 8,
+                                        "target" : 0,
+                                        "name" : "close recipe hideout"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 34,
+                                        "register" : 5,
+                                        "target" : 0,
+                                        "name" : "turn off smoke machine"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 34,
+                                        "register" : 7,
+                                        "target" : 1,
+                                        "name" : "close potion hideout"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 34,
+                                        "register" : 8,
+                                        "target" : 1,
+                                        "name" : "close exit"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 1,
+                                        "register" : 7,
+                                        "target" : 0,
+                                        "name" : "disable dragon sound"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 2,
+                                        "register" : 7,
+                                        "target" : 0,
+                                        "name" : "disable owl sound"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 3,
+                                        "register" : 7,
+                                        "target" : 0,
+                                        "name" : "disable ship sound"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 4,
+                                        "register" : 7,
+                                        "target" : 0,
+                                        "name" : "disable unicorn sound"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 5,
+                                        "register" : 7,
+                                        "target" : 0,
+                                        "name" : "disable thunder"
+                                }
+                        ]
+                },
+                {
+                        "name" : "Reset",
+                        "triggers" :[
+				{
+					"module" : "core",
+                                        "action" : "reset"
+				},
+				{
+					"module" : "core",
+                                        "action" : "timer_stop"
+				}
+                                
+                        ]
                 }
 
         ]

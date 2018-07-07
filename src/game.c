@@ -205,6 +205,11 @@ int core_trigger(json_object* trigger){
         }else if(strcasecmp(action_name,"timer_stop") == 0){
                 println("Stopping game timer", INFO);
                 game_timer_start = 0;
+        }else if(strcasecmp(action_name,"reset") == 0){
+                println("Resetting states", INFO);
+                for(size_t i = 0; i < state_cnt; i++){
+                        state_trigger_status[i] = 0;
+                }
         }else{
                 println("Unknown core action specified: %s",ERROR, action_name);
                 return -1;
