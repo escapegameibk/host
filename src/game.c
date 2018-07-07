@@ -19,6 +19,7 @@
 #include "config.h"
 #include "log.h"
 #include "data.h"
+#include "mtsp.h"
 
 #include <stddef.h>
 #include <stdio.h>
@@ -118,16 +119,40 @@ int trigger_event(size_t event_id){
         
         state_trigger_status[event_id] = 1;
         /* Iterate through triggers */
-        json_object* triggers = json_object_object_get(
+       
+         json_object* triggers = json_object_object_get(
                 json_object_array_get_idx(json_object_object_get(config_glob,
                  "events"),event_id),"triggers");
-for(size_t triggercnt = 0; json_object_array_length(triggers); 
-                triggercnt++){
+        println("Triggering %i triggers ",DEBUG, json_object_array_length(triggers));
+         for(size_t triggercnt = 0; triggercnt < 
+                json_object_array_length(triggers); triggercnt++){
                 json_object* trigger = json_object_array_get_idx(triggers,
                         triggercnt);
                 println("Executing trigger for event %i: %s",DEBUG, event_id,
                         json_object_get_string(json_object_object_get(trigger,
                         "name")));
+                const char* module = json_object_get_string(json_object_object_get(
+                        trigger,"module"));
+                
+                /* Find out which module is concerned and execute the trigger
+                 * in the specified function of the module.
+                 */
+                if(strcasecmp(module,"mtsp") == 0){
+                        /* The mtsp module is concerned. */
+                        if(mtsp_trigger(trigger) < 0){
+                                println("Failed to execute trigger for mtsp!",
+                                        ERROR);
+                                
+                                /* Untrigger event */
+                                state_trigger_status[event_id] = 0;
+                                return -1;
+                        }
+                }else{
+                        println("UNKNOWN MODULE %s!!",ERROR, module);
+                        state_trigger_status[event_id] = 0;
+                        return -2;
+
+                }
         }
         
 

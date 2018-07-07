@@ -7,11 +7,131 @@
                         "dependencies" : [
                                 {
                                         "module" : "mtsp",
-                                        "type" : "input",
                                         "device" : 65,
                                         "register" : 1,
                                         "target" : 1,
                                         "name" : "start input"
+                                }
+                        ],
+                        "triggers" : [
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 33,
+                                        "register" : 1,
+                                        "target" : 1,
+                                        "name" : "close cupboard"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 33,
+                                        "register" : 2,
+                                        "target" : 1,
+                                        "name" : "roll hideout close"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 33,
+                                        "register" : 3,
+                                        "target" : 1,
+                                        "name" : "close wand hideout"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 33,
+                                        "register" : 4,
+                                        "target" : 1,
+                                        "name" : "close mirror"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 33,
+                                        "register:" : 5,
+                                        "target" : 0,
+                                        "name" : "close book cage"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 33,
+                                        "register" : 6,
+                                        "target" : 0,
+                                        "name" : "turn off all violet lights"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 33,
+                                        "register" : 7,
+                                        "target" : 1,
+                                        "name" : "close ingredients hideout"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 33,
+                                        "register" : 8,
+                                        "target" : 0,
+                                        "name" : "close recipe hideout"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 34,
+                                        "register" : 5,
+                                        "target" : 0,
+                                        "name" : "turn off moke machine"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 34,
+                                        "register" : 6,
+                                        "target" : 0,
+                                        "name" : "turn offlight in room  2"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 34,
+                                        "register" : 7,
+                                        "target" : 1,
+                                        "name" : "close potion hideout"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 34,
+                                        "register" : 8,
+                                        "target" : 1,
+                                        "name" : "close exit"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 1,
+                                        "register" : 7,
+                                        "target" : 1,
+                                        "name" : "enable dragon sound"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 2,
+                                        "register" : 7,
+                                        "target" : 1,
+                                        "name" : "enable owl sound"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 3,
+                                        "register" : 7,
+                                        "target" : 1,
+                                        "name" : "enable ship sound"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 4,
+                                        "register" : 7,
+                                        "target" : 1,
+                                        "name" : "enable unicorn sound"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 5,
+                                        "register" : 7,
+                                        "target" : 1,
+                                        "name" : "enable thunder"
                                 }
                         ]
                 },

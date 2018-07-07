@@ -21,6 +21,7 @@
 #include <pthread.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <json-c/json.h>
 
 #define MTSP_DEFAULT_BAUD B460800
 #define MTSP_DEFAULT_PORT "/dev/ttyUSB0"
@@ -39,10 +40,12 @@ int mtsp_write(uint8_t* frame, size_t length);
 void* mtsp_listen();
 uint8_t* mtsp_receive_message();
 int mtsp_process_frame(uint8_t* frame);
+int mtsp_send_request(uint8_t slave_id, uint8_t command_id, 
+        uint8_t* payload, size_t palyoad_length);
 
+int mtsp_trigger(json_object* trigger);
 
 pthread_t mtsp_thread;
-bool mtsp_fd_lock;
 int mtsp_fd;
 
 /* Be glad this struct exists, before it came to life, there was chaos... */

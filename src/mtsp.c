@@ -207,14 +207,14 @@ int init_mtsp(char* device, int baud){
                 close(mtsp_fd);
                 return -1;
         }
-#if 1
+
         /* Set the timeout for the mtsp devices to reply*/
         struct termios termios;
         tcgetattr(mtsp_fd, &termios);
         termios.c_lflag &= ~ICANON; /* Set non-canonical mode */
         termios.c_cc[VTIME] = 1; /* Set timeout of 0.1 seconds */
+        termios.c_cc[VMIN] = 0; /* Set timeout of 0.1 seconds */
         tcsetattr(mtsp_fd, TCSANOW, &termios);
-#endif   
         return 0;
 }
 
@@ -261,38 +261,20 @@ int start_mtsp(){
  */
 int update_mtsp_states(){
 
-        struct timespec tim, tim2;
-        tim.tv_sec = 0;
-        tim.tv_nsec = 50;
         for(size_t i = 0; i < mtsp_regmap_length; i++){
                 mtsp_device_t *dev = &mtsp_device_register_map[i];
-                uint8_t* frame = mtsp_assemble_frame(dev->id, 1, dev->registers
+                int n = mtsp_send_request(dev->id, 1, dev->registers
                         , dev->regcnt);
-                if(nanosleep(&tim , &tim2) < 0 ){
-                        
-                } 
-                while(mtsp_fd_lock){}
-                mtsp_fd_lock = true;
-                mtsp_write(frame,dev->regcnt + MTSP_FRAME_OVERHEAD);
-                free(frame);
-                println("Awaiting response from %x", DEBUG, dev->id);
-                uint8_t* reply = mtsp_receive_message();
-                if(reply == NULL){
-                        println("MTSP failed to get reply from device %x",
+                
+                if(n < 0){
+                        println("MTSP failed to update device %x",
                                 WARNING, dev->id);
                         i--;
-                        mtsp_fd_lock = false;
                         continue;
                 }else{
-                        println("Received healthy reply from mtsp device %x",
-                                DEBUG, reply[1]);
+                        println("Healthy mtsp reply from %x",DEBUG, dev->id);
                 }
                 
-                /*if(mtsp_process_frame(reply) < 0){
-                        
-                }*/
-                mtsp_fd_lock = false;
-                free(reply);
         }
         
         return 0;
@@ -400,6 +382,10 @@ uint8_t* mtsp_receive_message(){
 
 int mtsp_process_frame(uint8_t* frame){
        
+        /* Throw away responses to command 2 */
+        if(frame[3] == 2){
+                return 0;
+        }
         /* Find the right device status from the array */
         mtsp_device_state* device = NULL;
         bool found = false;
@@ -422,4 +408,79 @@ int mtsp_process_frame(uint8_t* frame){
         }
         
         return 0;
+}
+
+/* This function sends a mtsp frame and waitd for a response. on success >=0 is
+ * returned, on error < 0 is returned.
+ */
+int mtsp_send_request(uint8_t slave_id, uint8_t command_id, uint8_t* payload,
+        size_t payload_length){
+        
+        /* Assemble a frame */
+        uint8_t* request =  mtsp_assemble_frame(slave_id,command_id, payload, 
+                payload_length);
+
+        /* Lock out anyone else or be locked out */
+        static bool lock = false;
+        while(lock){ /* NOP */ }
+        lock = true;
+        
+        /* Send my request */
+        int n = mtsp_write(request, payload_length + MTSP_FRAME_OVERHEAD);
+        
+        if ( n < 0){
+                /* Write failed. Unlock and return */
+                lock = false;
+                return -1;
+        }
+
+        free(request);
+        
+        uint8_t* reply = mtsp_receive_message();
+        
+        if(reply == NULL){
+                lock = false;
+                return -2;
+        }
+        
+        n = mtsp_process_frame(reply);
+        
+        if( n < 0){
+                free(reply);
+                lock = false;
+                return -3;
+        }
+        
+        free(reply);
+        lock = false;
+
+        return 0;
+
+}
+
+/* Execute a mtsp trigger */
+int mtsp_trigger(json_object* trigger){
+        
+        uint8_t slave_id = json_object_get_int(json_object_object_get(trigger,
+                "device"));
+        uint8_t payload[2];
+
+        payload[0]= json_object_get_int(json_object_object_get(trigger,
+                "register"));
+
+        payload[1] = json_object_get_int(json_object_object_get(trigger,
+                "target"));
+       int i = 0;
+        for(; i < 10; i ++){
+                if(mtsp_send_request(slave_id,2,payload,2) >= 0){
+                        i = 0;
+                        break;
+                }
+        }
+
+        if(i != 0){
+                return -1;
+        }else{
+                return 0;
+        }
 }
