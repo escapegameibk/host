@@ -316,8 +316,14 @@ int print_changeables_interface(int sockfd){
         json_object* stats = json_object_new_array();
         int n = 0;
         for(size_t i = 0; i < state_cnt; i ++){
-                n |= json_object_array_add(stats, json_object_new_int64(
+                n |= json_object_array_add(stats, json_object_new_int(
                         state_trigger_status[i]));
+
+                if(n != 0){
+                        println("Failed to add event to array!",ERROR);
+                        json_object_put(obj);
+                        json_object_put(stats);
+                }
         }
         json_object_object_add(obj, "events", stats);
         json_object_object_add(obj, "start_time", 
