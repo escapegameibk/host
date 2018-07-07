@@ -20,6 +20,7 @@
 
 #include <pthread.h>
 #include <stdbool.h>
+#include <json-c/json.h>
 
 #define PATROL_INTERVAL_NS 5000000
 #define DEFAULT_GAME_TIME 3600
@@ -32,6 +33,8 @@ int patrol();
 void* loop_game();
 
 int trigger_event(size_t event_id);
+
+int core_trigger(json_object *trigger);
 
 pthread_t game_thread;
 long long int game_timer_start, game_duration;

@@ -132,6 +132,10 @@
                                         "register" : 7,
                                         "target" : 1,
                                         "name" : "enable thunder"
+                                },
+                                {
+                                        "module" : "core",
+                                        "action" : "timer_start"
                                 }
                         ]
                 },
@@ -173,7 +177,17 @@
 					"register" : 1,
                                         "name" : "lightning"
 				}
-			]
+			],
+                        "triggers" : [
+				{
+					"module" : "mtsp" ,
+					"device" : 33,
+                                        "target" : 0,
+					"register" : 1,
+                                        "name" : "open hat hideout / closet"
+				}
+                                
+                        ]
                 },
                 {
                         "name" : "Roll Hideout", 
@@ -193,31 +207,138 @@
                                         "name" : "Previous State"
                                 }
 
+                        ],
+                        "triggers" : [
+				{
+					"module" : "mtsp" ,
+					"device" : 33,
+                                        "target" : 0,
+					"register" : 2,
+                                        "name" : "open roll hideout"
+				}
+                                
                         ]
                 },
                 {
-                        "name" : "Drawer"
+                        "name" : "Drawer with wand",
+                        "triggers" : [
+				{
+					"module" : "mtsp" ,
+					"device" : 33,
+                                        "target" : 0,
+					"register" : 3,
+                                        "name" : "open drawer / wand hideout"
+				}
+                                
+                        ]
                 },
                 {
-                        "name" : "Mirror"
+                        "name" : "Mirror",
+                        "triggers" : [
+				{
+					"module" : "mtsp" ,
+					"device" : 33,
+                                        "target" : 0,
+					"register" : 4,
+                                        "name" : "open door / mirror"
+				},
+				{
+					"module" : "mtsp" ,
+					"device" : 34,
+                                        "target" : 1,
+					"register" : 6,
+                                        "name" : "turn on light"
+				}
+                                
+                        ]
                 },
                 {
-                        "name" : "Book"
+                        "name" : "Book",
+                        "triggers" : [
+				{
+					"module" : "mtsp" ,
+                                        "type" : "burst",
+                                        "duration" : 500,
+					"device" : 33,
+                                        "target" : 1,
+					"register" : 5,
+                                        "name" : "open book hideout"
+				}
+                                
+                        ]
                 },
                 {
-                        "name" : "Ingredients"
+                        "name" : "Bottle Light",
+                        "triggers" : [
+				{
+					"module" : "mtsp" ,
+					"device" : 33,
+                                        "target" : 1,
+					"register" : 6,
+                                        "name" : "turn on lamps for bottles"
+				}
+                                
+                        ]
                 },
                 {
-                        "name" : "Candle"
+                        "name" : "Ingredients",
+                        "triggers" : [
+				{
+					"module" : "mtsp" ,
+					"device" : 33,
+                                        "target" : 0,
+					"register" : 7,
+                                        "name" : "open ingredients hideout"
+				}
+                                
+                        ]
                 },
                 {
-                        "name" : "Furnance hideout"
+                        "name" : "Candle",
+                        "triggers" : [
+				{
+					"module" : "mtsp" ,
+                                        "type" : "burst",
+                                        "duration" : 500,
+					"device" : 33,
+                                        "target" : 1,
+					"register" : 8,
+                                        "name" : "open candle / recipe hideout"
+				}
+                                
+                        ]
                 },
                 {
-                        "name" : "Furnance smoke"
+                        "name" : "Furnance",
+                        "triggers" : [
+				{
+					"module" : "mtsp" ,
+					"device" : 34,
+                                        "target" : 0,
+					"register" : 7,
+                                        "name" : "open potion hideout"
+				},
+				{
+					"module" : "mtsp",
+                                        "type" : "burst",
+                                        "duration" : 5000,
+					"device" : 34,
+                                        "target" : 1,
+					"register" : 5,
+                                        "name" : "make smoke"
+				},
+				{
+					"module" : "mtsp",
+					"device" : 34,
+                                        "target" : 0,
+					"register" : 8,
+                                        "name" : "open exit"
+				}
+                                
+                        ]
                 },
                 {
-                        "name" : "Exit"
+                        "name" : "Cleanup"
                 }
 
         ]

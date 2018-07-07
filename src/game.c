@@ -20,6 +20,7 @@
 #include "log.h"
 #include "data.h"
 #include "mtsp.h"
+#include "sound.h"
 
 #include <stddef.h>
 #include <stdio.h>
@@ -137,6 +138,20 @@ int trigger_event(size_t event_id){
                 /* Find out which module is concerned and execute the trigger
                  * in the specified function of the module.
                  */
+
+                if(strcasecmp(module,"core") == 0){
+                        /* The core module is concerned. */
+                        if(core_trigger(trigger) < 0){
+                                println("Failed to execute trigger for core!",
+                                        ERROR);
+                                /* Untrigger event */
+                                state_trigger_status[event_id] = 0;
+                                return -1;
+                        }
+                        continue;
+                }
+ 
+#ifndef NOMTSP
                 if(strcasecmp(module,"mtsp") == 0){
                         /* The mtsp module is concerned. */
                         if(mtsp_trigger(trigger) < 0){
@@ -147,15 +162,53 @@ int trigger_event(size_t event_id){
                                 state_trigger_status[event_id] = 0;
                                 return -1;
                         }
-                }else{
-                        println("UNKNOWN MODULE %s!!",ERROR, module);
-                        state_trigger_status[event_id] = 0;
-                        return -2;
-
+                        continue;
                 }
+#endif
+
+#ifndef NOSOUND
+
+                if(strcasecmp(module,"mtsp") == 0){
+                        /* The sound module is concerned. */
+                        if(sound_trigger(trigger) < 0){
+                                println("Failed to execute trigger for snd!",
+                                        ERROR);
+                                
+                                /* Untrigger event */
+                                state_trigger_status[event_id] = 0;
+                                return -1;
+                        }
+                        continue;
+                }
+#endif
+                println("UNKNOWN MODULE %s!!",ERROR, module);
+                state_trigger_status[event_id] = 0;
+                return -2;
+
         }
         
 
         return 0;
 }
 
+int core_trigger(json_object* trigger){
+        const char* action_name = json_object_get_string(json_object_object_get(
+                trigger, "action"));
+
+        if(action_name == NULL){
+                println("unable to trigger empty action! assuming nop",
+                        WARNING);
+                return 0;
+        }else if(strcasecmp(action_name,"timer_start") == 0){
+                println("Starting game timer", INFO);
+                game_timer_start = (unsigned long)time(NULL);
+        }else if(strcasecmp(action_name,"timer_stop") == 0){
+                println("Stopping game timer", INFO);
+                game_timer_start = 0;
+        }else{
+                println("Unknown core action specified: %s",ERROR, action_name);
+                return -1;
+        }
+        
+        return 0;
+}

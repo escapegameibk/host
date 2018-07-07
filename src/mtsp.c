@@ -271,8 +271,6 @@ int update_mtsp_states(){
                                 WARNING, dev->id);
                         i--;
                         continue;
-                }else{
-                        println("Healthy mtsp reply from %x",DEBUG, dev->id);
                 }
                 
         }
@@ -470,17 +468,44 @@ int mtsp_trigger(json_object* trigger){
 
         payload[1] = json_object_get_int(json_object_object_get(trigger,
                 "target"));
-       int i = 0;
+        int i = 0;
         for(; i < 10; i ++){
                 if(mtsp_send_request(slave_id,2,payload,2) >= 0){
                         i = 0;
                         break;
                 }
         }
+        
 
         if(i != 0){
                 return -1;
-        }else{
+        }        
+        const char* type = json_object_get_string(json_object_object_get(
+                trigger, "type"));
+        if(type == NULL || (strcasecmp(type,"permanent") == 0)){
+                /* Leave unchanged*/
                 return 0;
         }
+        /* Execute a burst */
+        if(strcasecmp(type,"burst") == 0){
+                /* To make the json more readable the time is specified in ms */
+                struct timespec delay;
+                delay.tv_nsec = 1000000 * json_object_get_int64(
+                        json_object_object_get(trigger, "duration"));
+                nanosleep(&delay,NULL);
+                
+                payload[1] = !payload[1];
+                
+                for(; i < 10; i ++){
+                        if(mtsp_send_request(slave_id,2,payload,2) >= 0){
+                                i = 0;
+                                break;
+                        }
+                }
+
+                if(i != 0){
+                        return -1;
+                }
+        }
+        return 0;
 }

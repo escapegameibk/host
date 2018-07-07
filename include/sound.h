@@ -19,8 +19,10 @@
 #define SOUND_H
 
 #include <vlc/vlc.h>
+#include <json-c/json.h>
 
 int init_sound();
+int sound_trigger(json_object* trigger);
 
 libvlc_instance_t * vlc_inst;
 libvlc_media_player_t **vlc_mp;

@@ -17,6 +17,7 @@
 #include "sound.h"
 #include <stdlib.h>
 #include "config.h"
+#include "log.h"
 
 int init_sound(){
 
@@ -37,4 +38,25 @@ int init_sound(){
         }
 
         return 0;
+}
+
+int sound_trigger(json_object* trigger){
+
+        const char* resource_locator = json_object_get_string(
+                json_object_object_get(trigger,"resource"));
+        if(resource_locator == NULL){
+                println("attemted to play sound without proper locator!",
+                        ERROR);
+                return -1;
+        }
+
+        libvlc_media_t *m = libvlc_media_new_location (vlc_inst, 
+                resource_locator);
+        vlc_mp = realloc(vlc_mp,++playercnt);
+        vlc_mp[playercnt-1] = libvlc_media_player_new_from_media (m);
+        libvlc_media_release(m);
+        libvlc_media_player_play(vlc_mp[playercnt-1]);
+
+        return 0;
+
 }
