@@ -190,11 +190,6 @@ int execute_command(int sock_fd, char* command){
         }
         int32_t action = json_object_get_int(act);
 
-        debug = malloc(INT_LEN);
-        memset(debug,0,INT_LEN);
-        sprintf(debug,"fd %i requested action %i",sock_fd,action);
-        println(debug,DEBUG);
-        free(debug);
 
         switch(action){
         case 0:
