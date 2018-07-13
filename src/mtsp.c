@@ -91,7 +91,11 @@ uint16_t crc_modbus (uint8_t *in, size_t len){
 
 }
 
-/* Add a register to the update pool */
+/* Add a register to the update pool / register a port of a device in the
+ * update pool
+ * This function may ONLY be used locally. It is therefore not included in the
+ * header file
+ */
 int mtsp_register_register(uint8_t device, uint8_t reg){
         size_t row = 0, column = 0;
         bool found = false;
@@ -184,6 +188,7 @@ int init_mtsp(char* device, int baud){
                         }
                 }
         }
+
         println("Added a total of %i mtsp input devices:",DEBUG, 
                 mtsp_regmap_length);
         for(size_t i = 0; i < mtsp_regmap_length; i++){
@@ -197,6 +202,7 @@ int init_mtsp(char* device, int baud){
         mtsp_fd = open(device,O_RDWR);
         if(mtsp_fd < 0){
                 println("Failed to open device at %s!",ERROR,device);
+                mtsp_fd = 0;
                 return -1;
         }
 
@@ -205,7 +211,8 @@ int init_mtsp(char* device, int baud){
                 println("Failed to set interface attribs for device at %s!",
                                 ERROR,device);
                 close(mtsp_fd);
-                return -1;
+                mtsp_fd = 0;
+                return -2;
         }
 
         /* Set the timeout for the mtsp devices to reply*/
@@ -215,6 +222,11 @@ int init_mtsp(char* device, int baud){
         termios.c_cc[VTIME] = 1; /* Set timeout of 0.1 seconds */
         termios.c_cc[VMIN] = 0; /* Set timeout of 0.1 seconds */
         tcsetattr(mtsp_fd, TCSANOW, &termios);
+
+        /*
+
+        */
+
         return 0;
 }
 
@@ -246,10 +258,16 @@ void* loop_mtsp(){
 }
 
 int start_mtsp(){
-        
+
+        if(mtsp_fd == 0){
+                println("Apparently error handling isn't your thing eh?",INFO);
+                
+                return -1;
+        }
+
         if(pthread_create(&mtsp_thread,NULL,loop_mtsp,NULL)){               
                  println("failed to create thread", ERROR);                      
-                 return -1;                                                      
+                 return -2;                                                      
         }
         
         println("MTSP started",DEBUG);
@@ -386,10 +404,11 @@ uint8_t* mtsp_receive_message(){
 
 int mtsp_process_frame(uint8_t* frame){
        
-        /* Throw away responses to command 2 */
+        /* Throw away responses to write calls */
         if(frame[3] == 2){
                 return 0;
         }
+
         /* Find the right device status from the array */
         mtsp_device_state* device = NULL;
         bool found = false;
@@ -410,6 +429,50 @@ int mtsp_process_frame(uint8_t* frame){
                 device = &mtsp_device_states[iterator];
                 
         }
+
+	/* Iterate through registers and set states accordingly*/
+
+	for(iterator = 4; iterator < (frame[2]  - 2);){
+		uint8_t address = frame[iterator];
+		uint32_t value = 0;
+
+		/* Read the correct amount of bytes from the frame */
+		if( address < 0x64){
+			value = frame[iterator+1] & 0xFF;
+			/* Move itarator to next position */
+			iterator += 2;
+			
+		}else if( address < 0xC8){
+			value = ((frame[iterator+1] & 0xFF) << 8) | 
+				(frame[iterator+2] & 0xFF);
+			iterator += 3;
+		}else{
+			value = ((frame[iterator+1] & 0xFF) << 24) | 
+				((frame[iterator+2] & 0xFF) << 16) |
+				((frame[iterator+3] & 0xFF) << 8) |
+				(frame[iterator+3] & 0xFF);
+			iterator += 5;
+		}
+
+		found = false;
+		/* Save the return values to their apropriate addresses */
+		size_t i = 0;
+		for(; i < device->register_count; i++){
+			mtsp_register_state* port = 
+				&device->register_states[i];
+			if(port->reg_id == address){
+				found = true;
+			}
+		}
+
+		if(!found){
+			device->register_states = realloc(
+			device->register_states, ++device->register_count * 
+				sizeof(mtsp_register_state));
+			device->register_states[++i].reg_id = address;
+		}
+		device->register_states[i].reg_state = value;
+	}
         
         return 0;
 }

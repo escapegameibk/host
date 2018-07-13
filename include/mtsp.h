@@ -48,6 +48,27 @@ int mtsp_trigger(json_object* trigger);
 pthread_t mtsp_thread;
 int mtsp_fd;
 
+/* ############################################################################
+   # DEFINITION OF MTSP STATE STORAGE					      #
+   ############################################################################
+   # It has proofen difficult to efficently save the MTSP device states, as a #
+   # direct request to the devices takes way too long, is way too inefficient,#
+   # and is likely to get lost. It was decided to buffer the current states of#
+   # MTSP registers or ports, or how every ou may call them. They can be      #
+   # saved and compared at a later point by the game handler. There are 2     #
+   # different array in here: mtsp_device_register_map and the		      #
+   # mtsp_device_states. The mtsp_device_register_map only contains registers #
+   # on the device WITHOUT any actual information about them. They are only   #
+   # used for requests and gathered at the mtsp init from the config file.    #
+   # The mtsp_device_states, however contains an array of "register_states"   #
+   # which in turn have saved information about the register states. please   #
+   # note that AT NO point is is allowed to assume that mtsp_device_states has#
+   # ALL or ANY device from mtsp_device_t in it. The two are COMPLETELY       #
+   # independent from each other, for reasons. Thank you		      #
+   ############################################################################
+
+ */
+
 /* Be glad this struct exists, before it came to life, there was chaos... */
 typedef struct{
         uint8_t id;
@@ -65,7 +86,7 @@ mtsp_device_t* mtsp_device_register_map;
 typedef struct{
 
         uint8_t reg_id;
-        unsigned long long int reg_state;
+        uint32_t reg_state;
          
 } mtsp_register_state;
 

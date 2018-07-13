@@ -146,35 +146,35 @@
 					"module" : "mtsp" ,
 					"device" : 1 ,
                                         "target" : 3287747339,
-					"register" : 1,
+					"register" : 200,
                                         "name" : "owl"
 				},
 				{
 					"module" : "mtsp" ,
 					"device" : 2 ,
                                         "target" : 2199826094,
-					"register" : 1,
+					"register" : 200,
                                         "name" : "unicorn"
 				},
 				{
 					"module" : "mtsp" ,
 					"device" : 3 ,
                                         "target" : 3601657582,
-					"register" : 1,
+					"register" : 200,
                                         "name" : "dragon"
 				},
 				{
 					"module" : "mtsp" ,
 					"device" : 4,
                                         "target" : 2515536651,
-					"register" : 1,
+					"register" : 200,
                                         "name" : "Ship"
 				},
 				{
 					"module" : "mtsp" ,
 					"device" : 5 ,
                                         "target" : 585763595,
-					"register" : 1,
+					"register" : 200,
                                         "name" : "lightning"
 				}
 			],
@@ -316,6 +316,20 @@
                 },
                 {
                         "name" : "Ingredients",
+                        "dependencies" : [
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 66,
+                                        "register" : 3,
+                                        "target" : 1,
+                                        "name" : "knock sensor triggered"
+                                },
+                                {
+                                        "module" : "core",
+                                        "type" : "trigger",
+                                        "trigger" : 7
+                                }
+                        ],
                         "triggers" : [
 				{
 					"module" : "mtsp" ,
@@ -323,7 +337,36 @@
                                         "target" : 0,
 					"register" : 7,
                                         "name" : "open ingredients hideout"
+				},
+				{
+					"module" : "mtsp" ,
+					"device" : 6,
+                                        "target" : 1,
+					"register" : 4,
+                                        "name" : "set morse code loop"
+				},
+				{
+					"module" : "mtsp" ,
+					"device" : 6,
+                                        "target" : 80,
+					"register" : 1,
+                                        "name" : "set morse code volume"
+				},
+				{
+					"module" : "mtsp" ,
+					"device" : 6,
+                                        "target" : 0,
+					"register" : 5,
+                                        "name" : "playback resume morse code"
+				},
+				{
+					"module" : "mtsp" ,
+					"device" : 6,
+                                        "target" : 1,
+					"register" : 0,
+                                        "name" : "play morse code"
 				}
+
                                 
                         ]
                 },
@@ -352,6 +395,13 @@
                                         "target" : 1,
 					"register" : 8,
                                         "name" : "open candle / recipe hideout"
+				},
+				{
+					"module" : "mtsp" ,
+					"device" : 6,
+                                        "target" : 0,
+					"register" : 4,
+                                        "name" : "unset morse code loop"
 				}
                                 
                         ]
