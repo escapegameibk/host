@@ -84,7 +84,7 @@ uint16_t crc_modbus (uint8_t *in, size_t len){
         for(size_t i = 0; i < len; i++){
                 temp = ((in[i] & 0xFF) ^ crc_word);
                 crc_word = (crc_word >> 8);
-                crc_word ^= crc_table[(htobe16(temp) >> 8) & 0xFF];
+                crc_word ^= crc_table[temp & 0xFF];
         }
 
         return crc_word;
