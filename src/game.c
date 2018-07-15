@@ -250,9 +250,13 @@ int check_dependency(json_object* dependency){
 #ifndef NOMTSP
 	else if(strcasecmp(module_name,"mtsp") == 0){
 		/* Question the MTSP module */
-		return 0;
+		return mtsp_check_dependency(dependency);
 	}
 #endif
+	else if(strcasecmp(module_name,"core")){
+		/* Question the core module */
+		return core_check_dependency(dependency);
+	}
 	else{
 		println("Unknown module specified [%s]!", ERROR, module_name);
 		return -2;
@@ -260,6 +264,33 @@ int check_dependency(json_object* dependency){
 
 
 	return 0;
+}
+int core_check_dependency(json_object* dependency){
+
+	const char* type = json_object_get_string(json_object_object_get(
+		dependency,"type"));
+
+	if(type == NULL){
+		println("Unspecified type in core dependency!", ERROR);
+		return -1;
+	}else if(strcasecmp(type,"event") == 0){
+		/* Check wether a trigger has already been executed */
+		int32_t event = json_object_get_int(
+			json_object_object_get(dependency,"event"));
+
+		if(event >= state_cnt || event < 0){
+			println("Invalid event specified in dependency.",
+				ERROR);
+			return -2;
+		}else{
+			return state_trigger_status[event];
+		}
+	}else{
+		println("invalid type specified in core dependency : %s",
+			ERROR, type);
+		return -3;
+	}
+
 }
 
 int core_trigger(json_object* trigger){

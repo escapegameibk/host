@@ -176,8 +176,13 @@
                                         "target" : 585763595,
 					"register" : 200,
                                         "name" : "lightning"
-				}
-			],
+				},
+                                {
+                                        "module" : "core",
+                                        "type" : "event",
+                                        "event" : 0
+                                }
+                        ],
                         "triggers" : [
 				{
 					"module" : "mtsp" ,
@@ -236,9 +241,8 @@
                                 },
                                 {
                                         "module" : "core",
-                                        "t" : 1,
-                                        "target" : 1,
-                                        "name" : "Previous State"
+                                        "type" : "event",
+                                        "event" : 1
                                 }
 
                         ],
@@ -255,6 +259,21 @@
                 },
                 {
                         "name" : "Drawer with wand",
+                        "dependencies": [
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 66,
+                                        "register" : 2,
+                                        "target" : 1,
+                                        "name" : "drawers"
+                                },
+                                {
+                                        "module" : "core",
+                                        "type" : "event",
+                                        "event" : 2
+                                }
+
+                        ],
                         "triggers" : [
 				{
 					"module" : "mtsp" ,
@@ -268,6 +287,35 @@
                 },
                 {
                         "name" : "Mirror",
+                        "dependencies": [
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 65,
+                                        "register" : 4,
+                                        "target" : 1,
+                                        "name" : "Firtst Star"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 65,
+                                        "register" : 5,
+                                        "target" : 1,
+                                        "name" : "Second Star"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 65,
+                                        "register" : 6,
+                                        "target" : 1,
+                                        "name" : "Third Star"
+                                },
+                                {
+                                        "module" : "core",
+                                        "type" : "event",
+                                        "event" : 3
+                                }
+
+                        ],
                         "triggers" : [
 				{
 					"module" : "mtsp" ,
@@ -288,6 +336,49 @@
                 },
                 {
                         "name" : "Book",
+                        "dependencies": [
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 6,
+                                        "register" : 200,
+                                        "target" : 3694659335,
+                                        "name" : "MINT"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 6,
+                                        "register" : 201,
+                                        "target" : 3240953350,
+                                        "name" : "AURANTIACO"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 6,
+                                        "register" : 202,
+                                        "target" : 2795558614,
+                                        "name" : "ABBIES"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 6,
+                                        "register" : 203,
+                                        "target" : 1965623047,
+                                        "name" : "CINNAMON"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 6,
+                                        "register" : 204,
+                                        "target" : 571344647,
+                                        "name" : "VANILLA"
+                                },
+                                {
+                                        "module" : "core",
+                                        "type" : "event",
+                                        "event" : 4
+                                }
+
+                        ],
                         "triggers" : [
 				{
 					"module" : "mtsp" ,
@@ -303,6 +394,21 @@
                 },
                 {
                         "name" : "Bottle Light",
+                        "dependencies": [
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 65,
+                                        "register" : 8,
+                                        "target" : 1,
+                                        "name" : "Bookstand"
+                                },
+                                {
+                                        "module" : "core",
+                                        "type" : "event",
+                                        "event" : 5
+                                }
+
+                        ],
                         "triggers" : [
 				{
 					"module" : "mtsp" ,
@@ -319,15 +425,36 @@
                         "dependencies" : [
                                 {
                                         "module" : "mtsp",
-                                        "device" : 66,
-                                        "register" : 3,
-                                        "target" : 1,
-                                        "name" : "knock sensor triggered"
+                                        "device" : 7,
+                                        "register" : 200,
+                                        "target" : 2584611852,
+                                        "name" : "Red bottle"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 7,
+                                        "register" : 201,
+                                        "target" : 626317014,
+                                        "name" : "Blue bottle"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 7,
+                                        "register" : 202,
+                                        "target" : 2869825038,
+                                        "name" : "Yellow bottle"
+                                },
+                                {
+                                        "module" : "mtsp",
+                                        "device" : 7,
+                                        "register" : 203,
+                                        "target" : 1162060964,
+                                        "name" : "Green bottle"
                                 },
                                 {
                                         "module" : "core",
-                                        "type" : "trigger",
-                                        "trigger" : 7
+                                        "type" : "event",
+                                        "event" : 6
                                 }
                         ],
                         "triggers" : [
@@ -382,8 +509,8 @@
                                 },
                                 {
                                         "module" : "core",
-                                        "type" : "trigger",
-                                        "trigger" : 7
+                                        "type" : "event",
+                                        "event" : 7
                                 }
                         ],
                         "triggers" : [
