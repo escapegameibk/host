@@ -90,12 +90,16 @@ int patrol(){
 		}
 		json_object* event = json_object_array_get_idx(
 			json_object_object_get(config_glob,"events"),i);
+		if(event == NULL){
+			println("Failed to iterate events", ERROR);
+			return -1;
+		}
 
 		json_object* event_depends = json_object_object_get(event
 			,"dependecies");
 
 		if(event_depends == NULL){
-			println("event without dependencys!!! triggering", 
+			println("event without dependencies!!! triggering", 
 				WARNING);
 			trigger_event(i);
 		}
@@ -107,6 +111,10 @@ int patrol(){
 			if(met < 0){
 				println("Failed to check dependency for event \
 %s!", ERROR, json_object_get_string(json_object_object_get(event,"name")));
+			}else if(met > 0){
+				println("All dependencies clear to exdcute \
+event %i!", INFO, i);
+				trigger_event(i);
 			}
 		}
                 
