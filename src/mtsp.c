@@ -503,7 +503,7 @@ int mtsp_process_frame(uint8_t* frame){
 			device->register_states, device->register_count * 
 				sizeof(mtsp_register_state));
 			i = device->register_count - 1;
-			device->register_states[++i].reg_id = address;
+			device->register_states[i].reg_id = address;
 		}
 		device->register_states[i].reg_state = value;
 	}
