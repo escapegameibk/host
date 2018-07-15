@@ -109,7 +109,7 @@ int patrol(){
 			int check = check_dependency(json_object_array_get_idx(
 				event_depends, dep));
 
-			if(check != 0){
+			if(check < 1){
 				met = false;
 				break;
 			}
