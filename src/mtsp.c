@@ -29,6 +29,7 @@
 #include <stdbool.h>
 #include <endian.h>
 #include <sys/select.h>
+#include <time.h>
 
 #include "mtsp.h"
 #include "log.h"
@@ -255,6 +256,10 @@ it's rfid count!", ERROR, dev->id);
 				/* I don't want to error out at this point, but
 				 * it seems that i have to */
 				 return -3;
+			}else{
+				println("Notified mtsp device %i of it's %i \
+RFID/MP3 Devices",
+					DEBUG, dev->id, register_large_count);
 			}
 		}
 	 }
@@ -358,6 +363,13 @@ int mtsp_write(uint8_t* frame, size_t length){
         static bool lock = false;
         while(lock){ /* NOOP */}
         lock = true;
+
+	/* wait to give MTSP devices time to react */
+	struct timespec sleeper;
+	sleeper.tv_sec = 0;
+	sleeper.tv_nsec = 5000;
+	nanosleep(&sleeper, NULL);
+
         int n  = write(mtsp_fd, frame, length * sizeof(uint8_t));
         if (n < length){
                 println("Failed to write %i bytes to mtsp device! Returned %i!",

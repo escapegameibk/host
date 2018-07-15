@@ -116,7 +116,7 @@ int patrol(){
 		}
 		
 		if(met){
-			println("All dependencies clear to exdcute event %i!",
+			println("All dependencies clear to execute event %i!",
 				 INFO, i);
 			trigger_event(i);
 		}

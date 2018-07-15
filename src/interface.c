@@ -298,7 +298,7 @@ int print_changeables_interface(int sockfd){
         json_object_object_add(obj, "start_time", 
                 json_object_new_int64(game_timer_start));
 
-        json_object_to_fd(sockfd, obj, JSON_C_TO_STRING_PRETTY);
+        json_object_to_fd(sockfd, obj, JSON_C_TO_STRING_PLAIN);
         
         json_object_put(obj);
         return n;
@@ -313,7 +313,7 @@ int print_events_interface(int sockfd){
                 json_object_get_string(json_object_object_get(
                 json_object_array_get_idx(eventarr,i),"name"))));
         }
-        json_object_to_fd(sockfd, arr_names, JSON_C_TO_STRING_PRETTY);
+        json_object_to_fd(sockfd, arr_names, JSON_C_TO_STRING_PLAIN);
         json_object_put(arr_names);
 
         return 0;
