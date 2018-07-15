@@ -14,7 +14,7 @@ SRCDIR := $(CWD)/src
 INCLUDEDIR := $(CWD)/include
 
 # flags
-CFLAGS := -I$(INCLUDEDIR) -D NOSER -D COLOR -Wall
+CFLAGS := -I$(INCLUDEDIR) -D NOSER -D COLOR -Wall -ggdb3
 LDFLAGS := -pthread -ljson-c -lvlc
 
 # target files
