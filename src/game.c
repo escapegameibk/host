@@ -96,7 +96,7 @@ int patrol(){
 		}
 
 		json_object* event_depends = json_object_object_get(event
-			,"dependecies");
+			,"dependencies");
 
 		if(event_depends == NULL){
 			println("event without dependencies!!! triggering", 
