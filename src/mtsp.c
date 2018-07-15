@@ -151,6 +151,9 @@ int init_mtsp(char* device, int baud){
          * and will probably be replaced in the not too far away future.
          */
         
+	mtsp_device_states = malloc(0);
+	mtsp_device_count = 0;
+
         mtsp_regmap_length = 0;
         mtsp_device_register_map = malloc(0);
  
