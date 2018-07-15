@@ -443,22 +443,22 @@ int mtsp_process_frame(uint8_t* frame){
 
         /* Find the right device status from the array */
         mtsp_device_state* device = NULL;
-        bool found = false;
         size_t iterator;
         for(iterator = 0; iterator < mtsp_device_count; iterator++){
                 if(mtsp_device_states[iterator].device_id == frame[1]){
-                        found = true;
+			device = &mtsp_device_states[iterator];
                         break;
                 }
         }
-        if(!found){
+        if(device == NULL){
                 mtsp_device_states = realloc(mtsp_device_states,
                         (mtsp_device_count + 1) * sizeof(mtsp_device_state));
                 device = &mtsp_device_states[mtsp_device_count++];
                 device->device_id = frame[1];
+		device->register_count = 0;
+		device->register_states = malloc(0);
         }else{
 
-                device = &mtsp_device_states[iterator];
                 
         }
 
