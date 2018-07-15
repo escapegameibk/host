@@ -491,12 +491,16 @@ int mtsp_process_frame(uint8_t* frame){
 				&device->register_states[i];
 			if(port->reg_id == address){
 				found = true;
+				break;
 			}
 		}
 
 		if(!found){
+			
+			++device->register_count; 
+			
 			device->register_states = realloc(
-			device->register_states, ++device->register_count * 
+			device->register_states, device->register_count * 
 				sizeof(mtsp_register_state));
 			device->register_states[++i].reg_id = address;
 		}
