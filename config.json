@@ -545,8 +545,8 @@
                                 },
                                 {
                                         "module" : "core",
-                                        "type" : "trigger",
-                                        "trigger" : 8
+                                        "type" : "event",
+                                        "event" : 8
                                 }
                         ],
                         "triggers" : [
@@ -588,8 +588,8 @@
                                 },
                                 {
                                         "module" : "core",
-                                        "type" : "trigger",
-                                        "trigger" : 9
+                                        "type" : "event",
+                                        "event" : 9
                                 }
                         ],
                         "triggers" : [
@@ -712,8 +712,8 @@
                                 },
                                 {
                                         "module" : "core",
-                                        "type" : "trigger",
-                                        "trigger" : 10
+                                        "type" : "event",
+                                        "event" : 10
                                 }
                         ],
                         "triggers" :[
