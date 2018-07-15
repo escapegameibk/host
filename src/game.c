@@ -253,7 +253,7 @@ int check_dependency(json_object* dependency){
 		return mtsp_check_dependency(dependency);
 	}
 #endif
-	else if(strcasecmp(module_name,"core")){
+	else if(strcasecmp(module_name,"core") == 0){
 		/* Question the core module */
 		return core_check_dependency(dependency);
 	}
