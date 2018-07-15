@@ -15,6 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef NOMTSP
+
 #include <stddef.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -605,3 +607,57 @@ int mtsp_trigger(json_object* trigger){
         }
         return 0;
 }
+
+/* Checks wether a dependency is fullfilled.
+ * Returns <0 on error, 0 if not and > 0 if is fullfilled
+ */
+int mtsp_check_dependency(json_object* dep){
+
+	/* Due to the fact that the target is UNSIGNED and the return value
+	 * of get_int is int32_t i precausiously convert it to 64 bit and strip
+	 * the upper 32 bit.
+	 */
+	uint32_t target = (json_object_get_int64(json_object_object_get(dep,
+		"target")) & 0xFFFFFFFF);
+	
+	uint8_t device = (json_object_get_int64(json_object_object_get(dep,
+		"device")) & 0xFF);
+	
+	uint8_t port = (json_object_get_int64(json_object_object_get(dep,
+		"register")) & 0xFF);
+
+	if(device == 0 || port == 0){
+		return -1;
+	}
+
+	mtsp_device_state *dev_state = NULL;
+	for(size_t dev = 0; dev < mtsp_device_count; dev++){
+		if(mtsp_device_states[dev].device_id == device){
+			dev_state = &mtsp_device_states[dev];
+			break;
+		}
+	}
+
+	if(dev_state == NULL){
+		/* The device has not replied yet */
+		return 0;
+	}
+
+	/* Search for the register in the device */
+	mtsp_register_state* reg_state = NULL;
+	for(size_t reg = 0; reg < dev_state->register_count; reg++){
+		if(dev_state->register_states[reg].reg_id == port){
+			reg_state = &dev_state->register_states[reg];
+		}
+	}
+
+	if(reg_state == NULL){
+		/* We never got a reply from that port */
+		return 0;
+	}
+
+	return reg_state->reg_state == target;
+
+
+}
+#endif /* NOMTSP */

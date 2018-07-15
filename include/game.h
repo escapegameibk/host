@@ -33,11 +33,13 @@ int patrol();
 void* loop_game();
 
 int trigger_event(size_t event_id);
+int check_dependency(json_object* dependency);
 
 int core_trigger(json_object *trigger);
 
 pthread_t game_thread;
 long long int game_timer_start, game_duration;
+/* For historic reasons these 2 variables are still named state. TODO */
 bool * state_trigger_status;
 size_t state_cnt;
 

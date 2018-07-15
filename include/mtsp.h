@@ -15,6 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef NOMTSP
+
 #ifndef MTSP_H
 #define MTSP_H
 
@@ -44,6 +46,7 @@ int mtsp_send_request(uint8_t slave_id, uint8_t command_id,
         uint8_t* payload, size_t palyoad_length);
 
 int mtsp_trigger(json_object* trigger);
+int mtsp_check_dependency(json_object* dep);
 
 pthread_t mtsp_thread;
 int mtsp_fd;
@@ -100,4 +103,6 @@ typedef struct{
 mtsp_device_state* mtsp_device_states;
 size_t mtsp_device_count;
 
-#endif
+#endif /* MTSP_H */
+
+#endif /* NOMTSP */

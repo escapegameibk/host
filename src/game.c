@@ -80,6 +80,35 @@ int patrol(){
 
        
         for(size_t i = 0; i < state_cnt; i++){
+		/* Check all dependencys of all states and trigger
+		 * if nescessary.
+		 */
+
+		if(state_trigger_status[i]){
+			/* Ommit already triggered events */
+			continue;
+		}
+		json_object* event = json_object_array_get_idx(
+			json_object_object_get(config_glob,"events"),i);
+
+		json_object* event_depends = json_object_object_get(event
+			,"dependecies");
+
+		if(event_depends == NULL){
+			println("event without dependencys!!! triggering", 
+				WARNING);
+			trigger_event(i);
+		}
+
+		for(size_t dep = 0; dep < json_object_array_length(event_depends
+			); dep++){
+			int met = check_dependency(json_object_array_get_idx(
+				event_depends, dep));
+			if(met < 0){
+				println("Failed to check dependency for event \
+%s!", ERROR, json_object_get_string(json_object_object_get(event,"name")));
+			}
+		}
                 
         }
 
@@ -124,6 +153,13 @@ int trigger_event(size_t event_id){
          json_object* triggers = json_object_object_get(
                 json_object_array_get_idx(json_object_object_get(config_glob,
                  "events"),event_id),"triggers");
+
+	if(triggers == NULL){
+		println("Attempted to trigger an event without triggers", INFO);
+		/* It was still a success i guess */
+		return 0;
+	}
+
         println("Triggering %i triggers ",DEBUG, json_object_array_length(triggers));
          for(size_t triggercnt = 0; triggercnt < 
                 json_object_array_length(triggers); triggercnt++){
@@ -189,6 +225,33 @@ int trigger_event(size_t event_id){
         
 
         return 0;
+}
+
+/* Checks wether a dependency is met
+ * Returns < 0 on error, 0 if not, and > 0 if forfilled.
+ */
+
+int check_dependency(json_object* dependency){
+	
+	const char* module_name = json_object_get_string(
+				json_object_object_get(dependency,"module"));
+	if(module_name == NULL){
+		println("Specified no module in dependency!", ERROR);
+		return -1;
+	}
+#ifndef NOMTSP
+	else if(strcasecmp(module_name,"mtsp") == 0){
+		/* Question the MTSP module */
+		return 0;
+	}
+#endif
+	else{
+		println("Unknown module specified [%s]!", ERROR, module_name);
+		return -2;
+	}
+
+
+	return 0;
 }
 
 int core_trigger(json_object* trigger){

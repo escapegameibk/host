@@ -65,6 +65,7 @@ int main(int argc, char * const argv[]){
 
         if(load_config(config) < 0){
                 println("failed to load config!!",ERROR);
+		exit_code = 1;
                 goto shutdown;
         }
 

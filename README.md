@@ -21,13 +21,13 @@ Audio is played via the libvlc.
 ## License
 This program is licensed under the GPLv3 or any later version of the license,
 which permits you to use it commercially, but requires you to give users the
-code if they demand it. in any case, we don't sell the software itself any way,
+source code. in any case, we don't sell the software itself any way,
 so it doesn't really matter.
 
 ## Dependencies
 As of now, the program has the following dependencies:
 
-- json-c
+- json-c >= 0.13
 - libvlc >= 0.12
 
 ## Links
@@ -35,6 +35,31 @@ As of now, the program has the following dependencies:
 LibVLC: https://wiki.videolan.org/LibVLC/
 
 JSON-C: https://json-c.github.io/json-c/
+
+# Configuration
+
+The host is configured via a giant json object which will be located in the
+following order:
+
+ - the comand line paramter -c has been specified and points to a file
+ - the working directory contains a file called "config.json"
+
+if none of the above exists or is a valid json, the host will return with exit
+code 1. 
+## General configuration
+The following fields may be specified on the upper most level of the
+json file:
+
+ - "name": The name of the game. It can be ommited and will be replaced with
+   "UNSPECIFIED" or NULL.
+ - "duration": the normal duration of a game in seconds. it can be ommited and
+   will default to 3600s or 1h.
+ - "boot_sound": A URL pointing to a audio file which is beeing played on
+   startup. 
+ - "events": an array containing all events to be executed. more inforamtion
+   follows.
+
+This 
 
 # ERRATA
 
