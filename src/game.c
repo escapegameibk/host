@@ -268,6 +268,11 @@ int check_dependency(json_object* dependency){
 
 	return 0;
 }
+
+/* Checks wether a core dependency is met
+ * Returns < 0 on error, 0 if not, and > 0 if forfilled.
+ */
+
 int core_check_dependency(json_object* dependency){
 
 	const char* type = json_object_get_string(json_object_object_get(

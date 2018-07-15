@@ -59,7 +59,26 @@ json file:
  - "events": an array containing all events to be executed. more inforamtion
    follows.
 
-This 
+This is where it get's a bit more complicated. I will try to explain the
+construction of the "events" array now to you. The events array contains an
+array of "events" or actions which have triggers and dependencies. If all
+dependencies of an action are fullfilled, the action will be triggered and all
+of it's triggers will be executed. So each element of the events array has to
+contain at least the following fields:
+
+ - "name": The event name
+ - "dependencies": an array containing all of the dependencies which have to be
+   fullfilled in order to trigger the event
+ - "triggers": an array containing all triggers to be executed in case the
+   event is triggered. 
+
+### Dependencies
+
+Dependencies are checked at a regular interval and passwd over to the modules.
+If a dependency is met, the next dependcy is checked. If all dependencies are
+met, the triggeres are executed, and the event is beeing marked as triggered.
+A dependency only needs to specify it's module name with the "module" string.
+Optionally a name may be given via the "name" field
 
 # ERRATA
 
