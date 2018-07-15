@@ -457,9 +457,6 @@ int mtsp_process_frame(uint8_t* frame){
                 device->device_id = frame[1];
 		device->register_count = 0;
 		device->register_states = malloc(0);
-        }else{
-
-                
         }
 
 	/* Iterate through registers and set states accordingly*/
@@ -486,7 +483,7 @@ int mtsp_process_frame(uint8_t* frame){
 			iterator += 5;
 		}
 
-		found = false;
+		bool found = false;
 		/* Save the return values to their apropriate addresses */
 		size_t i = 0;
 		for(; i < device->register_count; i++){
