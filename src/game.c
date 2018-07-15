@@ -103,19 +103,22 @@ int patrol(){
 				WARNING);
 			trigger_event(i);
 		}
-
-		for(size_t dep = 0; dep < json_object_array_length(event_depends
-			); dep++){
-			int met = check_dependency(json_object_array_get_idx(
+		bool met = true;
+		for(size_t dep = 0; dep < json_object_array_length(
+			event_depends); dep++){
+			int check = check_dependency(json_object_array_get_idx(
 				event_depends, dep));
-			if(met < 0){
-				println("Failed to check dependency for event \
-%s!", ERROR, json_object_get_string(json_object_object_get(event,"name")));
-			}else if(met > 0){
-				println("All dependencies clear to exdcute \
-event %i!", INFO, i);
-				trigger_event(i);
+
+			if(check != 0){
+				met = false;
+				break;
 			}
+		}
+		
+		if(met){
+			println("All dependencies clear to exdcute event %i!",
+				 INFO, i);
+			trigger_event(i);
 		}
                 
         }
