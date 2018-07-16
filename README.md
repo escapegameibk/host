@@ -78,7 +78,8 @@ Dependencies are checked at a regular interval and passwd over to the modules.
 If a dependency is met, the next dependcy is checked. If all dependencies are
 met, the triggeres are executed, and the event is beeing marked as triggered.
 A dependency only needs to specify it's module name with the "module" string.
-Optionally a name may be given via the "name" field
+Optionally a name may be given via the "name" field. This is useful for debug
+output. 
 
 # ERRATA
 

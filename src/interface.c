@@ -223,9 +223,24 @@ int execute_command(int sock_fd, char* command){
                          * dependencies. It will not be triggerable until the
                          * the game is reset to the start state.
                          */
+			println("Enforced trigger for event %i!", INFO, 
+				json_object_get_int(json_object_object_get(
+				parsed,"event")));
                         trigger_event(json_object_get_int(
                                 json_object_object_get(parsed,"event")));
-                
+		break;
+	case 5:
+		/* Forced untrigger the incoming event. Does NOT reset
+		the triggers. */
+
+		println("Enforced un-trigger for event %i!", INFO, 
+			json_object_get_int(json_object_object_get(
+			parsed,"event")));
+
+		/* This is REALLY dirty, but does the trick.*/
+		state_trigger_status[json_object_get_int(
+			json_object_object_get(parsed,"event"))] = false;
+
                 break;
         default:
                 /* OOPS */
