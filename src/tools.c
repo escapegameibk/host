@@ -22,7 +22,7 @@
 
 int* remove_array_element(size_t array_length, int* array,int element){
 
-        for (int i = element; i < array_length-1; i++) {
+        for (size_t i = element; i < array_length-1; i++) {
                 array[i] = array[i+1];
         }
         
@@ -45,7 +45,7 @@ int first_free_in_array(size_t arrlen, int* array){
         int min = 0;
 
 
-        for(int i = 0; i < arrlen;i++){
+        for(size_t i = 0; i < arrlen;i++){
                 if(min == array[i]){
                         i = 0;
                         min++;

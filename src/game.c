@@ -59,7 +59,56 @@ int init_game(){
         memset(state_trigger_status, 0, state_cnt * sizeof(bool));
         
         println("a total of %i states has been loaded", DEBUG, state_cnt);
+
+	/* initialize all dependencys of all events */
+	
+	json_object* events = json_object_object_get(config_glob ,"events");
+	
+	for(size_t state_i = 0; state_i < state_cnt; state_i++){
+		json_object* dependencies = json_object_object_get(
+			json_object_array_get_idx(events, state_i), 
+			"dependencies");
+		for(size_t dep_i = 0; dep_i < json_object_array_length(
+			dependencies); dep_i++){
+			json_object* dependency = json_object_array_get_idx(
+				dependencies,dep_i);
+			if(init_dependency(dependency) < 0){
+				println("Failed to init dependecy for module %s"
+					, ERROR,json_object_get_string(
+					json_object_object_get(
+					json_object_array_get_idx(events,
+					state_i),"name")));
+				return -1;
+			}
+		}
+		
+	}
+
         return 0;
+}
+
+int init_dependency(json_object* dependency){
+	const char* module_name = json_object_get_string(
+				json_object_object_get(dependency,"module"));
+	if(module_name == NULL){
+		println("Specified no module in dependency!", ERROR);
+		return -1;
+	}
+#ifndef NOMTSP
+	else if(strcasecmp(module_name,"mtsp") == 0){
+		/* Question the MTSP module */
+		return mtsp_init_dependency(dependency);
+	}
+#endif
+	else if(strcasecmp(module_name,"core") == 0){
+		/* Question the core module */
+		return core_init_dependency(dependency);
+	}
+	else{
+		println("Unknown module specified [%s]!", ERROR, module_name);
+		return -2;
+	}
+	
 }
 
 /* I may have to tell you, that this is NOT, and i repeat NOT a function used
@@ -236,6 +285,11 @@ int trigger_event(size_t event_id){
         
 
         return 0;
+}
+
+int core_init_dependency(json_object* dependency){
+
+	return 0;
 }
 
 /* Checks wether a dependency is met

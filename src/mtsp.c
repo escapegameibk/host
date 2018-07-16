@@ -79,6 +79,9 @@ static const uint16_t crc_table[] = {
  * polynominal
  */
 
+mtsp_device_t* mtsp_devices = NULL;
+size_t mtsp_device_count = 0;
+
 uint16_t crc_modbus (uint8_t *in, size_t len){
         
         uint16_t temp;
@@ -100,46 +103,45 @@ uint16_t crc_modbus (uint8_t *in, size_t len){
  * header file
  */
 int mtsp_register_register(uint8_t device, uint8_t reg){
-        size_t row = 0, column = 0;
-        bool found = false;
-        
-        for(; row <  mtsp_regmap_length; row++){
-                if(mtsp_device_register_map[row].id == device){
-                        found = true;
-                        break;
+        mtsp_device_t* dev = NULL;
+	for(size_t i = 0; i <  mtsp_device_count; i++){
+                if(mtsp_devices[i].device_id == device){
+			dev = &mtsp_devices[i];
+			break;
                 }
         }
-        mtsp_device_t* entry = NULL;
-        if(!found){
+
+        if(dev == NULL){
                 /* New device! Append it to the end */
-                mtsp_device_register_map = 
-                        realloc(mtsp_device_register_map, ++mtsp_regmap_length
-                        * sizeof(mtsp_device_t));
-                row = mtsp_regmap_length - 1;
-                entry = &mtsp_device_register_map[row];
-                entry->regcnt = 0;
-                entry->id = device;
-                entry->registers = malloc(0);
+		mtsp_devices = realloc(mtsp_devices, ++mtsp_device_count * 
+			sizeof(mtsp_device_t));
+		dev = &mtsp_devices[mtsp_device_count - 1];
+		dev->device_id = device;
+		dev->port_cnt = 0;
+		dev->ports = malloc(0);
+
+        }
+
+	mtsp_port_t* port = NULL;
+        for(size_t i = 0; i < dev->port_cnt; i++){
+		if(dev->ports[i].address == reg){
+			port = &dev->ports[i];
+			break;
+		}
+        }
+
+        if(port == NULL){
+                /* New register! Append it to the end */
+		dev->ports = realloc(dev->ports, ++(dev->port_cnt) * 
+			sizeof(mtsp_port_t));
+		port = &dev->ports[dev->port_cnt - 1];
+		port->address = reg;
+		port->state = MTSP_DEFAULT_STATE;
 
         }else{
-                entry = &mtsp_device_register_map[row];
-        }
-
-        found = false;
-        for(; column < entry->regcnt; column++){
-                if(entry->registers[column] == reg){
-                        found = true;
-                        break;
-                }
-        }
-
-        if(!found){
-                /* New register! Append it to the end */
-                entry->registers = 
-                        realloc(entry->registers,
-                         ++entry->regcnt);
-                entry->registers[entry->regcnt - 1] = reg;
-        }
+		/* The device does already exist. Ignore it and return 1*/
+		return 1;
+	}
         
         return 0;
 }
@@ -147,64 +149,14 @@ int mtsp_register_register(uint8_t device, uint8_t reg){
 int init_mtsp(char* device, int baud){
 
         
-        /* Look for all mtsp things declared to be input and write them to their
-         * designated location in the register_device_map. This is a bit dirty
-         * and will probably be replaced in the not too far away future.
-         */
-        
-	mtsp_device_states = malloc(0);
-	mtsp_device_count = 0;
-
-        mtsp_regmap_length = 0;
-        mtsp_device_register_map = malloc(0);
- 
-        /* Iterate through all events in the config file */
-        for(size_t iterator1 = 0;  iterator1 < json_object_array_length(
-                json_object_object_get(config_glob,"events")); iterator1++){
-                json_object* dependencies= json_object_object_get(
-                        json_object_array_get_idx(json_object_object_get(
-                        config_glob,"events"),iterator1), "dependencies");
-                if(dependencies == NULL){
-                        continue;
-                }
-                /* Iterate through the dependencies*/
-                for(size_t iterator2 = 0; iterator2 < json_object_array_length(
-                        dependencies); iterator2++){
-                                
-                         json_object* dependency = 
-                                json_object_array_get_idx(dependencies,
-                                        iterator2);
-                        const char* module = json_object_get_string(
-                                json_object_object_get( dependency, "module"));
-                        if(module == NULL){
-                                continue;
-                        }
-                         /* Check wether i am concerned or not */
-                        if(strncasecmp(module,"mtsp",strlen(module)) == 0){
-                                uint8_t device = json_object_get_int(
-                                        json_object_object_get(dependency,
-                                                "device"));
-                                uint8_t reg = json_object_get_int(
-                                        json_object_object_get(dependency,
-                                                "register"));
-                                if(mtsp_register_register(device, reg) < 0){
-                                        println("Failed to add MTSP state",
-                                                ERROR);
-                                }
-                        }
-                }
-        }
-
         println("Added a total of %i mtsp input devices:",DEBUG, 
-                mtsp_regmap_length);
-        for(size_t i = 0; i < mtsp_regmap_length; i++){
-                println("\t%i: %x",DEBUG, i, mtsp_device_register_map[i].id);
+                mtsp_device_count);
+        for(size_t i = 0; i < mtsp_device_count; i++){
+                println("\t%i: %x",DEBUG, i, mtsp_devices[i].device_id);
         }
+       
+       /* initialize the serial device */
         
-
-        mtsp_device_states = malloc(0);
-        mtsp_device_count = 0;
-
         mtsp_fd = open(device,O_RDWR);
         if(mtsp_fd < 0){
                 println("Failed to open device at %s!",ERROR,device);
@@ -234,13 +186,13 @@ int init_mtsp(char* device, int baud){
 	 * above 199 or C7 and send a count to the device to port 0xA.
          */
 
-	 for(size_t i = 0; i < mtsp_regmap_length; i ++){
+	 for(size_t i = 0; i < mtsp_device_count; i++){
 
-		mtsp_device_t* dev = &mtsp_device_register_map[i];
+		mtsp_device_t* dev = &mtsp_devices[i];
 		uint8_t register_large_count = 0;
 
-		for(size_t j = 0; j < dev->regcnt; j++){
-			if(dev->registers[j] > 199){
+		for(size_t j = 0; j < dev->port_cnt; j++){
+			if(dev->ports[i].address > 199){
 				register_large_count++;
 			}
 		}
@@ -248,24 +200,42 @@ int init_mtsp(char* device, int baud){
 		/* Send the device a notice */
 		if(register_large_count > 0){
 			uint8_t payload[] = {0xA, register_large_count};
-			if(mtsp_send_request(dev->id, 2, payload, 
+			if(mtsp_send_request(dev->device_id, 2, payload, 
 					sizeof(payload)) < 0){
 
 				println("Failed to notice mtsp device %i of \
-it's rfid count!", ERROR, dev->id);
+it's rfid count!", ERROR, dev->device_id);
 				/* I don't want to error out at this point, but
 				 * it seems that i have to */
 				 return -3;
 			}else{
 				println("Notified mtsp device %i of it's %i \
 RFID/MP3 Devices",
-					DEBUG, dev->id, register_large_count);
+					DEBUG, dev->device_id, register_large_count);
 			}
 		}
 	 }
 
         return 0;
 }
+
+int mtsp_init_dependency(json_object * dependency){
+
+	uint8_t device_id = json_object_get_int(json_object_object_get(
+		dependency,"device"));
+	
+	uint8_t port_id = json_object_get_int(json_object_object_get(
+		dependency,"register")) & 0xFF;
+
+	if(mtsp_register_register(device_id, port_id) < 0){
+		println("Failed to register MTSP port %i at device %i!",
+			ERROR, port_id, device_id);
+		return -1;
+	}
+	
+	return 0;
+}
+
 
 void* loop_mtsp(){
 
@@ -316,14 +286,22 @@ int start_mtsp(){
  */
 int update_mtsp_states(){
 
-        for(size_t i = 0; i < mtsp_regmap_length; i++){
-                mtsp_device_t *dev = &mtsp_device_register_map[i];
-                int n = mtsp_send_request(dev->id, 1, dev->registers
-                        , dev->regcnt);
+        for(size_t i = 0; i < mtsp_device_count; i++){
+                mtsp_device_t *dev = &mtsp_devices[i];
+
+		uint8_t* regs = malloc(dev->port_cnt);
+		for(size_t prt = 0; prt < dev->port_cnt; prt++){
+			regs[prt] = dev->ports[prt].address;
+		}
+
+                int n = mtsp_send_request(dev->device_id, 1, regs
+                        , dev->port_cnt);
+
+		free(regs);
                 
                 if(n < 0){
                         println("MTSP failed to update device %x",
-                                WARNING, dev->id);
+                                WARNING, dev->device_id);
                         i--;
                         continue;
                 }
@@ -370,7 +348,7 @@ int mtsp_write(uint8_t* frame, size_t length){
 	sleeper.tv_nsec = 5000;
 	nanosleep(&sleeper, NULL);
 
-        int n  = write(mtsp_fd, frame, length * sizeof(uint8_t));
+        size_t n  = write(mtsp_fd, frame, length * sizeof(uint8_t));
         if (n < length){
                 println("Failed to write %i bytes to mtsp device! Returned %i!",
                                 ERROR, length, n);
@@ -453,27 +431,24 @@ int mtsp_process_frame(uint8_t* frame){
                 return 0;
         }
 
-        /* Find the right device status from the array */
-        mtsp_device_state* device = NULL;
-        size_t iterator;
-        for(iterator = 0; iterator < mtsp_device_count; iterator++){
-                if(mtsp_device_states[iterator].device_id == frame[1]){
-			device = &mtsp_device_states[iterator];
+        /* Find the right device status from the array, if not found, something
+	 * has gone terribly wrong. */
+        mtsp_device_t* device = NULL;
+        for(size_t iterator = 0; iterator < mtsp_device_count; iterator++){
+                if(mtsp_devices[iterator].device_id == frame[1]){
+			device = &mtsp_devices[iterator];
                         break;
                 }
         }
-        if(device == NULL){
-                mtsp_device_states = realloc(mtsp_device_states,
-                        (mtsp_device_count + 1) * sizeof(mtsp_device_state));
-                device = &mtsp_device_states[mtsp_device_count++];
-                device->device_id = frame[1];
-		device->register_count = 0;
-		device->register_states = malloc(0);
-        }
+
+	if(device == NULL){
+		println("Got invalid mtsp device %i!", WARNING, frame[1]);
+		return -1;
+	}
 
 	/* Iterate through registers and set states accordingly*/
 
-	for(iterator = 4; iterator < (frame[2]  - 2);){
+	for(int iterator = 4; iterator < (frame[2]  - 2);){
 		uint8_t address = frame[iterator];
 		uint32_t value = 0;
 
@@ -495,29 +470,20 @@ int mtsp_process_frame(uint8_t* frame){
 			iterator += 5;
 		}
 
-		bool found = false;
+		mtsp_port_t* port = NULL;
 		/* Save the return values to their apropriate addresses */
-		size_t i = 0;
-		for(; i < device->register_count; i++){
-			mtsp_register_state* port = 
-				&device->register_states[i];
-			if(port->reg_id == address){
-				found = true;
+		for(size_t i = 0; i < device->port_cnt; i++){
+			if(device->ports[i].address == address){
+				port = &device->ports[i];
 				break;
 			}
 		}
 
-		if(!found){
-			
-			device->register_count++; 
-			
-			device->register_states = realloc(
-			device->register_states, device->register_count * 
-				sizeof(mtsp_register_state));
-			i = device->register_count - 1;
-			device->register_states[i].reg_id = address;
+		if(port == NULL){
+			println("Recieived invalid mtsp port %i on device %i",
+				ERROR, port->address, device->device_id);
 		}
-		device->register_states[i].reg_state = value;
+		port->state = value;
 	}
         
         return 0;
@@ -637,43 +603,43 @@ int mtsp_check_dependency(json_object* dep){
 	uint32_t target = (json_object_get_int64(json_object_object_get(dep,
 		"target")) & 0xFFFFFFFF);
 	
-	uint8_t device = (json_object_get_int64(json_object_object_get(dep,
+	uint8_t device_id = (json_object_get_int64(json_object_object_get(dep,
 		"device")) & 0xFF);
 	
-	uint8_t port = (json_object_get_int64(json_object_object_get(dep,
+	uint8_t port_id = (json_object_get_int64(json_object_object_get(dep,
 		"register")) & 0xFF);
 
-	if(device == 0 || port == 0){
+	if(device_id == 0 ){
 		return -1;
 	}
 
-	mtsp_device_state *dev_state = NULL;
-	for(size_t dev = 0; dev < mtsp_device_count; dev++){
-		if(mtsp_device_states[dev].device_id == device){
-			dev_state = &mtsp_device_states[dev];
+	mtsp_device_t *device = NULL;
+	for(size_t dev_i = 0; dev_i < mtsp_device_count; dev_i++){
+		if(mtsp_devices[dev_i].device_id == device_id){
+			device = &mtsp_devices[dev_i];
 			break;
 		}
 	}
 
-	if(dev_state == NULL){
+	if(device == NULL){
 		/* The device has not replied yet */
 		return 0;
 	}
 
 	/* Search for the register in the device */
-	mtsp_register_state* reg_state = NULL;
-	for(size_t reg = 0; reg < dev_state->register_count; reg++){
-		if(dev_state->register_states[reg].reg_id == port){
-			reg_state = &dev_state->register_states[reg];
+	mtsp_port_t* port = NULL;
+	for(size_t reg = 0; reg < device->port_cnt; reg++){
+		if(device->ports[reg].address == port_id){
+			port = &device->ports[reg];
 		}
 	}
 
-	if(reg_state == NULL){
+	if(port == NULL){
 		/* We never got a reply from that port */
 		return 0;
 	}
 
-	return reg_state->reg_state == target;
+	return port->state == target;
 
 
 }
