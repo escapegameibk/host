@@ -236,7 +236,7 @@
                                         "module" : "mtsp",
                                         "device" : 65,
                                         "register" : 3,
-                                        "target" : 1,
+                                        "target" : 0,
                                         "name" : "Books"
                                 },
                                 {
@@ -264,7 +264,7 @@
                                         "module" : "mtsp",
                                         "device" : 66,
                                         "register" : 2,
-                                        "target" : 1,
+                                        "target" : 0,
                                         "name" : "drawers"
                                 },
                                 {
@@ -292,21 +292,21 @@
                                         "module" : "mtsp",
                                         "device" : 65,
                                         "register" : 4,
-                                        "target" : 1,
+                                        "target" : 0,
                                         "name" : "Firtst Star"
                                 },
                                 {
                                         "module" : "mtsp",
                                         "device" : 65,
                                         "register" : 5,
-                                        "target" : 1,
+                                        "target" : 0,
                                         "name" : "Second Star"
                                 },
                                 {
                                         "module" : "mtsp",
                                         "device" : 65,
                                         "register" : 6,
-                                        "target" : 1,
+                                        "target" : 0,
                                         "name" : "Third Star"
                                 },
                                 {
@@ -399,7 +399,7 @@
                                         "module" : "mtsp",
                                         "device" : 65,
                                         "register" : 8,
-                                        "target" : 1,
+                                        "target" : 0,
                                         "name" : "Bookstand"
                                 },
                                 {
@@ -504,7 +504,7 @@
                                         "module" : "mtsp",
                                         "device" : 66,
                                         "register" : 3,
-                                        "target" : 1,
+                                        "target" : 0,
                                         "name" : "knock sensor triggered"
                                 },
                                 {
@@ -583,7 +583,7 @@
                                         "module" : "mtsp",
                                         "device" : 65,
                                         "register" : 1,
-                                        "target" : 1,
+                                        "target" : 0,
                                         "name" : "start input"
                                 },
                                 {
@@ -707,7 +707,7 @@
                                         "module" : "mtsp",
                                         "device" : 65,
                                         "register" : 1,
-                                        "target" : 1,
+                                        "target" : 0,
                                         "name" : "start input"
                                 },
                                 {
