@@ -90,6 +90,9 @@ typedef struct{
 mtsp_device_t* mtsp_devices;
 size_t mtsp_device_count;
 
+/* Is set to true, after each update round. Is set to false on init */
+bool mtsp_devices_populated;
+
 #endif /* MTSP_H */
 
 #endif /* NOMTSP */

@@ -148,7 +148,8 @@ int mtsp_register_register(uint8_t device, uint8_t reg){
 
 int init_mtsp(char* device, int baud){
 
-        
+	mtsp_devices_populated = false;
+
         println("Added a total of %i mtsp input devices:",DEBUG, 
                 mtsp_device_count);
         for(size_t i = 0; i < mtsp_device_count; i++){
@@ -226,6 +227,8 @@ RFID/MP3 Devices",
 }
 
 int mtsp_init_dependency(json_object * dependency){
+
+	mtsp_devices_populated = false;
 
 	uint8_t device_id = json_object_get_int(json_object_object_get(
 		dependency,"device"));
@@ -313,6 +316,8 @@ int update_mtsp_states(){
                 }
                 
         }
+
+	mtsp_devices_populated = true;
         
         return 0;
 
@@ -601,6 +606,12 @@ int mtsp_trigger(json_object* trigger){
  * Returns <0 on error, 0 if not and > 0 if is fullfilled
  */
 int mtsp_check_dependency(json_object* dep){
+
+	/* If the devices have not been populated yet don't trigger! */
+	if(!mtsp_devices_populated){
+		return 0;
+	}
+
 
 	/* Due to the fact that the target is UNSIGNED and the return value
 	 * of get_int is int32_t i precausiously convert it to 64 bit and strip
