@@ -152,7 +152,13 @@ int init_mtsp(char* device, int baud){
         println("Added a total of %i mtsp input devices:",DEBUG, 
                 mtsp_device_count);
         for(size_t i = 0; i < mtsp_device_count; i++){
-                println("\t%i: %x",DEBUG, i, mtsp_devices[i].device_id);
+                println("\t%i: %i : %i",DEBUG, i, mtsp_devices[i].device_id,
+			mtsp_devices[i].port_cnt);
+		/* Iterate through registers and output them */
+		for(size_t j = 0; j < mtsp_devices[i].port_cnt; j++){
+			println("\t\t%i: %i", DEBUG, j,
+			mtsp_devices[i].ports[j].address);
+		}
         }
        
        /* initialize the serial device */
