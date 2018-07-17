@@ -27,6 +27,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <string.h>
+#include <unistd.h>
 
 int init_game(){
 
@@ -62,27 +63,22 @@ int init_game(){
 
 	/* initialize all dependencys of all events */
 	
-	json_object* events = json_object_object_get(config_glob ,"events");
+	json_object* dependencies = get_all_dependencies();
 	
-	for(size_t state_i = 0; state_i < state_cnt; state_i++){
-		json_object* dependencies = json_object_object_get(
-			json_object_array_get_idx(events, state_i), 
-			"dependencies");
-		for(size_t dep_i = 0; dep_i < json_object_array_length(
-			dependencies); dep_i++){
-			json_object* dependency = json_object_array_get_idx(
-				dependencies,dep_i);
-			if(init_dependency(dependency) < 0){
-				println("Failed to init dependecy for module %s"
-					, ERROR,json_object_get_string(
-					json_object_object_get(
-					json_object_array_get_idx(events,
-					state_i),"name")));
-				return -1;
-			}
+	for(size_t i = 0; i < json_object_array_length(dependencies); i++){
+		if(init_dependency(json_object_array_get_idx(dependencies,i))
+			< 0){
+			println("Failed to init depedency no %i! Dumping:",
+				ERROR, i);
+			json_object_to_fd(STDIN_FILENO, 
+				json_object_array_get_idx(dependencies, i),
+				JSON_C_TO_STRING_PRETTY);
+			return -1;
+
 		}
-		
 	}
+
+	json_object_put(dependencies);
 
         return 0;
 }
@@ -380,4 +376,31 @@ int core_trigger(json_object* trigger){
         }
         
         return 0;
+}
+
+/* This returns a json array with all dependencies as elements. It can be 
+ * free'd afterwards */
+json_object* get_all_dependencies(){
+
+	json_object* all_dependencies = json_object_new_array();
+
+	for(size_t event_i = 0; event_i < state_cnt; event_i++ ){
+		
+		json_object* event = json_object_array_get_idx(
+		json_object_object_get(config_glob, "events"),event_i);
+		
+		for(size_t dep_i = 0; dep_i < json_object_array_length(
+			json_object_object_get(event,"dependencies")); 
+			dep_i++){
+			json_object* dependency_cpy = NULL;
+
+			json_object_deep_copy(json_object_array_get_idx(
+				json_object_object_get(event,"dependencies"),
+				 dep_i), &dependency_cpy, NULL);
+
+			json_object_array_add(all_dependencies, dependency_cpy);
+		}
+	}
+
+	return all_dependencies;
 }

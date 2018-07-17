@@ -40,6 +40,10 @@ int core_init_dependency(json_object* dependency);
 int core_check_dependency(json_object* dependency);
 int core_trigger(json_object *trigger);
 
+/* utility functions */
+
+json_object* get_all_dependencies();
+
 pthread_t game_thread;
 long long int game_timer_start, game_duration;
 
