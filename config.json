@@ -9,7 +9,7 @@
                                         "module" : "mtsp",
                                         "device" : 65,
                                         "register" : 1,
-                                        "target" : 1,
+                                        "target" : 0,
                                         "name" : "start input"
                                 }
                         ],

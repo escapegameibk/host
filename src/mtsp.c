@@ -198,7 +198,7 @@ int init_mtsp(char* device, int baud){
 		uint8_t register_large_count = 0;
 
 		for(size_t j = 0; j < dev->port_cnt; j++){
-			if(dev->ports[i].address > 199){
+			if(dev->ports[j].address >= 200){
 				register_large_count++;
 			}
 		}
