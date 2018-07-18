@@ -540,7 +540,7 @@
                                         "module" : "mtsp",
                                         "device" : 66,
                                         "register" : 3,
-                                        "target" : 1,
+                                        "target" : 0,
                                         "name" : "people blew into the ashes"
                                 },
                                 {
@@ -843,10 +843,6 @@
                                         "register" : 7,
                                         "target" : 1,
                                         "name" : "enable thunder"
-                                },
-                                {
-                                        "module" : "core",
-                                        "action" : "timer_start"
                                 }
                                 
                         ]
