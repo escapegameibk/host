@@ -242,6 +242,23 @@ int execute_command(int sock_fd, char* command){
 			json_object_object_get(parsed,"event"))] = false;
 
                 break;
+	case 6:
+		
+		/* Return all dependencies. Only their definitions, NOT their
+		 * values!
+		 */
+		
+		print_dependencies_interface(sock_fd);
+
+		break;
+
+	case 7:
+		/* Returns all dependency states, without ANY other inforamtion
+		 * about them in the same order as action 6 returns them .
+		 */
+
+		 print_dependency_states_interface(sock_fd);
+		break;
         default:
                 /* OOPS */
                 debug = malloc(INT_LEN);
@@ -332,4 +349,35 @@ int print_events_interface(int sockfd){
         json_object_put(arr_names);
 
         return 0;
+}
+
+int print_dependencies_interface(int sockfd){
+
+
+	json_object* dependencies = get_all_dependencies();
+
+	json_object_to_fd(sockfd, dependencies, JSON_C_TO_STRING_PLAIN);
+	json_object_put(dependencies);
+
+	return 0;
+	
+}
+
+int print_dependency_states_interface(int sockfd){
+
+	size_t length = 0;
+	int* dependency_states = get_all_dependency_states(&length);
+
+	json_object* stats = json_object_new_array();
+	
+	for(size_t i = 0; i < length; i++){
+		json_object_array_add(stats,json_object_new_int(
+			dependency_states[i]));
+	}
+
+	json_object_to_fd(sockfd, stats, JSON_C_TO_STRING_PLAIN);
+	json_object_put(stats);
+
+	return 0;
+	
 }

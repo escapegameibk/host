@@ -43,6 +43,7 @@ int core_trigger(json_object *trigger);
 /* utility functions */
 
 json_object* get_all_dependencies();
+int* get_all_dependency_states(size_t * state_cnt);
 
 pthread_t game_thread;
 long long int game_timer_start, game_duration;

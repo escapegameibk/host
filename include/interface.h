@@ -34,5 +34,7 @@ int execute_command(int sock_fd,char* command);
 int print_info_interface(int sockfd);
 int print_changeables_interface(int sockfd);
 int print_events_interface(int sockfd);
+int print_dependencies_interface(int sockfd);
+int print_dependenciy_states_interface(int sockfd);
 
 #endif

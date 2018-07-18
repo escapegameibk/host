@@ -404,3 +404,22 @@ json_object* get_all_dependencies(){
 
 	return all_dependencies;
 }
+
+int* get_all_dependency_states(size_t* state_cnt){
+
+	json_object* dependencies = get_all_dependencies();
+
+	*state_cnt = json_object_array_length(dependencies);
+	int* states = malloc(sizeof(int) * *state_cnt);
+
+	for(size_t i = 0; i < *state_cnt; i++){
+		states[i] = check_dependency(json_object_array_get_idx(
+			dependencies, i));
+
+
+	}
+
+	json_object_put(dependencies);
+
+	return states;
+}
