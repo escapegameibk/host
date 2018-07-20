@@ -120,12 +120,12 @@ int start_game(){
 
 	/* If defined execute an init trigger */
 	json_object* init_trigger = json_object_object_get(config_glob, 
-		"init_trigger");
+		"init_event");
 
 	if(init_trigger != NULL){
 		size_t trig = json_object_get_int(init_trigger);
 
-		println("initialy triggering trigger no %i", DEBUG, trig);
+		println("initialy triggering event no %i", DEBUG, trig);
 
 		trigger_event(trig);
 	}
