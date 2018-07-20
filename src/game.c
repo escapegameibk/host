@@ -385,7 +385,7 @@ int core_trigger(json_object* trigger){
 
         }else if(strcasecmp(action_name,"delay") == 0){
 		uint32_t delay_ms = json_object_get_int64(
-			json_object_object_get(trigger, "delay"))
+			json_object_object_get(trigger, "delay"));
 		println("sleeping %ims!", DEBUG, delay_ms);
 		struct timespec delay;
 		delay.tv_sec = 0;
