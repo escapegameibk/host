@@ -370,7 +370,14 @@ int core_trigger(json_object* trigger){
                 for(size_t i = 0; i < state_cnt; i++){
                         state_trigger_status[i] = 0;
                 }
-        }else{
+        }else if(strcasecmp(action_name,"delay") == 0){
+		struct timespec delay;
+		delay.tv_sec = 0;
+		delay.tv_nsec = 1000000 * json_object_get_int64(
+			json_object_object_get(trigger, "delay"));
+		nanosleep(&delay,NULL);
+	
+	}else{
                 println("Unknown core action specified: %s",ERROR, action_name);
                 return -1;
         }
