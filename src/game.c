@@ -382,11 +382,14 @@ int core_trigger(json_object* trigger){
                 for(size_t i = 0; i < state_cnt; i++){
                         state_trigger_status[i] = 0;
                 }
+
         }else if(strcasecmp(action_name,"delay") == 0){
+		uint32_t delay_ms = json_object_get_int64(
+			json_object_object_get(trigger, "delay"))
+		println("sleeping %ims!", DEBUG, delay_ms);
 		struct timespec delay;
 		delay.tv_sec = 0;
-		delay.tv_nsec = 1000000 * json_object_get_int64(
-			json_object_object_get(trigger, "delay"));
+		delay.tv_nsec = 1000000 * delay_ms;
 		nanosleep(&delay,NULL);
 	
 	}else{
