@@ -196,7 +196,7 @@ void* loop_game(){
                         println("interupt in game loop! sleep failed",ERROR);
                 }
 
-                if(patrol() < 0){
+        if(patrol() < 0){
                         println("failed to patrol!!",ERROR);
                         continue;
                 }
@@ -384,13 +384,10 @@ int core_trigger(json_object* trigger){
                 }
 
         }else if(strcasecmp(action_name,"delay") == 0){
-		uint32_t delay_ms = json_object_get_int64(
+		uint32_t delay = json_object_get_int64(
 			json_object_object_get(trigger, "delay"));
-		println("sleeping %ims!", DEBUG, delay_ms);
-		struct timespec delay;
-		delay.tv_sec = 0;
-		delay.tv_nsec = 1000000 * delay_ms;
-		nanosleep(&delay,NULL);
+		println("sleeping %is!", DEBUG, delay);
+		sleep(delay);
 	
 	}else{
                 println("Unknown core action specified: %s",ERROR, action_name);
