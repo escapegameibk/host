@@ -118,6 +118,18 @@ int start_game(){
                 return -1;
         }
 
+	/* If defined execute an init trigger */
+	json_object* init_trigger = json_object_object_get(config_glob, 
+		"init_trigger");
+
+	if(init_trigger != NULL){
+		size_t trig = json_object_get_int(init_trigger);
+
+		println("initialy triggering trigger no %i", DEBUG, trig);
+
+		trigger_event(trig);
+	}
+
         return 0;
 }
 
@@ -393,7 +405,7 @@ json_object* get_all_dependencies(){
 
 	for(size_t event_i = 0; event_i < state_cnt; event_i++ ){
 		
-		json_object* event = json_object_array_get_idx(
+			json_object* event = json_object_array_get_idx(
 		json_object_object_get(config_glob, "events"),event_i);
 		
 		for(size_t dep_i = 0; dep_i < json_object_array_length(
