@@ -74,17 +74,20 @@ int main(int argc, char * const argv[]){
 #ifndef HEADLESS
         if(init_interface() < 0){
                 println("failed to init interface!!",ERROR);
+		exit_code = 1;
                 goto shutdown;
         }
 #endif
         
         if(init_game() < 0){
                 println("failed to init game!!",ERROR);
+		exit_code = 1;
                 goto shutdown;
         }
 #ifndef NOSER
         if(init_serial(DEFAULT_SERIAL_PORT) < 0){
                 println("failed to init serial connection!!",ERROR);
+		exit_code = 1;
                 goto shutdown;
         }
 
@@ -95,6 +98,7 @@ int main(int argc, char * const argv[]){
         if(init_mtsp(MTSP_DEFAULT_PORT, MTSP_DEFAULT_BAUD)){
 
                 println("failed to init mtsp connection!!",ERROR);
+		exit_code = 1;
                 goto shutdown;
 
         }
