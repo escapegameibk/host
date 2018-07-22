@@ -19,6 +19,9 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
+#include <sys/time.h>
+#include <time.h>
+#include <string.h>
 
 int* remove_array_element(size_t array_length, int* array,int element){
 
@@ -53,4 +56,17 @@ int first_free_in_array(size_t arrlen, int* array){
         }
 
         return min;
+}
+
+/* Sleep milliseconds returns 0 on success and < 0 on error */
+int sleep_ms(uint32_t ms){
+	struct timespec tim;
+	tim.tv_sec = (ms - (ms % 1000));
+	tim.tv_nsec = (ms % 1000);
+	
+	struct timespec rel;
+
+	nanosleep(&tim, &rel);
+
+	return (memcmp(&tim, &rel, sizeof(tim)) == 0) - 1;
 }

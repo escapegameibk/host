@@ -73,21 +73,21 @@ int mtsp_fd;
  * to the more funny part where things begin to change
  */
 
-typedef struct{
+struct mtsp_port_t{
 
         uint8_t address;
         uint32_t state;
          
-} mtsp_port_t;
+};
 
-typedef struct{
+struct mtsp_device_t{
 
         uint8_t device_id;
         size_t port_cnt;
-        mtsp_port_t* ports;
-} mtsp_device_t;
+        struct mtsp_port_t* ports;
+};
 
-mtsp_device_t* mtsp_devices;
+struct mtsp_device_t* mtsp_devices;
 size_t mtsp_device_count;
 
 /* Is set to true, after each update round. Is set to false on init */

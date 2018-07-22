@@ -36,10 +36,6 @@ void* loop_game();
 int trigger_event(size_t event_id);
 int check_dependency(json_object* dependency);
 
-int core_init_dependency(json_object* dependency);
-int core_check_dependency(json_object* dependency);
-int core_trigger(json_object *trigger);
-
 /* utility functions */
 
 json_object* get_all_dependencies();

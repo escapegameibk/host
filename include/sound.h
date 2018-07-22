@@ -23,6 +23,10 @@
 
 int init_sound();
 int sound_trigger(json_object* trigger);
+int init_sound_dependency(json_object * dependency);
+int snd_init_dependency(json_object* dependency);;
+int play_sound(const char* url);
+int reset_sounds();
 
 libvlc_instance_t * vlc_inst;
 libvlc_media_player_t **vlc_mp;

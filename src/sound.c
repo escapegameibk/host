@@ -16,6 +16,7 @@
  */
 #include "sound.h"
 #include <stdlib.h>
+#include <strings.h>
 #include "config.h"
 #include "log.h"
 
@@ -29,12 +30,7 @@ int init_sound(){
                                 json_object_object_get(config_glob,
                                         "boot_sound"));
         if(boot_snd != NULL){
-
-                libvlc_media_t *m = libvlc_media_new_location (vlc_inst, boot_snd);
-                vlc_mp = realloc(vlc_mp,++playercnt);
-                vlc_mp[0] = libvlc_media_player_new_from_media (m);
-                libvlc_media_release(m);
-                libvlc_media_player_play(vlc_mp[0]);
+		play_sound(boot_snd);
         }
 
         return 0;
@@ -42,6 +38,28 @@ int init_sound(){
 
 int sound_trigger(json_object* trigger){
 
+	json_object* action_obj = json_object_object_get(trigger, "action");
+
+	if(action_obj == NULL){
+		println("No action specified for sound trigger!", ERROR);
+		return -1;
+	}
+	const char* action = json_object_get_string(action_obj);
+
+	if(strcasecmp(action, "play") == 0){
+
+		json_object* resource_obj = json_object_object_get(trigger, 
+			"resource");
+
+		const char* resource = json_object_get_string(resource_obj);
+
+		println("Playing sound file from %s", DEBUG, resource);
+	
+		return play_sound(resource);
+
+	}else{
+		println("Unknown action to trigger for sound module!", ERROR);
+	}
         const char* resource_locator = json_object_get_string(
                 json_object_object_get(trigger,"resource"));
         if(resource_locator == NULL){
@@ -50,13 +68,46 @@ int sound_trigger(json_object* trigger){
                 return -1;
         }
 
-        libvlc_media_t *m = libvlc_media_new_location (vlc_inst, 
-                resource_locator);
+
+        return 0;
+
+}
+
+int snd_init_dependency(json_object* dependency){
+
+	/* Not really nescessary */
+
+	return 0;
+}
+
+int play_sound(const char* url){
+        
+	libvlc_media_t *m = libvlc_media_new_location (vlc_inst, 
+                url);
+
+	if(m == NULL){
+		println("snd failed to get media from resource %s!", ERROR,
+			url);
+		return -1;
+	}
+
         vlc_mp = realloc(vlc_mp,++playercnt);
         vlc_mp[playercnt-1] = libvlc_media_player_new_from_media (m);
         libvlc_media_release(m);
         libvlc_media_player_play(vlc_mp[playercnt-1]);
+	return 0;
 
-        return 0;
+}
+
+int reset_sounds(){
+
+	for(size_t i = 0; i < playercnt; i++){
+		libvlc_media_player_release(vlc_mp[i]);
+	}
+	free(vlc_mp);
+	vlc_mp = malloc(0);
+	playercnt = 0;
+
+	return 0;
 
 }

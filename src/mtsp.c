@@ -37,6 +37,7 @@
 #include "serial.h"
 #include "game.h"
 #include "config.h"
+#include "tools.h"
 
 static const uint16_t crc_table[] = {
         0X0000, 0XC0C1, 0XC181, 0X0140, 0XC301, 0X03C0, 0X0280, 0XC241,
@@ -79,7 +80,7 @@ static const uint16_t crc_table[] = {
  * polynominal
  */
 
-mtsp_device_t* mtsp_devices = NULL;
+struct mtsp_device_t* mtsp_devices = NULL;
 size_t mtsp_device_count = 0;
 
 uint16_t crc_modbus (uint8_t *in, size_t len){
@@ -103,7 +104,7 @@ uint16_t crc_modbus (uint8_t *in, size_t len){
  * header file
  */
 int mtsp_register_register(uint8_t device, uint8_t reg){
-        mtsp_device_t* dev = NULL;
+        struct mtsp_device_t* dev = NULL;
 	for(size_t i = 0; i <  mtsp_device_count; i++){
                 if(mtsp_devices[i].device_id == device){
 			dev = &mtsp_devices[i];
@@ -114,7 +115,7 @@ int mtsp_register_register(uint8_t device, uint8_t reg){
         if(dev == NULL){
                 /* New device! Append it to the end */
 		mtsp_devices = realloc(mtsp_devices, ++mtsp_device_count * 
-			sizeof(mtsp_device_t));
+			sizeof(struct mtsp_device_t));
 		dev = &mtsp_devices[mtsp_device_count - 1];
 		dev->device_id = device;
 		dev->port_cnt = 0;
@@ -122,7 +123,7 @@ int mtsp_register_register(uint8_t device, uint8_t reg){
 
         }
 
-	mtsp_port_t* port = NULL;
+	struct mtsp_port_t* port = NULL;
         for(size_t i = 0; i < dev->port_cnt; i++){
 		if(dev->ports[i].address == reg){
 			port = &dev->ports[i];
@@ -133,7 +134,7 @@ int mtsp_register_register(uint8_t device, uint8_t reg){
         if(port == NULL){
                 /* New register! Append it to the end */
 		dev->ports = realloc(dev->ports, ++(dev->port_cnt) * 
-			sizeof(mtsp_port_t));
+			sizeof(struct mtsp_port_t));
 		port = &dev->ports[dev->port_cnt - 1];
 		port->address = reg;
 		port->state = MTSP_DEFAULT_STATE;
@@ -195,7 +196,7 @@ int init_mtsp(char* device, int baud){
 
 	 for(size_t i = 0; i < mtsp_device_count; i++){
 
-		mtsp_device_t* dev = &mtsp_devices[i];
+		struct mtsp_device_t* dev = &mtsp_devices[i];
 		uint8_t register_large_count = 0;
 
 		for(size_t j = 0; j < dev->port_cnt; j++){
@@ -296,7 +297,7 @@ int start_mtsp(){
 int update_mtsp_states(){
 
         for(size_t i = 0; i < mtsp_device_count; i++){
-                mtsp_device_t *dev = &mtsp_devices[i];
+                struct mtsp_device_t *dev = &mtsp_devices[i];
 
 		uint8_t* regs = malloc(dev->port_cnt);
 		for(size_t prt = 0; prt < dev->port_cnt; prt++){
@@ -444,7 +445,7 @@ int mtsp_process_frame(uint8_t* frame){
 
         /* Find the right device status from the array, if not found, something
 	 * has gone terribly wrong. */
-        mtsp_device_t* device = NULL;
+        struct mtsp_device_t* device = NULL;
         for(size_t iterator = 0; iterator < mtsp_device_count; iterator++){
                 if(mtsp_devices[iterator].device_id == frame[1]){
 			device = &mtsp_devices[iterator];
@@ -481,7 +482,7 @@ int mtsp_process_frame(uint8_t* frame){
 			iterator += 5;
 		}
 
-		mtsp_port_t* port = NULL;
+		struct mtsp_port_t* port = NULL;
 		/* Save the return values to their apropriate addresses */
 		for(size_t i = 0; i < device->port_cnt; i++){
 			if(device->ports[i].address == address){
@@ -581,11 +582,8 @@ int mtsp_trigger(json_object* trigger){
         /* Execute a burst */
         if(strcasecmp(type,"burst") == 0){
                 /* To make the json more readable the time is specified in ms */
-                struct timespec delay;
-                delay.tv_nsec = 1000000 * json_object_get_int64(
-                        json_object_object_get(trigger, "duration"));
-                nanosleep(&delay,NULL);
-                
+                sleep_ms(json_object_get_int64(
+                        json_object_object_get(trigger, "duration")));
                 payload[1] = !payload[1];
                 
                 for(; i < 10; i ++){
@@ -630,7 +628,7 @@ int mtsp_check_dependency(json_object* dep){
 		return -1;
 	}
 
-	mtsp_device_t *device = NULL;
+	struct mtsp_device_t *device = NULL;
 	for(size_t dev_i = 0; dev_i < mtsp_device_count; dev_i++){
 		if(mtsp_devices[dev_i].device_id == device_id){
 			device = &mtsp_devices[dev_i];
@@ -644,7 +642,7 @@ int mtsp_check_dependency(json_object* dep){
 	}
 
 	/* Search for the register in the device */
-	mtsp_port_t* port = NULL;
+	struct mtsp_port_t* port = NULL;
 	for(size_t reg = 0; reg < device->port_cnt; reg++){
 		if(device->ports[reg].address == port_id){
 			port = &device->ports[reg];
@@ -660,4 +658,5 @@ int mtsp_check_dependency(json_object* dep){
 
 
 }
+
 #endif /* NOMTSP */

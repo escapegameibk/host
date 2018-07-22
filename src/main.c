@@ -23,6 +23,7 @@
 #include "sound.h"
 #include "config.h"
 #include "mtsp.h"
+#include "core.h"
 
 #include <unistd.h>
 #include <pthread.h>
@@ -78,6 +79,10 @@ int main(int argc, char * const argv[]){
                 goto shutdown;
         }
 #endif
+        if(init_sound() < 0){
+                println("failed to init sound!!",ERROR);
+                goto shutdown;
+        }
         
         if(init_game() < 0){
                 println("failed to init game!!",ERROR);
@@ -95,7 +100,7 @@ int main(int argc, char * const argv[]){
 
 #ifndef NOMTSP
         
-        if(init_mtsp(MTSP_DEFAULT_PORT, MTSP_DEFAULT_BAUD)){
+        if(init_mtsp(MTSP_DEFAULT_PORT, MTSP_DEFAULT_BAUD) < 0){
 
                 println("failed to init mtsp connection!!",ERROR);
 		exit_code = 1;
@@ -104,10 +109,12 @@ int main(int argc, char * const argv[]){
         }
 
 #endif
-        if(init_sound() < 0){
-                println("failed to init sound!!",ERROR);
+
+	if(init_core() < 0){
+		println("Failed to initilize core!", ERROR);
+		exit_code = 1;
                 goto shutdown;
-        }
+	}
         
         println("INIT DONE",INFO);
 
@@ -116,7 +123,6 @@ int main(int argc, char * const argv[]){
 #ifndef HEADLESS
         start_interface();
 #endif
-        start_game();
 #ifndef NOSER
         start_serial();
 #endif
@@ -124,6 +130,8 @@ int main(int argc, char * const argv[]){
 #ifndef NOMTSP
         start_mtsp();
 #endif
+        start_core();
+	start_game();
         println("STARTUP DONE",INFO);
         println("ENTERING REGULAR OPERATION",INFO);
         while(!shutting_down){sleep(1);}
@@ -157,6 +165,12 @@ void catch_signal(int sig){
                 
                 println("SIGPIPE! ignoring...",WARNING);
                 break;
+
+	case SIGHUP:
+		
+		println("Received SIGHUP. I hope i haven't really hung up...",
+			WARNING);
+		break;
         default:
                 /* ignore */
                 break;

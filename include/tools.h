@@ -19,10 +19,13 @@
 #define TOOLS_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 int *remove_array_element(size_t array_length, int* array,int element);
 int *add_array_element(size_t array_length, int* array, int element);
 
 int first_free_in_array(size_t arrlen, int* array);
+
+int sleep_ms(uint32_t ms);
 
 #endif

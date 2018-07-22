@@ -21,6 +21,7 @@
 #include "data.h"
 #include "mtsp.h"
 #include "sound.h"
+#include "core.h"
 
 #include <stddef.h>
 #include <stdio.h>
@@ -99,6 +100,11 @@ int init_dependency(json_object* dependency){
 	else if(strcasecmp(module_name,"core") == 0){
 		/* Question the core module */
 		return core_init_dependency(dependency);
+	}
+	
+	else if(strcasecmp(module_name,"snd") == 0){
+		/* Question the core module */
+		return snd_init_dependency(dependency);
 	}
 	else{
 		println("Unknown module specified [%s]!", ERROR, module_name);
@@ -272,7 +278,7 @@ int trigger_event(size_t event_id){
 
 #ifndef NOSOUND
 
-                if(strcasecmp(module,"mtsp") == 0){
+                if(strcasecmp(module,"snd") == 0){
                         /* The sound module is concerned. */
                         if(sound_trigger(trigger) < 0){
                                 println("Failed to execute trigger for snd!",
@@ -295,11 +301,6 @@ int trigger_event(size_t event_id){
         return 0;
 }
 
-int core_init_dependency(json_object* dependency){
-
-	return 0;
-}
-
 /* Checks wether a dependency is met
  * Returns < 0 on error, 0 if not, and > 0 if forfilled.
  */
@@ -314,7 +315,7 @@ int check_dependency(json_object* dependency){
 	}
 #ifndef NOMTSP
 	else if(strcasecmp(module_name,"mtsp") == 0){
-		/* Question the MTSP module */
+		/* Question the MTSP module. yes QUESTION IT! */
 		return mtsp_check_dependency(dependency);
 	}
 #endif
@@ -331,71 +332,6 @@ int check_dependency(json_object* dependency){
 	return 0;
 }
 
-/* Checks wether a core dependency is met
- * Returns < 0 on error, 0 if not, and > 0 if forfilled.
- */
-
-int core_check_dependency(json_object* dependency){
-
-	const char* type = json_object_get_string(json_object_object_get(
-		dependency,"type"));
-
-	if(type == NULL){
-		println("Unspecified type in core dependency!", ERROR);
-		return -1;
-	}else if(strcasecmp(type,"event") == 0){
-		/* Check wether a trigger has already been executed */
-		int32_t event = json_object_get_int(
-			json_object_object_get(dependency,"event"));
-
-		if(event >= state_cnt || event < 0){
-			println("Invalid event specified in dependency.",
-				ERROR);
-			return -2;
-		}else{
-			return state_trigger_status[event];
-		}
-	}else{
-		println("invalid type specified in core dependency : %s",
-			ERROR, type);
-		return -3;
-	}
-
-}
-
-int core_trigger(json_object* trigger){
-        const char* action_name = json_object_get_string(json_object_object_get(
-                trigger, "action"));
-
-        if(action_name == NULL){
-                println("unable to trigger empty action! assuming nop",
-                        WARNING);
-                return 0;
-        }else if(strcasecmp(action_name,"timer_start") == 0){
-                println("Starting game timer", INFO);
-                game_timer_start = (unsigned long)time(NULL);
-        }else if(strcasecmp(action_name,"timer_stop") == 0){
-                println("Stopping game timer", INFO);
-                game_timer_start = 0;
-        }else if(strcasecmp(action_name,"reset") == 0){
-                println("Resetting states", INFO);
-                for(size_t i = 0; i < state_cnt; i++){
-                        state_trigger_status[i] = 0;
-                }
-
-        }else if(strcasecmp(action_name,"delay") == 0){
-		uint32_t delay = json_object_get_int64(
-			json_object_object_get(trigger, "delay"));
-		println("sleeping %is!", DEBUG, delay);
-		sleep(delay);
-	
-	}else{
-                println("Unknown core action specified: %s",ERROR, action_name);
-                return -1;
-        }
-        
-        return 0;
-}
 
 /* This returns a json array with all dependencies as elements. It can be 
  * free'd afterwards */
