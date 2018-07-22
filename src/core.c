@@ -28,7 +28,7 @@
 #include <unistd.h>
 
 size_t core_sequence_count = 0;
-struct sequence_dependency_t *core_sequential_trigger = NULL;
+struct sequence_dependency_t *core_sequential_dependencies = NULL;
 
 int init_core(){
 	
@@ -149,10 +149,37 @@ int core_check_dependency(json_object* dependency){
 		}else{
 			return (state_trigger_status[event] == target);
 		}
+
+	}else if(strcasecmp(type,"sequence") == 0){
+	
+		/* Search for the sequence in the array and compare it's
+		 * current value with it's target
+		 */
+
+		 for(size_t i = 0; i < core_sequence_count; i++){
+
+			struct sequence_dependency_t* seq = 
+				&core_sequential_dependencies[i];
+			if(seq->dependency != dependency){
+				continue;
+			}
+
+			/* Return "0 == true" compliant */
+			return (memcmp(seq->target_sequence,
+				seq->sequence_so_far, seq->sequence_length * 
+				sizeof(size_t)) == 0) - 1;
+
+		 }
+		
+		/* WTF?! */
+		println("FOUND UNINITIALIZED SEUQNENTIAL DEPENDENCY!!!", ERROR);
+		println("THIS SHOULD BE IMPOSSIBLE!!!!", ERROR);
+		return -3;
+
 	}else{
 		println("invalid type specified in core dependency : %s",
 			ERROR, type);
-		return -3;
+		return -4;
 	}
 
 }
@@ -171,11 +198,13 @@ int core_trigger(json_object* trigger){
         }else if(strcasecmp(action_name,"timer_stop") == 0){
                 println("Stopping game timer", INFO);
                 game_timer_start = 0;
-        }else if(strcasecmp(action_name,"reset") == 0){
+        }else if(strcasecmp(action_name,"sequence") == 0){
                 println("Resetting states", INFO);
-                for(size_t i = 0; i < state_cnt; i++){
+                
+		for(size_t i = 0; i < state_cnt; i++){
                         state_trigger_status[i] = 0;
                 }
+
 
         }else if(strcasecmp(action_name,"delay") == 0){
 		uint32_t delay = json_object_get_int64(
@@ -196,7 +225,7 @@ int core_update_sequential(){
 	for(size_t i = 0; i < core_sequence_count; i++){
 		
 		struct sequence_dependency_t* sequence = 
-			&core_sequential_trigger[i];
+			&core_sequential_dependencies[i];
 		
 		json_object* dependencies = json_object_object_get(
 			sequence->dependency, "dependencies");

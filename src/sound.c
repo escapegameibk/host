@@ -57,6 +57,10 @@ int sound_trigger(json_object* trigger){
 	
 		return play_sound(resource);
 
+	} else if(strcasecmp(action, "reset") == 0){
+
+		return reset_sounds();
+
 	}else{
 		println("Unknown action to trigger for sound module!", ERROR);
 	}
@@ -104,6 +108,7 @@ int reset_sounds(){
 	for(size_t i = 0; i < playercnt; i++){
 		libvlc_media_player_release(vlc_mp[i]);
 	}
+
 	free(vlc_mp);
 	vlc_mp = malloc(0);
 	playercnt = 0;

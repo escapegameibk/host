@@ -44,6 +44,7 @@ struct sequence_dependency_t{
 	/* The root dependency containing the dependencys used for the sequence
 	 */
 	json_object* dependency;
+	/* The array legnth, not the byte length of the sequences */
 	size_t sequence_length;
 	/* These 2 objects contain the sequences of triggered dependencies */
 	size_t* target_sequence;
@@ -51,7 +52,7 @@ struct sequence_dependency_t{
 
 };
 
-struct sequence_dependency_t* core_sequential_trigger;
+struct sequence_dependency_t* core_sequential_dependencies;
 size_t core_sequence_count;
 struct core_permanent_trigger_t* core_permanent_trigger;
 
