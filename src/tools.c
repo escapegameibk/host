@@ -16,6 +16,7 @@
  */
 
 #include "tools.h"
+#include "log.h"
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
@@ -61,8 +62,10 @@ int first_free_in_array(size_t arrlen, int* array){
 /* Sleep milliseconds returns 0 on success and < 0 on error */
 int sleep_ms(uint32_t ms){
 	struct timespec tim;
-	tim.tv_sec = (ms - (ms % 1000));
-	tim.tv_nsec = (ms % 1000);
+	tim.tv_sec = (ms - (ms % 1000)) / 1000;
+	tim.tv_nsec = (ms % 1000) * 1000000;
+
+	println("sleeping %is and %ins", DEBUG, tim.tv_sec, tim.tv_nsec);
 	
 	struct timespec rel;
 

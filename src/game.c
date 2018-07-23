@@ -297,6 +297,7 @@ int trigger_event(size_t event_id){
 
         }
         
+	println("Done triggering!", DEBUG);
 
         return 0;
 }
