@@ -160,7 +160,7 @@ int core_check_dependency(json_object* dependency){
 
 			struct sequence_dependency_t* seq = 
 				&core_sequential_dependencies[i];
-			if(seq->dependency != dependency){
+			if(json_object_equal(seq->dependency, dependency)){
 				continue;
 			}
 
