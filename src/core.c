@@ -90,7 +90,11 @@ int core_init_dependency(json_object* dependency){
 		}
 		println("Registered sequence with 3 elements", DEBUG);
 
-		struct sequence_dependency_t seq = { dependency,
+		json_object* dependency_copy = NULL;
+		json_object_deep_copy(dependency, &dependency_copy, 
+			json_c_shallow_copy_default);
+
+		struct sequence_dependency_t seq = { dependency_copy,
 			sequence_length, 
 			malloc(sizeof(size_t) * sequence_length),
 			malloc(sequence_length * sizeof(size_t))};
