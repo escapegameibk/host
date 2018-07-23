@@ -71,5 +71,5 @@ int sleep_ms(uint32_t ms){
 
 	nanosleep(&tim, &rel);
 
-	return (memcmp(&tim, &rel, sizeof(tim)) == 0) - 1;
+	return 1;
 }
