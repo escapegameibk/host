@@ -170,7 +170,8 @@ int core_check_dependency(json_object* dependency){
 
 			struct sequence_dependency_t* seq = 
 				&core_sequential_dependencies[i];
-			if(json_object_equal(seq->dependency, dependency)){
+			if(strcmp(json_object_get_string(seq->dependency),
+				json_object_get_string(dependency)) != 0){
 				continue;
 			}
 
@@ -239,6 +240,8 @@ int core_update_sequential(){
 		
 		json_object* dependencies = json_object_object_get(
 			sequence->dependency, "dependencies");
+
+		
 
 		for(size_t dep = 0; dep < json_object_array_length(
 			dependencies); dep++){
