@@ -109,6 +109,12 @@ int core_init_dependency(json_object* dependency){
 		memset(seq.sequence_so_far, 0, 
 			sequence_length * sizeof(size_t));
 		/* Append the struct to the array */
+
+		core_sequential_dependencies = realloc(
+			core_sequential_dependencies, ++core_sequence_count 
+			* sizeof(struct sequence_dependency_t));
+		memcpy(&core_sequential_dependencies[core_sequence_count -1],
+			&seq, sizeof(struct sequence_dependency_t));
 	}
 	/* Ignore everything else */
 
@@ -176,7 +182,7 @@ int core_check_dependency(json_object* dependency){
 		 }
 		
 		/* WTF?! */
-		println("FOUND UNINITIALIZED SEUQNENTIAL DEPENDENCY!!!", ERROR);
+		println("FOUND UNINITIALIZED SEQUENTIAL DEPENDENCY!!!", ERROR);
 		println("THIS SHOULD BE IMPOSSIBLE!!!!", ERROR);
 		return -3;
 
