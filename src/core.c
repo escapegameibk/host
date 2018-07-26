@@ -57,6 +57,10 @@ void* core_loop(){
 			println("Failed to check sequential dependency!", 
 				DEBUG);
 		}
+		struct timespec tim;
+		tim.tv_sec = 0;
+		tim.tv_nsec = PATROL_INTERVAL_NS;
+		nanosleep(&tim, NULL);
 
 	}
 	
@@ -90,11 +94,8 @@ int core_init_dependency(json_object* dependency){
 		}
 		println("Registered sequence with 3 elements", DEBUG);
 
-		json_object* dependency_copy = NULL;
-		json_object_deep_copy(dependency, &dependency_copy, 
-			json_c_shallow_copy_default);
-
-		struct sequence_dependency_t seq = { dependency_copy,
+		struct sequence_dependency_t seq = { dependency,
+			get_dependency_id(dependency),
 			sequence_length, 
 			malloc(sizeof(size_t) * sequence_length),
 			malloc(sequence_length * sizeof(size_t))};
@@ -115,6 +116,8 @@ int core_init_dependency(json_object* dependency){
 			* sizeof(struct sequence_dependency_t));
 		memcpy(&core_sequential_dependencies[core_sequence_count -1],
 			&seq, sizeof(struct sequence_dependency_t));
+		println("Successfully initialized sequence with id %i", DEBUG, 
+			seq.dependency_id);
 	}
 	/* Ignore everything else */
 
@@ -170,12 +173,11 @@ int core_check_dependency(json_object* dependency){
 
 			struct sequence_dependency_t* seq = 
 				&core_sequential_dependencies[i];
-			if(strcmp(json_object_get_string(seq->dependency),
-				json_object_get_string(dependency)) != 0){
+			if(seq->dependency_id != get_dependency_id(dependency)){
 				continue;
 			}
 
-			/* Return "0 == true" compliant */
+			/* Return ">=0 == true" compliant */
 			return (memcmp(seq->target_sequence,
 				seq->sequence_so_far, seq->sequence_length * 
 				sizeof(size_t)) == 0) - 1;

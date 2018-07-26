@@ -21,6 +21,7 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <json-c/json.h>
+#include <stdint.h>
 
 #define PATROL_INTERVAL_NS 5000000
 #define DEFAULT_GAME_TIME 3600
@@ -40,7 +41,9 @@ int check_dependency(json_object* dependency);
 
 json_object* get_all_dependencies();
 int* get_all_dependency_states(size_t * state_cnt);
-
+int get_dependency_id();
+json_object** dependency_list;
+size_t dependency_count;
 pthread_t game_thread;
 long long int game_timer_start, game_duration;
 

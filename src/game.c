@@ -34,6 +34,8 @@ int init_game(){
 
         const char* name = json_object_get_string(json_object_object_get(
                                 config_glob, "name"));
+	dependency_list = malloc(0);
+	dependency_count = 0;
         if(name == NULL){
                 
                 println("Initializing game: %s",DEBUG, "UNSPECIFIED!");
@@ -87,6 +89,11 @@ int init_game(){
 int init_dependency(json_object* dependency){
 	const char* module_name = json_object_get_string(
 				json_object_object_get(dependency,"module"));
+
+	dependency_list = realloc(dependency_list, ++dependency_count * 
+		sizeof(json_object *));
+	dependency_list[dependency_count - 1] = dependency;
+
 	if(module_name == NULL){
 		println("Specified no module in dependency!", ERROR);
 		return -1;
@@ -378,4 +385,24 @@ int* get_all_dependency_states(size_t* state_cnt){
 	json_object_put(dependencies);
 
 	return states;
+}
+
+/* 
+ * This returns a dependency's id, or it's place in the global dependency
+ * array. This is needed for various things, e.g nested dependencys, which are
+ * supported by some modules like the core. This functions returns >=0 on
+ * sucess and <0 on error.
+ */
+int get_dependency_id(json_object* dependency){
+
+	
+	for(size_t i = 0; i < dependency_count; i++){
+		if(dependency_list[i] == dependency){
+			return i;
+		}
+	}
+	
+	println("Failed to find id for dependecy! dumping!", ERROR);
+	json_object_to_fd(STDOUT_FILENO,dependency, JSON_C_TO_STRING_PRETTY);
+	return -1;
 }

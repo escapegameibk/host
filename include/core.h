@@ -44,6 +44,7 @@ struct sequence_dependency_t{
 	/* The root dependency containing the dependencys used for the sequence
 	 */
 	json_object* dependency;
+	int dependency_id;
 	/* The array legnth, not the byte length of the sequences */
 	size_t sequence_length;
 	/* These 2 objects contain the sequences of triggered dependencies */
