@@ -354,10 +354,27 @@ int print_events_interface(int sockfd){
 int print_dependencies_interface(int sockfd){
 
 
-	json_object* dependencies = get_all_dependencies();
+	json_object** dependencies = dependency_list;
+	json_object* dep_array = json_object_new_array();
+	for(size_t i = 0; i < dependency_count; i++){
+		
+		const char* module = json_object_get_string(
+			json_object_object_get(dependencies[i], "module"));
 
-	json_object_to_fd(sockfd, dependencies, JSON_C_TO_STRING_PLAIN);
-	json_object_put(dependencies);
+		/* Ommit core dependencies */
+		if(strcasecmp(module, "core") == 0){
+			continue;
+		}
+		
+		json_object* dep = NULL;
+		json_object_deep_copy(dependencies[i], &dep, 
+			json_c_shallow_copy_default);
+		
+		json_object_array_add(dep_array, dep);
+	}
+
+	json_object_to_fd(sockfd, dep_array, JSON_C_TO_STRING_PLAIN);
+	json_object_put(dep_array);
 
 	return 0;
 	
@@ -365,14 +382,21 @@ int print_dependencies_interface(int sockfd){
 
 int print_dependency_states_interface(int sockfd){
 
-	size_t length = 0;
-	int* dependency_states = get_all_dependency_states(&length);
-
 	json_object* stats = json_object_new_array();
 	
-	for(size_t i = 0; i < length; i++){
-		json_object_array_add(stats,json_object_new_int(
-			dependency_states[i]));
+	json_object** dependencies = dependency_list;
+	for(size_t i = 0; i < dependency_count; i++){
+		
+		const char* module = json_object_get_string(
+			json_object_object_get(dependencies[i], "module"));
+
+		/* Ommit core dependencies */
+		if(strcasecmp(module, "core") == 0){
+			continue;
+		}
+		json_object* stat = json_object_new_int(check_dependency(
+			dependencies[i]));
+		json_object_array_add(stats, stat);
 	}
 
 	json_object_to_fd(sockfd, stats, JSON_C_TO_STRING_PLAIN);
