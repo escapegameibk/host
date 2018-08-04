@@ -92,7 +92,9 @@ int init_dependency(json_object* dependency){
 
 	dependency_list = realloc(dependency_list, ++dependency_count * 
 		sizeof(json_object *));
-	dependency_list[dependency_count - 1] = dependency;
+	json_object* dep_cpy = NULL;
+	json_object_deep_copy(dependency,&dep_cpy,json_c_shallow_copy_default);
+	dependency_list[dependency_count - 1] = dep_cpy;
 
 	if(module_name == NULL){
 		println("Specified no module in dependency!", ERROR);
@@ -394,12 +396,10 @@ int* get_all_dependency_states(size_t* state_cnt){
  * sucess and <0 on error.
  */
 int get_dependency_id(json_object* dependency){
-
 	
 	for(size_t i = 0; i < dependency_count; i++){
-		if(dependency_list[i] == dependency){
+		if(!strcmp(json_object_get_string(dependency_list[i]), json_object_get_string(dependency)))
 			return i;
-		}
 	}
 	
 	println("Failed to find id for dependecy! dumping!", ERROR);

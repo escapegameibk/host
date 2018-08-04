@@ -28,7 +28,7 @@
 #include <unistd.h>
 
 size_t core_sequence_count = 0;
-struct sequence_dependency_t *core_sequential_dependencies = NULL;
+struct sequence_dependency_t **core_sequential_dependencies = NULL;
 
 int init_core(){
 	
@@ -44,7 +44,6 @@ int start_core(){
                  println("failed to create core thread", ERROR);                      
                  return -2;                                                      
         }
-
 
 	return 0;
 }
@@ -92,36 +91,38 @@ int core_init_dependency(json_object* dependency){
 			println("Empty sequence detected!", ERROR);
 			return -2;
 		}
-		println("Registered sequence with 3 elements", DEBUG);
+		println("Registered sequence with %i elements", DEBUG,
+			json_object_array_length(sequence));
 
-		struct sequence_dependency_t seq = { dependency,
-			get_dependency_id(dependency),
-			sequence_length, 
-			malloc(sizeof(size_t) * sequence_length),
-			malloc(sequence_length * sizeof(size_t))};
+		struct sequence_dependency_t* seq = malloc(sizeof(struct 
+			sequence_dependency_t));
+		memset(seq, 0, sizeof(struct sequence_dependency_t));
+		seq->dependency = dependency;
+		seq->dependency_id = get_dependency_id(dependency);
+		seq->sequence_length = sequence_length; 
+		seq->target_sequence = malloc(sizeof(size_t) * sequence_length);
+		seq->sequence_so_far = malloc(sequence_length * sizeof(size_t));
 		/* Write the target sequence to the struct */
 		for(size_t i = 0; i < sequence_length; i++){
 			size_t dep = json_object_get_int(
 				json_object_array_get_idx(sequence,i));
 
-			seq.target_sequence[i] = dep;
+			seq->target_sequence[i] = dep;
 
 		}
-		memset(seq.sequence_so_far, 0, 
+
+		memset(seq->sequence_so_far, 0, 
 			sequence_length * sizeof(size_t));
 		/* Append the struct to the array */
 
 		core_sequential_dependencies = realloc(
 			core_sequential_dependencies, ++core_sequence_count 
-			* sizeof(struct sequence_dependency_t));
-		memcpy(&core_sequential_dependencies[core_sequence_count -1],
-			&seq, sizeof(struct sequence_dependency_t));
-		println("Successfully initialized sequence with id %i", DEBUG, 
-			seq.dependency_id);
+			* sizeof(struct sequence_dependency_t *));
+		core_sequential_dependencies[core_sequence_count - 1] = seq;
+		println("Successfully initialized syequence with id %i", DEBUG, 
+			seq->dependency_id);
 	}
 	/* Ignore everything else */
-
-
 
 	return 0;
 }
@@ -172,7 +173,7 @@ int core_check_dependency(json_object* dependency){
 		 for(size_t i = 0; i < core_sequence_count; i++){
 
 			struct sequence_dependency_t* seq = 
-				&core_sequential_dependencies[i];
+				core_sequential_dependencies[i];
 			if(seq->dependency_id != get_dependency_id(dependency)){
 				continue;
 			}
@@ -238,12 +239,21 @@ int core_update_sequential(){
 	for(size_t i = 0; i < core_sequence_count; i++){
 		
 		struct sequence_dependency_t* sequence = 
-			&core_sequential_dependencies[i];
+			core_sequential_dependencies[i];
+
 		
 		json_object* dependencies = json_object_object_get(
 			sequence->dependency, "dependencies");
 
-		
+		if(dependencies == NULL){
+			println("FAILED TO GET DEPENENDENCIES FOR SEQUENCE! \
+DUMPING:", 
+				DEBUG);
+				json_object_to_fd(STDOUT_FILENO,
+					sequence->dependency,
+					JSON_C_TO_STRING_PRETTY);
+				return -1;
+		}
 
 		for(size_t dep = 0; dep < json_object_array_length(
 			dependencies); dep++){
@@ -260,7 +270,7 @@ int core_update_sequential(){
 					ERROR);
 				json_object_to_fd(STDOUT_FILENO, dependency, 
 					JSON_C_TO_STRING_PLAIN);
-				return -1;
+				return -2;
 			}else{
 				bool evaluated = !!(state);
 				

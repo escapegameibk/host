@@ -53,7 +53,7 @@ struct sequence_dependency_t{
 
 };
 
-struct sequence_dependency_t* core_sequential_dependencies;
+struct sequence_dependency_t** core_sequential_dependencies;
 size_t core_sequence_count;
 struct core_permanent_trigger_t* core_permanent_trigger;
 
