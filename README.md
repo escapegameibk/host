@@ -79,11 +79,30 @@ If a dependency is met, the next dependcy is checked. If all dependencies are
 met, the triggeres are executed, and the event is beeing marked as triggered.
 A dependency only needs to specify it's module name with the "module" string.
 Optionally a name may be given via the "name" field. This is useful for debug
-output. 
+output. It cannot be assuemd, that dependency checks are run in a certain
+interval. It may be possible for a check to only occure from every few milli-
+seconds to every hour! If your backend module relies on checks in a certain
+interval, please build a cache.
+
+### Triggers
+
+Triggers are executed after all dependencys of an event are fullfilled, or if
+an event has been triggered manually. If one trigger fails to execute, the
+complete event gets reset, which doesn't mean, that i attempt to do magic
+with the triggers, but that i reset the trigger state of the event and continue
+as usual. A trigger must contain any module value and may contain any other 
+values.
+
+## Modules
+
+All modules get their respective dependencies before initialisation to prepare
+them for further actions. Nested dependencies are possible, but the module has
+to initialize it's dependencies in order for them to work. Afterwards the
+modules get initialized. 
 
 # ERRATA
 
-# Raspberry Pi
+## Raspberry Pi
 
 If the host is a raspberry pi and the native USART connection is used, it is
 known that it won't work, unless you change the following things:

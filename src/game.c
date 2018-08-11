@@ -22,6 +22,7 @@
 #include "mtsp.h"
 #include "sound.h"
 #include "core.h"
+#include "tools.h"
 
 #include <stddef.h>
 #include <stdio.h>
@@ -229,6 +230,14 @@ int trigger_event(size_t event_id){
                 println("Tried to trigger invalid event %i", WARNING, event_id);
                 return -1;
         }
+
+	static bool trigger_lock = false;
+	while(trigger_lock){/* NOP */}
+	trigger_lock = true;
+	
+	/* Sleep 1 ms to prevent unintended collisions */
+	sleep_ms(1);
+
         
         state_trigger_status[event_id] = 1;
         /* Iterate through triggers */
@@ -240,6 +249,7 @@ int trigger_event(size_t event_id){
 	if(triggers == NULL){
 		println("Attempted to trigger an event without triggers", INFO);
 		/* It was still a success i guess */
+		trigger_lock = false;
 		return 0;
 	}
 
@@ -265,6 +275,7 @@ int trigger_event(size_t event_id){
                                         ERROR);
                                 /* Untrigger event */
                                 state_trigger_status[event_id] = 0;
+				trigger_lock = false;
                                 return -1;
                         }
                         continue;
@@ -279,6 +290,7 @@ int trigger_event(size_t event_id){
                                 
                                 /* Untrigger event */
                                 state_trigger_status[event_id] = 0;
+				trigger_lock = false;
                                 return -1;
                         }
                         continue;
@@ -295,6 +307,7 @@ int trigger_event(size_t event_id){
                                 
                                 /* Untrigger event */
                                 state_trigger_status[event_id] = 0;
+				trigger_lock = false;
                                 return -1;
                         }
                         continue;
@@ -307,6 +320,7 @@ int trigger_event(size_t event_id){
         }
         
 	println("Done triggering!", DEBUG);
+	trigger_lock = false;
 
         return 0;
 }
