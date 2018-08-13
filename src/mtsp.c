@@ -189,40 +189,11 @@ int init_mtsp(char* device, int baud){
         termios.c_cc[VMIN] = 0; /* Set timeout of 0.1 seconds */
         tcsetattr(mtsp_fd, TCSANOW, &termios);
 
-        /* I have to send a notice to all MP3 / RFID devices on how many
-	 * devices are attached to them. I have to count all ports which are
-	 * above 199 or C7 and send a count to the device to port 0xA.
-         */
-
-	 for(size_t i = 0; i < mtsp_device_count; i++){
-
-		struct mtsp_device_t* dev = &mtsp_devices[i];
-		uint8_t register_large_count = 0;
-
-		for(size_t j = 0; j < dev->port_cnt; j++){
-			if(dev->ports[j].address >= 200){
-				register_large_count++;
-			}
-		}
-
-		/* Send the device a notice */
-		if(register_large_count > 0){
-			uint8_t payload[] = {0xA, register_large_count};
-			if(mtsp_send_request(dev->device_id, 2, payload, 
-					sizeof(payload)) < 0){
-
-				println("Failed to notice mtsp device %i of \
-it's rfid count!", ERROR, dev->device_id);
-				/* I don't want to error out at this point, but
-				 * it seems that i have to */
-				 return -3;
-			}else{
-				println("Notified mtsp device %i of it's %i \
-RFID/MP3 Devices",
-					DEBUG, dev->device_id, register_large_count);
-			}
-		}
-	 }
+	if(mtsp_send_notify() < 0){
+		
+		println("Failed to send MTSP notify to all devices!!", ERROR);
+		return -3;
+	}
 
         return 0;
 }
@@ -656,6 +627,46 @@ int mtsp_check_dependency(json_object* dep){
 
 	return port->state == target;
 
+
+}
+
+int mtsp_send_notify(){
+        /* I have to send a notice to all MP3 / RFID devices on how many
+	 * devices are attached to them. I have to count all ports which are
+	 * above 199 or C7 and send a count to the device to port 0xA.
+         */
+
+	 for(size_t i = 0; i < mtsp_device_count; i++){
+
+		struct mtsp_device_t* dev = &mtsp_devices[i];
+		uint8_t register_large_count = 0;
+
+		for(size_t j = 0; j < dev->port_cnt; j++){
+			if(dev->ports[j].address >= 200){
+				register_large_count++;
+			}
+		}
+
+		/* Send the device a notice */
+		if(register_large_count > 0){
+			uint8_t payload[] = {0xA, register_large_count};
+			if(mtsp_send_request(dev->device_id, 2, payload, 
+					sizeof(payload)) < 0){
+
+				println("Failed to notice mtsp device %i of \
+it's rfid count!", ERROR, dev->device_id);
+				/* I don't want to error out at this point, but
+				 * it seems that i have to */
+				 return -1;
+			}else{
+				println("Notified mtsp device %i of it's %i \
+RFID/MP3 Devices",
+					DEBUG, dev->device_id, register_large_count);
+			}
+		}
+	 }
+
+	return 0;
 
 }
 

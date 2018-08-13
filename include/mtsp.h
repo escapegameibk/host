@@ -50,6 +50,8 @@ int mtsp_send_request(uint8_t slave_id, uint8_t command_id,
 int mtsp_trigger(json_object* trigger);
 int mtsp_check_dependency(json_object* dep);
 
+int mtsp_send_notify();
+
 pthread_t mtsp_thread;
 int mtsp_fd;
 
