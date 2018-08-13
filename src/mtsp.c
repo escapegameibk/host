@@ -262,6 +262,21 @@ int start_mtsp(){
         return 0;
 }
 
+/* This function brings the mtsp stuff into an initial state in order to avoid
+ * any errors.
+ */
+int reset_mtsp(){
+
+	if(mtsp_send_notify() < 0){
+
+		println("MTSP device notify failed!!", ERROR);
+		return -1;
+
+	}
+
+	return 0;
+}
+
 /* This sends update requests to all nodes on the bus to send their input
  * states back to me, reads their messages and processes them.
  */

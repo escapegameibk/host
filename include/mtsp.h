@@ -37,6 +37,7 @@ int init_mtsp(char* device, int baud);
 int mtsp_init_dependency(json_object* dependency);
 void* loop_mtsp();
 int start_mtsp();
+int reset_mtsp();
 int update_mtsp_states();
 uint8_t* mtsp_assemble_frame(uint8_t slave_id, uint8_t command_id, 
         uint8_t* payload, size_t palyoad_length);

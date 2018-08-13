@@ -21,6 +21,7 @@
 #include "log.h"
 #include "tools.h"
 #include "data.h"
+#include "mtsp.h"
 
 #include <string.h>
 #include <strings.h>
@@ -237,6 +238,11 @@ int core_trigger(json_object* trigger){
 				core_sequential_dependencies[i];
 				memset(seq->sequence_so_far, 0, 
 					seq->sequence_length);
+		}
+
+		if(reset_mtsp() < 0){
+			println("Failed to reset MTSP!", ERROR);
+			return -1;
 		}
 
 
