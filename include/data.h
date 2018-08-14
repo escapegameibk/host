@@ -22,12 +22,12 @@
  *      MAJOR:
  *              0...            ALPHA
  *              1...            BETA
- *              1ff...          RELEASE
+ *		2ff...          RELEASE
  *
  */
 #define VERSION_MAJOR           0
 #define VERSION_MINOR           3
-#define VERSION_RELEASE         1
+#define VERSION_RELEASE         2
 
 #define SHUTDOWN_DELAY 5
 
