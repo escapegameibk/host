@@ -141,7 +141,7 @@ int start_game(){
 	if(init_trigger != NULL){
 		size_t trig = json_object_get_int(init_trigger);
 
-		println("initialy triggering event no %i", DEBUG, trig);
+		println("initially triggering event no %i", DEBUG, trig);
 
 		trigger_event(trig);
 	}
@@ -253,8 +253,11 @@ int trigger_event(size_t event_id){
 		return 0;
 	}
 
-        println("Triggering %i triggers ",DEBUG, 
-		json_object_array_length(triggers));
+        println("Triggering %i triggers for event %s/%i",DEBUG, 
+		json_object_array_length(triggers),json_object_get_string(
+		json_object_object_get(json_object_array_get_idx(
+		json_object_object_get(config_glob,"events"), event_id), 
+		"name")), event_id);
 		
 	for(size_t triggercnt = 0; triggercnt < 
 		json_object_array_length(triggers); triggercnt++){
@@ -262,12 +265,9 @@ int trigger_event(size_t event_id){
 		json_object* trigger = json_object_array_get_idx(triggers,
                         triggercnt);
 		
-		println("Executing trigger for event %i",DEBUG, event_id,
-			json_object_get_string(json_object_object_get(trigger,
-			"name")));
 
 		if(execute_trigger(trigger) < 0){
-			println("FAILED TO EXECUTE TRIGGER!RESETTING!", ERROR);
+			println("FAILED TO EXECUTE TRIGGER! RESETTING!", ERROR);
                         state_trigger_status[event_id] = 0;
 			/* untrigger event */
 			trigger_lock = false;
@@ -287,6 +287,8 @@ int execute_trigger(json_object* trigger){
 
 	const char* module = json_object_get_string(json_object_object_get(
                 trigger,"module"));
+	println("Executing trigger %s", DEBUG, json_object_get_string(
+		json_object_object_get(trigger,"name")));
         
         /* Find out which module is concerned and execute the trigger
          * in the specified function of the module.
