@@ -34,7 +34,9 @@ int start_game();
 int patrol();
 void* loop_game();
 
+
 int trigger_event(size_t event_id);
+int execute_trigger(json_object* trigger);
 int check_dependency(json_object* dependency);
 
 /* utility functions */

@@ -312,8 +312,28 @@ DUMPING:",
 					(sequence->sequence_length - 1) * 
 					sizeof(size_t));
 				sequence->sequence_so_far[0] = dep;
+
 				println("Adding %i to sequence with id %i:", 
 					DEBUG, dep, sequence->dependency_id);
+				json_object* trigger = json_object_object_get(
+					sequence->dependency, "update_trigger");
+
+				if(trigger != NULL){
+					println(
+"Triggering aditional dependencies for sequence update."
+						, DEBUG);
+
+					for(size_t i = 0; i < 
+						json_object_array_length(
+						trigger); i++){
+						execute_trigger(
+						json_object_array_get_idx(
+						trigger,i));
+					}
+					
+
+				}
+
 				for(size_t i = 0; i < sequence->sequence_length;
 					i++){
 					println("%i:\t%i/%i", DEBUG, i, 

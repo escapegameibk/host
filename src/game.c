@@ -253,77 +253,87 @@ int trigger_event(size_t event_id){
 		return 0;
 	}
 
-        println("Triggering %i triggers ",DEBUG, json_object_array_length(triggers));
-         for(size_t triggercnt = 0; triggercnt < 
-                json_object_array_length(triggers); triggercnt++){
-                json_object* trigger = json_object_array_get_idx(triggers,
+        println("Triggering %i triggers ",DEBUG, 
+		json_object_array_length(triggers));
+		
+	for(size_t triggercnt = 0; triggercnt < 
+		json_object_array_length(triggers); triggercnt++){
+		
+		json_object* trigger = json_object_array_get_idx(triggers,
                         triggercnt);
-                println("Executing trigger for event %i: %s",DEBUG, event_id,
-                        json_object_get_string(json_object_object_get(trigger,
-                        "name")));
-                const char* module = json_object_get_string(json_object_object_get(
-                        trigger,"module"));
-                
-                /* Find out which module is concerned and execute the trigger
-                 * in the specified function of the module.
-                 */
+		
+		println("Executing trigger for event %i",DEBUG, event_id,
+			json_object_get_string(json_object_object_get(trigger,
+			"name")));
 
-                if(strcasecmp(module,"core") == 0){
-                        /* The core module is concerned. */
-                        if(core_trigger(trigger) < 0){
-                                println("Failed to execute trigger for core!",
-                                        ERROR);
-                                /* Untrigger event */
-                                state_trigger_status[event_id] = 0;
-				trigger_lock = false;
-                                return -1;
-                        }
-                        continue;
-                }
- 
-#ifndef NOMTSP
-                if(strcasecmp(module,"mtsp") == 0){
-                        /* The mtsp module is concerned. */
-                        if(mtsp_trigger(trigger) < 0){
-                                println("Failed to execute trigger for mtsp!",
-                                        ERROR);
-                                
-                                /* Untrigger event */
-                                state_trigger_status[event_id] = 0;
-				trigger_lock = false;
-                                return -1;
-                        }
-                        continue;
-                }
-#endif
+		if(execute_trigger(trigger) < 0){
+			println("FAILED TO EXECUTE TRIGGER!RESETTING!", ERROR);
+                        state_trigger_status[event_id] = 0;
+			/* untrigger event */
+			trigger_lock = false;
+			return -1;
+		}
 
-#ifndef NOSOUND
-
-                if(strcasecmp(module,"snd") == 0){
-                        /* The sound module is concerned. */
-                        if(sound_trigger(trigger) < 0){
-                                println("Failed to execute trigger for snd!",
-                                        ERROR);
-                                
-                                /* Untrigger event */
-                                state_trigger_status[event_id] = 0;
-				trigger_lock = false;
-                                return -1;
-                        }
-                        continue;
-                }
-#endif
-                println("UNKNOWN MODULE %s!!",ERROR, module);
-                state_trigger_status[event_id] = 0;
-                return -2;
-
-        }
-        
+	 }
 	println("Done triggering!", DEBUG);
 	trigger_lock = false;
 
         return 0;
 }
+
+
+int execute_trigger(json_object* trigger){
+
+
+	const char* module = json_object_get_string(json_object_object_get(
+                trigger,"module"));
+        
+        /* Find out which module is concerned and execute the trigger
+         * in the specified function of the module.
+         */
+
+        if(strcasecmp(module,"core") == 0){
+                /* The core module is concerned. */
+                if(core_trigger(trigger) < 0){
+                        println("Failed to execute trigger for core!",
+                                ERROR);
+                        return -1;
+                }
+		return 0;
+        }
+ 
+#ifndef NOMTSP
+	if(strcasecmp(module,"mtsp") == 0){
+                /* The mtsp module is concerned. */
+                if(mtsp_trigger(trigger) < 0){
+                        println("Failed to execute trigger for mtsp!",
+                                ERROR);
+                        
+                        return -1;
+
+                }
+		return 0;
+	}
+#endif
+
+#ifndef NOSOUND
+
+	if(strcasecmp(module,"snd") == 0){
+		/* The sound module is concerned. */
+		if(sound_trigger(trigger) < 0){
+			println("Failed to execute trigger for snd!",
+				ERROR);
+                       
+			return -1;
+		}
+		return 0;
+	}
+#endif
+        println("UNKNOWN MODULE %s!!",ERROR, module);
+	return -2;
+
+}
+
 
 /* Checks wether a dependency is met
  * Returns < 0 on error, 0 if not, and > 0 if forfilled.

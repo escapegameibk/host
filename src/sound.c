@@ -19,6 +19,7 @@
 #include <strings.h>
 #include "config.h"
 #include "log.h"
+#include "tools.h"
 
 int init_sound(){
 
@@ -95,10 +96,20 @@ int play_sound(const char* url){
 		return -1;
 	}
 
-        vlc_mp = realloc(vlc_mp,++playercnt);
+	println("Updating cue to %i currently playing players.", DEBUG, 
+		++playercnt);
+
+        vlc_mp = realloc(vlc_mp, playercnt * sizeof (libvlc_media_player_t *));
         vlc_mp[playercnt-1] = libvlc_media_player_new_from_media (m);
         libvlc_media_release(m);
         libvlc_media_player_play(vlc_mp[playercnt-1]);
+
+	/* Wait for alsa to respond, as the vlc handles everything from now on
+	 * in a separate thread.
+	 */
+
+	sleep_ms(100);
+
 	return 0;
 
 }
@@ -110,7 +121,7 @@ int reset_sounds(){
 	}
 
 	free(vlc_mp);
-	vlc_mp = malloc(0);
+	vlc_mp = NULL;
 	playercnt = 0;
 
 	return 0;
