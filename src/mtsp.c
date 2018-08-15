@@ -502,36 +502,55 @@ int mtsp_send_request(uint8_t slave_id, uint8_t command_id, uint8_t* payload,
         while(lock){ /* NOP */ }
         lock = true;
         
-        /* Send my request */
-        int n = mtsp_write(request, payload_length + MTSP_FRAME_OVERHEAD);
+#define ERROR_THRESHOLD 10
+
+	int return_value = -1;
+	uint8_t* reply = NULL;
+
+	/* This will try to send the message to the device until ERROR_THRESHOLD
+	 * is reached. in that case, it will cancle and error out. 
+	 */
+	for(size_t i = 0; i < ERROR_THRESHOLD; i++){
+		
+		/* Send my request */
+		int n = mtsp_write(request, payload_length + MTSP_FRAME_OVERHEAD);
         
-        if ( n < 0){
-                /* Write failed. Unlock and return */
-                lock = false;
-                return -1;
-        }
+		if ( n < 0){
+			/* Write failed. retry */
+			println("Failed to write to mtsp device %i!",
+				WARNING, slave_id);
+			return_value = -1;
+		}
+        
+		reply = mtsp_receive_message();
+        
+		if(reply == NULL){
+			println("Failed to get reply from mtsp device %i!",
+				WARNING, slave_id);
+			return_value = -2;
+			continue;
+		}
+        
+		n = mtsp_process_frame(reply);
+        
+		if( n < 0){
+			println("Failed to get VALID reply from mtsp device %i",
+				WARNING, slave_id);
+			return_value = -3;
+			continue;
+		}
+
+		return_value = 0;
+		break;
+
+	}
+
 
         free(request);
-        
-        uint8_t* reply = mtsp_receive_message();
-        
-        if(reply == NULL){
-                lock = false;
-                return -2;
-        }
-        
-        n = mtsp_process_frame(reply);
-        
-        if( n < 0){
-                free(reply);
-                lock = false;
-                return -3;
-        }
-        
         free(reply);
         lock = false;
 
-        return 0;
+        return return_value;
 
 }
 

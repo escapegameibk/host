@@ -1,9 +1,13 @@
-# Painter
+# Host
 
 ## About
-This is the backend for the painter at the escape game innsbruck. it basically
-opens a unix socket at /tmp/escape and reads commands from there. Every command
-has to be a valid json an has to contain the following things:
+This is the host for games at the escape game innsbruck.
+
+## Interface
+
+The interface to anything wanting to communicate with the host is provided
+at /var/run/escape/socket. It takes queries in form of a json object and
+answers in form of a json object.
 
 - An element called ´action´ which states what type of action the
 command is
@@ -11,7 +15,9 @@ command is
 - Any other value as defined by the parser.
 
 Documentation on how the commands are parsed and executed may be found in 
-src/interface.c.
+src/interface.c. Further documentation is a TODO.
+
+## Serial interface 
 
 A serial connection to a µc is established at application start. Documentation
 on how the protocol works can be found in ../arduino/README.md.
@@ -24,7 +30,8 @@ which permits you to use it commercially, but requires you to give users the
 source code. in any case, we don't sell the software itself any way,
 so it doesn't really matter.
 
-## Dependencies
+## Build Dependencies
+
 As of now, the program has the following dependencies:
 
 - json-c >= 0.13
@@ -46,7 +53,9 @@ following order:
 
 if none of the above exists or is a valid json, the host will return with exit
 code 1. 
+
 ## General configuration
+
 The following fields may be specified on the upper most level of the
 json file:
 
@@ -100,8 +109,111 @@ them for further actions. Nested dependencies are possible, but the module has
 to initialize it's dependencies in order for them to work. Afterwards the
 modules get initialized. 
 
-# ERRATA
+### CORE
 
+The core module contains all game relevant triggers and dependencys. It
+communicate directly with the host's internal states and attempts to give a
+clear interface to the user.
+
+#### Dependencies
+
+The core module is specified via the module field inside of a dependency. It
+REQUIRES a type field to be specified. This type field contains information on
+what type of dependency it is. The following types have been defined as of now:
+
+1. event:
+	Event dependencies are fullfilled if the event-id integer specified 
+	inside the event field. Optionally a target field may be specified 
+	containing a boolean which will be compared agaist the event's trigger-
+	state.
+2. sequence:
+	Sequence dependencies are fullfilled, if a specific sequence of sub-
+	dependencies is matched to a target. Imagine you want a series of
+	inputs from a user in the right order. That's waht i would call a 
+	sequence. Sequences require at the very least a squence array field and
+	a dependencies array field to be specified. The dependencies array field
+	may contain any amount of dependencies which is larger than 1, wheter
+	this makes sense or not is totally up to you. The dependencies specified
+	inside of this field are all treated as if they were regular
+	dependencies. They may contain ANY other dependency, if you want to even
+	another sequence may be specified in here. The sequence field consists
+	of an array containing integer values. It specifies in which order the
+	dependencies have to be triggered. If you for example specify 2,1,0,
+	the first dependency to trigger would be the first one, the second the
+	second one, and the third the third one. Yes arrays start at 0. This
+	means the first element is the last one in the sequence array.
+
+#### Triggers 
+The core module is specified via the module field inside of a trigger.
+It REQUIRES an action field to be specified. It may contain any of the
+following actions:
+
+1. timer_start:
+	This action starts the timer and sets it's start time to the current
+	unix time. No additional fields are required.
+
+2. timer_stop:
+	This action causes the start time to be set to 0, therefore causing it
+	to be stopped. No additional fields are required
+
+3. reset:
+	Reset all game critical things and modules to their initial state. This
+	DOESN't cause the game to automatically reset all values, but rather the
+	modules to perform a cleanup. It also resets all events to be not
+	triggered.  No additional fields are required.
+
+4. delay:
+	A delay is performed. As all triggeres are executed in serial, this
+	can be used to wait a bit before triggereing the next thing. It
+	requires a delay field to be specified containing the time to be slept
+	in milliseconds aka 1s/1000.
+
+### SND
+
+The sound module aka snd is specified inside the module section of a trigger
+with the value snd. Specifying the sound module inside a dependency is not 
+valid as of the time of writing. 
+
+#### Triggers 
+
+The sound module requires an action field to be specified. This action field
+specifies what the sound module should do. The following actions have been
+specified as of now:
+
+1. play:
+	This action tells the sound module to play whatever URL is specified
+	inside the resource field. This may be a http link, a file link, or
+	anything else that can be passed to the libvlc without error.
+
+2. reset:
+	This clears ALL currently playing sounds. No additional fields are 
+	required.
+
+### MTSP
+
+The module called MTSP which is an acronym for *Minimum Transport Security
+Protocol* provides an interface for hardware from the esd team, a russian group
+of people which thought using a 480600 baud connection for more than 2m would
+be a good idea. It heavily uses caching and error checking as it is highly
+propable, that messages get lost from this protocol. It can be trigger, as well
+as dependency, and is specified as mtsp in the module field.
+
+#### Dependencies
+
+Dependencies are cached, and therefore have very low latencies to access. A
+dependency is required to contain at least a device field, a register field,
+and a target field. If one of the above is not present, the program will either
+crash or error-out! The target specifies a 32 bit unsigned integer which is
+compared to the return value of the mtsp device and port.
+
+#### Triggers
+
+Triggeres are real time, and if something fails to trigger, the ENTIRE event
+is reset and may only be re-triggered from the very beginning. Triggeres are not
+checked during initialisation. A trigger requires a device, register and target
+to be specified. The target is written to the device at the specified register.
+
+# ERRATA
 ## Raspberry Pi
 
 If the host is a raspberry pi and the native USART connection is used, it is
