@@ -282,7 +282,9 @@ DUMPING:",
 
 		}
 
-		for(size_t dep = 0; dep < sequence->sequence_length; dep++){
+		for(size_t dep = 0; dep < 
+			json_object_array_length(dependencies); 
+			dep++){
 			if(sequence->sequence_so_far[0] == dep){
 				continue;
 			}
