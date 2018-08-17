@@ -133,7 +133,6 @@ int main(int argc, char * const argv[]){
         start_core();
 	start_game();
         println("STARTUP DONE",INFO);
-        json_object_to_fd(1, config_glob, JSON_C_TO_STRING_PRETTY);
         println("ENTERING REGULAR OPERATION",INFO);
         while(!shutting_down){sleep(1);}
 
