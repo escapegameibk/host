@@ -36,6 +36,7 @@ void* loop_game();
 
 
 int trigger_event(size_t event_id);
+void async_trigger_event(size_t event_id);
 int execute_trigger(json_object* trigger);
 int check_dependency(json_object* dependency);
 

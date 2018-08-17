@@ -92,9 +92,7 @@ int init_interface(){
 int start_interface(){
 
         println("starting unix socket handler",DEBUG);
-       
-
-        
+             
         if(pthread_create(&interface_thread,NULL,loop_interface,NULL)){
                 println("failed to create thread", ERROR);
                 return -1;
@@ -226,7 +224,7 @@ int execute_command(int sock_fd, char* command){
 			println("Enforced trigger for event %i!", INFO, 
 				json_object_get_int(json_object_object_get(
 				parsed,"event")));
-                        trigger_event(json_object_get_int(
+                        async_trigger_event(json_object_get_int(
                                 json_object_object_get(parsed,"event")));
 		break;
 	case 5:

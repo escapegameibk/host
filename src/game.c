@@ -282,6 +282,54 @@ int trigger_event(size_t event_id){
 }
 
 
+/*
+ * This is a helper function used to execute the triggers and return afterwards.
+ */
+void* helper_async_trigger(void* event_id){
+
+	size_t* ev = event_id;
+
+	if(trigger_event(*ev) < 0){
+
+		println("Failed to asynchroneously execute event. Not handling"
+			,ERROR);
+		free(event_id);
+		return NULL;
+	
+	}
+
+	free(event_id);
+	return NULL;
+}
+
+/*
+ * Spawns a new posix thread which executes an event's triggers.
+ */
+
+void async_trigger_event(size_t event_id){
+
+	
+	if(state_trigger_status[event_id]){
+		/* Shit happens */
+		return;
+	}
+
+	size_t *event_idp = malloc(sizeof(size_t));
+	*event_idp = event_id;
+
+	pthread_t executing_thread;
+
+        if(pthread_create(&executing_thread, NULL, helper_async_trigger, 
+		event_idp)){
+                println("failed to create asynchroneous trigger thread",ERROR);
+                return;
+        }
+
+	return;
+
+}
+
+
 int execute_trigger(json_object* trigger){
 
 
