@@ -46,16 +46,6 @@ int init_game(){
         }
 
         memset(&game_thread, 0, sizeof(game_thread));
-        /* initialize timer values */
-        game_timer_start = 0;
-        game_duration = json_object_get_int64(
-                json_object_object_get(config_glob,"duration"));
-        if(game_duration == 0){
-                println("game duration not specified! defaulting to %i",WARNING,
-                        DEFAULT_GAME_TIME);
-                game_duration = DEFAULT_GAME_TIME;
-        }
-        println("game duration configured to be %i",DEBUG,game_duration);
         
         /* Allocate space for states */
         state_cnt = json_object_array_length(json_object_object_get(
@@ -66,36 +56,45 @@ int init_game(){
         println("a total of %i states has been loaded", DEBUG, state_cnt);
 
 	/* initialize all dependencys of all events */
+	size_t depcnt = 0;
+	size_t* event_ids = NULL;
+	json_object** dependencies = get_all_dependencies(&depcnt, &event_ids);
 	
-	json_object* dependencies = get_all_dependencies();
-	
-	for(size_t i = 0; i < json_object_array_length(dependencies); i++){
-		if(init_dependency(json_object_array_get_idx(dependencies,i))
-			< 0){
+	for(size_t i = 0; i < depcnt; i++){
+		if(init_dependency(dependencies[i], event_ids[i]) < 0){
 			println("Failed to init depedency no %i! Dumping:",
 				ERROR, i);
-			json_object_to_fd(STDIN_FILENO, 
-				json_object_array_get_idx(dependencies, i),
+			json_object_to_fd(STDIN_FILENO, dependencies[i],
 				JSON_C_TO_STRING_PRETTY);
 			return -1;
 
 		}
 	}
 
-	json_object_put(dependencies);
-
+	free(dependencies);
+	free(event_ids);
         return 0;
 }
 
-int init_dependency(json_object* dependency){
-	const char* module_name = json_object_get_string(
-				json_object_object_get(dependency,"module"));
-
+/* This function adds metadata to the dependency, and add it to a global list.
+ *  String comparisons of dependencies are no longer valid after this function
+ */
+int init_dependency(json_object* dependency, int event_id){
+	
+	/* Add the dependency to the global array */	
+	
 	dependency_list = realloc(dependency_list, ++dependency_count * 
 		sizeof(json_object *));
-	json_object* dep_cpy = NULL;
-	json_object_deep_copy(dependency,&dep_cpy,json_c_shallow_copy_default);
-	dependency_list[dependency_count - 1] = dep_cpy;
+	dependency_list[dependency_count - 1] = dependency;
+
+	/* Add metadata to the dependency */
+	json_object_object_add(dependency, "id", json_object_new_int(
+		dependency_count - 1));
+	json_object_object_add(dependency, "event_id", json_object_new_int(
+		event_id));
+
+	const char* module_name = json_object_get_string(
+				json_object_object_get(dependency,"module"));
 
 	if(module_name == NULL){
 		println("Specified no module in dependency!", ERROR);
@@ -218,7 +217,7 @@ void* loop_game(){
                 }
         }
 
-        println("TERMINATING WATCHER", INFO);
+        println("TERMINATING WATCHER", DEBUG);
         println("bailing out. you're on your own. good luck.",DEBUG);
 
         return NULL;
@@ -416,12 +415,17 @@ int check_dependency(json_object* dependency){
 	return 0;
 }
 
-
-/* This returns a json array with all dependencies as elements. It can be 
+/* This returns an array with all dependencies as elements. It can be 
  * free'd afterwards */
-json_object* get_all_dependencies(){
+json_object** get_all_dependencies(size_t* depcnt, size_t** event_idsp){
 
-	json_object* all_dependencies = json_object_new_array();
+	json_object** deps = NULL;
+	size_t* event_ids = NULL;
+	*depcnt = 0;
+	
+	/* 
+	 * Iterate through events
+	 */
 
 	for(size_t event_i = 0; event_i < state_cnt; event_i++ ){
 		
@@ -431,36 +435,23 @@ json_object* get_all_dependencies(){
 		for(size_t dep_i = 0; dep_i < json_object_array_length(
 			json_object_object_get(event,"dependencies")); 
 			dep_i++){
-			json_object* dependency_cpy = NULL;
+			
+			deps = realloc(deps, ++*depcnt * sizeof(json_object*));
+			event_ids = realloc(event_ids, *depcnt * 
+				sizeof(size_t));
+			
+			deps[*depcnt - 1] = json_object_array_get_idx(
+				json_object_object_get(event,"dependencies"), 
+				dep_i);
+			event_ids[*depcnt - 1] = event_i;
 
-			json_object_deep_copy(json_object_array_get_idx(
-				json_object_object_get(event,"dependencies"),
-				 dep_i), &dependency_cpy, NULL);
-
-			json_object_array_add(all_dependencies, dependency_cpy);
 		}
 	}
-
-	return all_dependencies;
-}
-
-int* get_all_dependency_states(size_t* state_cnt){
-
-	json_object* dependencies = get_all_dependencies();
-
-	*state_cnt = json_object_array_length(dependencies);
-	int* states = malloc(sizeof(int) * *state_cnt);
-
-	for(size_t i = 0; i < *state_cnt; i++){
-		states[i] = check_dependency(json_object_array_get_idx(
-			dependencies, i));
+	
+	*event_idsp = event_ids;
 
 
-	}
-
-	json_object_put(dependencies);
-
-	return states;
+	return deps;
 }
 
 /* 
@@ -471,12 +462,14 @@ int* get_all_dependency_states(size_t* state_cnt){
  */
 int get_dependency_id(json_object* dependency){
 	
-	for(size_t i = 0; i < dependency_count; i++){
-		if(!strcmp(json_object_get_string(dependency_list[i]), json_object_get_string(dependency)))
-			return i;
+	json_object* id = json_object_object_get(dependency, "id");
+
+	if(id != NULL){
+		return json_object_get_int(id);
 	}
-	
-	println("Failed to find id for dependecy! dumping!", ERROR);
+		
+	println("Probably uninitialized dependency! Dumping", ERROR);
 	json_object_to_fd(STDOUT_FILENO,dependency, JSON_C_TO_STRING_PRETTY);
+	
 	return -1;
 }

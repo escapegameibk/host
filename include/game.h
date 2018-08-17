@@ -27,7 +27,7 @@
 #define DEFAULT_GAME_TIME 3600
 
 int init_game();
-int init_dependency(json_object* dependency);
+int init_dependency(json_object* dependency, int event_id);
 int start_game();
 
 /* checks for changes and act accordingly */
@@ -42,13 +42,11 @@ int check_dependency(json_object* dependency);
 
 /* utility functions */
 
-json_object* get_all_dependencies();
-int* get_all_dependency_states(size_t * state_cnt);
+json_object** get_all_dependencies(size_t* depcn, size_t** event_idsp);
 int get_dependency_id();
 json_object** dependency_list;
 size_t dependency_count;
 pthread_t game_thread;
-long long int game_timer_start, game_duration;
 
 /* For historic reasons these 2 variables are still named state. TODO */
 bool * state_trigger_status;

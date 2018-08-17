@@ -30,7 +30,7 @@ int core_trigger(json_object *trigger);
 
 int core_update_sequential();
 
-long long int game_timer_start, game_duration;
+long long int game_timer_start, game_timer_end, game_duration;
 
 struct{
 

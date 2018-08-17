@@ -21,6 +21,7 @@
 #include "tools.h"
 #include "config.h"
 #include "game.h"
+#include "core.h"
 
 #include <json-c/json.h>
 #include <sys/socket.h>
@@ -327,6 +328,8 @@ int print_changeables_interface(int sockfd){
         json_object_object_add(obj, "events", stats);
         json_object_object_add(obj, "start_time", 
                 json_object_new_int64(game_timer_start));
+        json_object_object_add(obj, "end_time", 
+                json_object_new_int64(game_timer_end));
 
         json_object_to_fd(sockfd, obj, JSON_C_TO_STRING_PLAIN);
         

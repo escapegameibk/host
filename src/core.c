@@ -35,6 +35,20 @@ int init_core(){
 	
 	println("Initializing core components done!", DEBUG);
 
+	/* initialize timer values */
+        game_timer_start = 0;
+	game_timer_end = 0;
+
+        game_duration = json_object_get_int64(
+                json_object_object_get(config_glob,"duration"));
+        if(game_duration == 0){
+                println("game duration not specified! defaulting to %i",WARNING,
+                        DEFAULT_GAME_TIME);
+                game_duration = DEFAULT_GAME_TIME;
+        }
+        println("game duration configured to be %i",DEBUG,game_duration);
+
+
 	return 0;
 }
 
@@ -61,6 +75,8 @@ void* core_loop(){
 		nanosleep(&tim, NULL);
 
 	}
+
+	println("Core component watcher leaving operational state", DEBUG);
 	
 	return NULL;
 }
@@ -98,7 +114,8 @@ int core_init_dependency(json_object* dependency){
 			);i ++){
 
 			init_dependency(json_object_array_get_idx(
-				sub_dependencies,i));
+				sub_dependencies,i), json_object_get_int( 
+				json_object_object_get(dependency, "event_id")));
 		}
 		
 
@@ -222,10 +239,17 @@ int core_trigger(json_object* trigger){
                 return 0;
         }else if(strcasecmp(action_name,"timer_start") == 0){
                 println("Starting game timer", INFO);
-                game_timer_start = (unsigned long)time(NULL);
+                game_timer_start = (unsigned long long)time(NULL);
+
         }else if(strcasecmp(action_name,"timer_stop") == 0){
                 println("Stopping game timer", INFO);
-                game_timer_start = 0;
+                game_timer_end = (unsigned long long)time(NULL);
+        
+	}else if(strcasecmp(action_name,"timer_reset") == 0){
+                println("Clearing game timer", INFO);
+                game_timer_end = 0;
+		game_timer_start = 0;
+
         }else if(strcasecmp(action_name,"reset") == 0){
                 println("Resetting states", INFO);
                 
