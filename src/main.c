@@ -24,6 +24,7 @@
 #include "config.h"
 #include "mtsp.h"
 #include "core.h"
+#include "hints.h"
 
 #include <unistd.h>
 #include <pthread.h>
@@ -41,7 +42,7 @@ int main(int argc, char * const argv[]){
         signal(SIGPIPE,&catch_signal);
 
         /* initialize global variables */
-        exit_code = 0;
+        exit_code = EXIT_SUCCESS;
         shutting_down = 0;
 
         char* config = NULL;
@@ -66,7 +67,7 @@ int main(int argc, char * const argv[]){
 
         if(load_config(config) < 0){
                 println("failed to load config!!",ERROR);
-		exit_code = 1;
+		exit_code = EXIT_FAILURE;
                 goto shutdown;
         }
 
@@ -75,7 +76,7 @@ int main(int argc, char * const argv[]){
 #ifndef HEADLESS
         if(init_interface() < 0){
                 println("failed to init interface!!",ERROR);
-		exit_code = 1;
+		exit_code = EXIT_FAILURE;
                 goto shutdown;
         }
 #endif
@@ -86,13 +87,22 @@ int main(int argc, char * const argv[]){
         
         if(init_game() < 0){
                 println("failed to init game!!",ERROR);
-		exit_code = 1;
+		exit_code = EXIT_FAILURE;
                 goto shutdown;
         }
+#ifndef NOHINTS
+        if(init_hints() < 0){
+                println("failed to init hints!!",ERROR);
+		exit_code = EXIT_FAILURE;
+                goto shutdown;
+        }
+	
+#endif
+
 #ifndef NOSER
         if(init_serial(DEFAULT_SERIAL_PORT) < 0){
                 println("failed to init serial connection!!",ERROR);
-		exit_code = 1;
+		exit_code = EXIT_FAILURE;
                 goto shutdown;
         }
 
@@ -103,7 +113,7 @@ int main(int argc, char * const argv[]){
         if(init_mtsp(MTSP_DEFAULT_PORT, MTSP_DEFAULT_BAUD) < 0){
 
                 println("failed to init mtsp connection!!",ERROR);
-		exit_code = 1;
+		exit_code = EXIT_FAILURE;
                 goto shutdown;
 
         }
@@ -112,7 +122,7 @@ int main(int argc, char * const argv[]){
 
 	if(init_core() < 0){
 		println("Failed to initilize core!", ERROR);
-		exit_code = 1;
+		exit_code = EXIT_FAILURE;
                 goto shutdown;
 	}
         
@@ -137,6 +147,7 @@ int main(int argc, char * const argv[]){
         while(!shutting_down){sleep(1);}
 
 shutdown:
+shutting_down = true;
         println("SHUTTING DOWN",WARNING);
         
         sleep(SHUTDOWN_DELAY);

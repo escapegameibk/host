@@ -36,5 +36,6 @@ int print_changeables_interface(int sockfd);
 int print_events_interface(int sockfd);
 int print_dependencies_interface(int sockfd);
 int print_dependency_states_interface(int sockfd);
+int print_hints_interface(int sockfd);
 
 #endif

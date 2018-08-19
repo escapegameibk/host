@@ -22,6 +22,7 @@
 #include "config.h"
 #include "game.h"
 #include "core.h"
+#include "hints.h"
 
 #include <json-c/json.h>
 #include <sys/socket.h>
@@ -142,9 +143,10 @@ int handle_comm(int fd){
                         break;
                 }else{
                         execute_command(fd,buffer);
+			break;
                 }
         }
-
+	
         close (fd);
 #undef BUFFERLENGTH
 
@@ -256,8 +258,26 @@ int execute_command(int sock_fd, char* command){
 		 * about them in the same order as action 6 returns them .
 		 */
 
-		 print_dependency_states_interface(sock_fd);
+		print_dependency_states_interface(sock_fd);
 		break;
+#ifndef NOHINTS
+	case 8:
+		/* Returns, if available, a list of all hints, structured into
+		 * two arrays. The top one in order of items corresponding to
+		 * an event, and the sub-arrays containing any hint. Please
+		 * Consult the hints module for more information.
+		 */
+		print_hints_interface(sock_fd);
+		break;
+	case 9:
+		/* Enfoces the execution of a hint.
+		 */
+		
+		execute_hint(json_object_get_int(json_object_object_get(parsed,
+			"event_id")),json_object_get_int(
+			json_object_object_get(parsed, "hint_id")));
+		break;
+#endif
         default:
                 /* OOPS */
                 debug = malloc(INT_LEN);
@@ -268,6 +288,7 @@ int execute_command(int sock_fd, char* command){
                 break;
 
         }
+
 
 #undef INT_LEN
         /* cleanup */
@@ -301,6 +322,11 @@ int print_info_interface(int sock_fd){
                 
         n|= json_object_object_add(obj, "duration",
                 json_object_new_int64(game_duration));
+
+#ifndef NOHINTS
+	n |= json_object_object_add(obj, "hints", json_object_new_boolean(
+		hints_enabled));
+#endif
 
         json_object_to_fd(sock_fd, obj, JSON_C_TO_STRING_PRETTY);
 
@@ -405,4 +431,10 @@ int print_dependency_states_interface(int sockfd){
 
 	return 0;
 	
+}
+
+int print_hints_interface(int sockfd){
+	
+	return json_object_to_fd(sockfd, get_hints_root(), 
+		JSON_C_TO_STRING_PLAIN);
 }
