@@ -387,12 +387,12 @@ int print_dependencies_interface(int sockfd){
 		
 		const char* module = json_object_get_string(
 			json_object_object_get(dependencies[i], "module"));
-
+#ifndef ALLDEPENDS
 		/* Ommit core dependencies */
 		if(strcasecmp(module, "core") == 0){
 			continue;
 		}
-		
+#endif	
 		json_object* dep = NULL;
 		json_object_deep_copy(dependencies[i], &dep, 
 			json_c_shallow_copy_default);
@@ -417,10 +417,12 @@ int print_dependency_states_interface(int sockfd){
 		const char* module = json_object_get_string(
 			json_object_object_get(dependencies[i], "module"));
 
+#ifndef ALLDEPENDS
 		/* Ommit core dependencies */
 		if(strcasecmp(module, "core") == 0){
 			continue;
 		}
+#endif
 		json_object* stat = json_object_new_int(check_dependency(
 			dependencies[i]));
 		json_object_array_add(stats, stat);

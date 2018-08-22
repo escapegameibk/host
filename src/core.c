@@ -263,12 +263,13 @@ int core_trigger(json_object* trigger){
 				memset(seq->sequence_so_far, 0, 
 					seq->sequence_length);
 		}
-
+#ifndef NOMTSP
 		if(reset_mtsp() < 0){
 			println("Failed to reset MTSP!", ERROR);
 			return -1;
 		}
 
+#endif
 
         }else if(strcasecmp(action_name,"delay") == 0){
 		uint32_t delay = json_object_get_int64(

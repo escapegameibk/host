@@ -2,9 +2,92 @@
 
 	"duration" : 3600,
 	"name" : "Generic",
-	"boot_sound" : "http://escapegame.ddns.net/sounds/w95s.ogg",
 	"events":
 	[
+		{
+			"name" : "Start",
+			"dependencies" :
+			[
+				{
+					"name" : "Prevented by stop",
+					"module" : "core",
+					"type" : "event",
+					"event" : 1,
+					"target" : 0
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" : "start timer",
+					"module" : "core",
+					"action" : "timer_start"
+				}
+			]
+		},
+		{
+			"name" : "Stop",
+			"dependencies" :
+			[
+				{
+					"name" : "Prevented by start",
+					"module" : "core",
+					"type" : "event",
+					"event" : 0,
+					"target" : 0
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" : "stop timer",
+					"module" : "core",
+					"action" : "timer_stop"
+				}
+			]
+		},
+		{
+			"name" : "Reset",
+			"dependencies" :
+			[
+				{
+					"name" : "Prevented by start",
+					"module" : "core",
+					"type" : "event",
+					"event" : 0,
+					"target" : 0
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" : "reset timer",
+					"module" : "core",
+					"action" : "timer_reset"
+				},
+				{
+					"name" : "reset",
+					"module" : "core",
+					"action" : "reset"
+				}
+			]
+		}
 
+	],
+	"hints":
+	[
+		[
+			{
+				"name" : "Hinweis 1",
+				"triggers" :
+				[
+					{
+						"name" : "spiele",
+						"module" : "snd",
+						"resource" : "https://escpe.net/sounds/e1m1.ogg"
+					}
+				]
+			}
+		]
 	]
 }
