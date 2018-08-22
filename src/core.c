@@ -367,6 +367,7 @@ DUMPING:",
 						sequence->sequence_so_far[i],
 						sequence->target_sequence[i]);
 				}
+				return 0;
 				
 			}
 

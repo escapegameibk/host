@@ -33,6 +33,7 @@ int init_sound(){
         if(boot_snd != NULL){
 		play_sound(boot_snd);
         }
+	effect_player = libvlc_media_player_new(vlc_inst);
 
         return 0;
 }
@@ -57,6 +58,17 @@ int sound_trigger(json_object* trigger){
 		println("Playing sound file from %s", DEBUG, resource);
 	
 		return play_sound(resource);
+	
+	}else if(strcasecmp(action, "effect") == 0){
+
+		json_object* resource_obj = json_object_object_get(trigger, 
+			"resource");
+
+		const char* resource = json_object_get_string(resource_obj);
+
+		println("Playing sound effect from %s", DEBUG, resource);
+	
+		return play_effect(resource);
 
 	} else if(strcasecmp(action, "reset") == 0){
 
@@ -109,6 +121,29 @@ int play_sound(const char* url){
 	 */
 
 	sleep_ms(100);
+
+	return 0;
+
+}
+
+/* There can only be one effect at once. It will be cleared, if another effect
+ * is triggered. This is done to reduce stress on the sound device */
+int play_effect(const char* url){
+	
+	libvlc_media_t *m = libvlc_media_new_location (vlc_inst, 
+                url);
+
+	if(m == NULL){
+		println("snd failed to get media from resource %s!", ERROR,
+			url);
+		return -1;
+	}
+	println("Updating currently playing effect", DEBUG);
+
+	libvlc_media_player_set_media(effect_player, m);
+        
+	libvlc_media_release(m);
+        libvlc_media_player_play(effect_player);
 
 	return 0;
 
