@@ -147,8 +147,33 @@ int mtsp_register_register(uint8_t device, uint8_t reg){
         return 0;
 }
 
-int init_mtsp(char* device, int baud){
+int init_mtsp(){
+	
+	/* Attempt to get mtsp config from config file, otherwise use defaults 
+	 */
+	const char* device = MTSP_DEFAULT_PORT;
 
+	json_object* config_dev = json_object_object_get(config_glob, 
+		"mtsp_device");
+
+	if(config_dev != NULL){
+		device = json_object_get_string(config_dev);
+		println("Configurative update of mtsp device: %s", DEBUG,
+			device );
+	}
+	
+	int baud = MTSP_DEFAULT_BAUD;
+	
+	json_object* config_baud = json_object_object_get(config_glob, 
+		"mtsp_baud");
+
+	if(config_baud != NULL){
+		int baud_tmp = json_object_get_int(config_baud);
+		baud = get_baud_from_int(baud_tmp);
+		println("Configurative update of mtsp baud rate: %i", DEBUG,
+			baud_tmp);
+	}
+	
 	mtsp_devices_populated = false;
 
         println("Added a total of %i mtsp input devices:",DEBUG, 

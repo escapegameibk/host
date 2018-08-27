@@ -57,7 +57,6 @@ int main(int argc, char * const argv[]){
                                         DEBUG, optarg);
 
                         break;
-                
                 default:
                         break;
                 }
@@ -109,8 +108,8 @@ int main(int argc, char * const argv[]){
 #endif
 
 #ifndef NOMTSP
-        
-        if(init_mtsp(MTSP_DEFAULT_PORT, MTSP_DEFAULT_BAUD) < 0){
+ 
+        if(init_mtsp() < 0){
 
                 println("failed to init mtsp connection!!",ERROR);
 		exit_code = EXIT_FAILURE;

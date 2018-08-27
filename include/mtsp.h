@@ -32,7 +32,7 @@
 #define MTSP_TIMEOUT_US 5000000 // the read timeout in µs
 
 uint16_t crc_modbus(uint8_t * in, size_t len);
-int init_mtsp(char* device, int baud);
+int init_mtsp();
 
 int mtsp_init_dependency(json_object* dependency);
 void* loop_mtsp();

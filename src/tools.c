@@ -23,6 +23,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <string.h>
+#include <termios.h>
 
 int* remove_array_element(size_t array_length, int* array,int element){
 
@@ -72,4 +73,32 @@ int sleep_ms(uint32_t ms){
 	nanosleep(&tim, &rel);
 
 	return 1;
+}
+
+/* As it is not possible to get the baud rate from the kernel via a int
+ * representation of it, this wrapper matches int representation of the baud
+ * rate with a preprocessor-definition and returns the latter.
+ * Returns 0 on error */
+
+int get_baud_from_int(int baud_in){
+	
+	int baud = 0;
+
+	switch(baud_in){
+		
+		case 460800:
+			baud = B460800;
+		break;
+
+		case 57600:
+			baud = B57600;
+		break;
+		default:
+			println("Invalid baud rate specified: %i", ERROR,
+				baud_in);
+		break;
+	}
+
+	return baud;
+	
 }
