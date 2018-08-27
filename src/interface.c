@@ -328,6 +328,15 @@ int print_info_interface(int sock_fd){
 		hints_enabled));
 #endif
 
+	json_object* color = json_object_object_get(config_glob, "color");
+	
+	if(color != NULL){
+		json_object* colors = NULL;
+		json_object_deep_copy(color, &colors, 
+			json_c_shallow_copy_default);
+		json_object_object_add(obj, "colors", colors);
+	}
+
         json_object_to_fd(sock_fd, obj, JSON_C_TO_STRING_PRETTY);
 
         json_object_put(obj);
