@@ -69,6 +69,10 @@ json file:
    follows.
  - "hints": an array containing hints in a special order. please consult the
    chapter on hint configuration for further information.
+ - "mtsp_device" : The mtsp device to which to connect. Can be ommitted and
+   will be replaced with "/dev/ttyUSB0".
+ - "mtsp_baud" : The mtsp baud rate with which to connect onto the bus. Can be
+   ommited and will be replaced with B460800
 
 This is where it get's a bit more complicated. I will try to explain the
 construction of the "events" array now to you. The events array contains an
