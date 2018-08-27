@@ -67,6 +67,8 @@ json file:
    startup. 
  - "events": an array containing all events to be executed. more inforamtion
    follows.
+ - "hints": an array containing hints in a special order. please consult the
+   chapter on hint configuration for further information.
 
 This is where it get's a bit more complicated. I will try to explain the
 construction of the "events" array now to you. The events array contains an
@@ -212,6 +214,11 @@ Triggeres are real time, and if something fails to trigger, the ENTIRE event
 is reset and may only be re-triggered from the very beginning. Triggeres are not
 checked during initialisation. A trigger requires a device, register and target
 to be specified. The target is written to the device at the specified register.
+
+## Hints
+
+Hins are, well obviously, meant to help the players. The global field "hints"
+is a 2-dimensional array.
 
 # ERRATA
 ## Raspberry Pi

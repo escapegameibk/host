@@ -18,6 +18,7 @@
 #define CORE_H
 
 #include <json-c/json.h>
+#include <stdbool.h>
 
 int init_core();
 int start_core();
@@ -29,6 +30,11 @@ int core_check_dependency(json_object* dependency);
 int core_trigger(json_object *trigger);
 
 int core_update_sequential();
+
+#ifndef NOALARM
+void core_trigger_alarm();
+void core_release_alarm();
+#endif /* NOALARM */
 
 long long int game_timer_start, game_timer_end, game_duration;
 
@@ -56,5 +62,10 @@ struct sequence_dependency_t{
 struct sequence_dependency_t** core_sequential_dependencies;
 size_t core_sequence_count;
 struct core_permanent_trigger_t* core_permanent_trigger;
+
+/* Alarm related things. An alarm tries to get the operator's attention.*/
+#ifndef NOALARM
+bool alarm_on;
+#endif /* NOALARM */
 
 #endif /* CORE_H */

@@ -39,6 +39,9 @@ int init_core(){
         game_timer_start = 0;
 	game_timer_end = 0;
 
+	/* Initialize alarm */
+	alarm_on = false;
+
         game_duration = json_object_get_int64(
                 json_object_object_get(config_glob,"duration"));
         if(game_duration == 0){
@@ -80,7 +83,6 @@ void* core_loop(){
 	
 	return NULL;
 }
-
 
 int core_init_dependency(json_object* dependency){
 	
@@ -277,6 +279,12 @@ int core_trigger(json_object* trigger){
 		println("sleeping %ims!", DEBUG, delay);
 		return sleep_ms(delay);
 	
+	}else if(strcasecmp(action_name,"alarm") == 0){
+		core_trigger_alarm();
+		return 0;
+	}else if(strcasecmp(action_name,"alarm_release") == 0){
+		core_release_alarm();
+		return 0;
 	}else{
                 println("Unknown core action specified: %s",ERROR, action_name);
                 return -1;
@@ -377,3 +385,23 @@ DUMPING:",
 
 	return 0;
 }
+
+#ifndef NOALARM
+
+/* Updated the alarm as needed. */
+void core_trigger_alarm(){
+
+	println("Triggered alarm!", DEBUG);
+	/* If the alarm was already on, there is no reason to turn it off. */
+	alarm_on = true;
+	return;
+}
+
+void core_release_alarm(){
+
+	println("Released alarm!", DEBUG);
+	alarm_on = false;
+	return;
+}
+
+#endif

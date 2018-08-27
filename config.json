@@ -43,6 +43,11 @@
 					"name" : "stop timer",
 					"module" : "core",
 					"action" : "timer_stop"
+				},
+				{
+					"name" : "alarm",
+					"module" : "core",
+					"action" : "alarm"
 				}
 			]
 		},
@@ -69,6 +74,11 @@
 					"name" : "reset",
 					"module" : "core",
 					"action" : "reset"
+				},
+				{
+					"name" : "clean alarm",
+					"module" : "core",
+					"action" : "alarm_release"
 				}
 			]
 		}
@@ -89,5 +99,13 @@
 				]
 			}
 		]
-	]
+	],
+	"color" :
+	{
+		"nav" : "#B71C1C",
+		"countdown" : "#FFFFFF", 
+		"footer" : "#B71C1C",
+		"body" : "#FFEBEE",
+		"alarm" : "#000000"
+	}
 }

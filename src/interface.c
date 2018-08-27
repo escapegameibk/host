@@ -277,7 +277,17 @@ int execute_command(int sock_fd, char* command){
 			"event_id")),json_object_get_int(
 			json_object_object_get(parsed, "hint_id")));
 		break;
-#endif
+#endif /* NOHINTS */
+
+#ifndef NOALARM
+	case 10:
+		
+		/* Releases the alarm 
+		 */
+		 core_release_alarm();
+
+		break;
+#endif /* NOALARM */
         default:
                 /* OOPS */
                 debug = malloc(INT_LEN);
@@ -337,6 +347,11 @@ int print_info_interface(int sock_fd){
 		json_object_object_add(obj, "colors", colors);
 	}
 
+#ifndef NOALARM
+        n|= json_object_object_add(obj, "alarm",
+                json_object_new_boolean(true));
+#endif
+
         json_object_to_fd(sock_fd, obj, JSON_C_TO_STRING_PRETTY);
 
         json_object_put(obj);
@@ -365,6 +380,11 @@ int print_changeables_interface(int sockfd){
                 json_object_new_int64(game_timer_start));
         json_object_object_add(obj, "end_time", 
                 json_object_new_int64(game_timer_end));
+
+#ifndef NOALARM
+        n|= json_object_object_add(obj, "alarm",
+                json_object_new_boolean(alarm_on));
+#endif
 
         json_object_to_fd(sockfd, obj, JSON_C_TO_STRING_PLAIN);
         
