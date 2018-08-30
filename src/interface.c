@@ -455,10 +455,16 @@ int print_dependencies_interface(int sockfd){
 	json_object* dep_array = json_object_new_array();
 	for(size_t i = 0; i < depcnt; i++){
 		
-		json_object* dep = NULL;
+		
+		json_object* dep = json_object_new_object();
 		json_object* orig_dep = dependencies[i];
 		json_object_object_add(dep,"name", json_object_new_string(
 			get_name_from_object(orig_dep)));
+		
+		json_object_object_add(dep,"event_id", json_object_new_int(
+			is_in_array(json_object_get_int(json_object_object_get(
+			orig_dep,"event_id")), printable_events, 
+			printable_event_cnt)));
 			
 		json_object_array_add(dep_array, dep);
 	}
@@ -535,6 +541,16 @@ json_object** get_printables_dependencies(size_t *depcntp){
 			continue;
 		}
 #endif
+		
+		/* Check if the parent event of the dependency is visible */
+		size_t event_id = json_object_get_int(json_object_object_get(
+			dep,"event_id"));
+		if(is_in_array(event_id, printable_events, 
+			printable_event_cnt) < 0){
+			continue;
+		}
+
+		
 		deps = realloc(deps,++depcnt * sizeof(json_object*));
 		deps[depcnt - 1] = dep;
 

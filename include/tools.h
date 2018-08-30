@@ -29,4 +29,6 @@ int first_free_in_array(size_t arrlen, int* array);
 int sleep_ms(uint32_t ms);
 
 int get_baud_from_int(int baud_in);
+
+int is_in_array(size_t element, size_t* arr, size_t arrlen);
 #endif

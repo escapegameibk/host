@@ -102,3 +102,19 @@ int get_baud_from_int(int baud_in){
 	return baud;
 	
 }
+
+/* Searches the given array for the given element. Returns < 0 if not found,
+ * and the array index if found. */
+
+int is_in_array(size_t element, size_t* arr, size_t arrlen){
+
+	int position = -1;
+	for(size_t i = 0; i < arrlen; i++){
+		if(arr[i] == element){
+			position = i;
+			break;
+		}
+	}
+	
+	return position;
+}

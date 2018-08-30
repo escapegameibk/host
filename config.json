@@ -68,6 +68,13 @@
 					"type" : "event",
 					"event" : 0,
 					"target" : 0
+				},
+				{
+					"name" : "Prevented by stop",
+					"module" : "core",
+					"type" : "event",
+					"event" : 1,
+					"target" : 0
 				}
 			],
 			"triggers" :
