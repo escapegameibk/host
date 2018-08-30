@@ -33,10 +33,10 @@
 
 int init_game(){
 
-        const char* name = json_object_get_string(json_object_object_get(
-                                config_glob, "name"));
+        const char* name = get_name_from_object(config_glob);
 	dependency_list = malloc(0);
 	dependency_count = 0;
+
         if(name == NULL){
                 
                 println("Initializing game: %s",DEBUG, "UNSPECIFIED!");
@@ -70,6 +70,10 @@ int init_game(){
 
 		}
 	}
+	
+	/* Allocate the nescessary memory for the reset jobs and null it. */
+	reset_jobs = malloc(state_cnt * sizeof(bool*));
+	memset(reset_jobs, 0, state_cnt * sizeof(bool*));
 
 	free(dependencies);
 	free(event_ids);
@@ -88,10 +92,20 @@ int init_dependency(json_object* dependency, int event_id){
 	dependency_list[dependency_count - 1] = dependency;
 
 	/* Add metadata to the dependency */
-	json_object_object_add(dependency, "id", json_object_new_int(
-		dependency_count - 1));
 	json_object_object_add(dependency, "event_id", json_object_new_int(
 		event_id));
+
+	return init_general_dependency(dependency);
+}
+
+/* This function passes the dependency to it's module. It may add metadata,
+ * but still prepares the dependency so it may be retrieved via the check 
+ * dependency function. */
+int init_general_dependency(json_object* dependency){
+	
+	/* Add metadata to dependency */
+	json_object_object_add(dependency, "id", json_object_new_int(
+		dependency_count - 1));
 
 	const char* module_name = json_object_get_string(
 				json_object_object_get(dependency,"module"));
@@ -119,6 +133,8 @@ int init_dependency(json_object* dependency, int event_id){
 		println("Unknown module specified [%s]!", ERROR, module_name);
 		return -2;
 	}
+
+	return 0;
 	
 }
 
@@ -191,6 +207,14 @@ int patrol(){
 			println("All dependencies clear to execute event %i!",
 				 INFO, i);
 			trigger_event(i);
+		}else{
+			/* If there is a reset job pending for this event,
+			 * reset it, and clear the reset job. 
+			 */
+			if(reset_jobs[i]){
+				reset_jobs[i] = false;
+				state_trigger_status[i] = false;
+			}
 		}
                 
         }
@@ -236,14 +260,16 @@ int trigger_event(size_t event_id){
 	
 	/* Sleep 1 ms to prevent unintended collisions */
 	sleep_ms(1);
-
         
         state_trigger_status[event_id] = 1;
+       
+	json_object* event = json_object_array_get_idx(json_object_object_get(
+		config_glob,"events"), event_id);
+       
         /* Iterate through triggers */
        
-         json_object* triggers = json_object_object_get(
-                json_object_array_get_idx(json_object_object_get(config_glob,
-                 "events"),event_id),"triggers");
+
+         json_object* triggers = json_object_object_get(event,"triggers");
 
 	if(triggers == NULL){
 		println("Attempted to trigger an event without triggers", INFO);
@@ -253,10 +279,7 @@ int trigger_event(size_t event_id){
 	}
 
         println("Triggering %i triggers for event %s/%i",DEBUG, 
-		json_object_array_length(triggers),json_object_get_string(
-		json_object_object_get(json_object_array_get_idx(
-		json_object_object_get(config_glob,"events"), event_id), 
-		"name")), event_id);
+		json_object_array_length(triggers),get_name_from_object(event), event_id);
 		
 	for(size_t triggercnt = 0; triggercnt < 
 		json_object_array_length(triggers); triggercnt++){
@@ -273,8 +296,20 @@ int trigger_event(size_t event_id){
 			return -1;
 		}
 
-	 }
-	println("Done triggering!", DEBUG);
+	}
+	
+	/* If the event was marked for autoreset, create a reset job for it */
+	json_object* autoreset = json_object_object_get(event,"autoreset");
+
+	if(autoreset != NULL){
+		if(json_object_get_boolean(autoreset)){
+			println("Creating reset job for event %i", DEBUG, 
+				event_id);
+			reset_jobs[event_id] = true;
+		}
+	}
+
+	println("Done triggering event!", DEBUG);
 	trigger_lock = false;
 
         return 0;
@@ -472,4 +507,20 @@ int get_dependency_id(json_object* dependency){
 	json_object_to_fd(STDOUT_FILENO,dependency, JSON_C_TO_STRING_PRETTY);
 	
 	return -1;
+}
+
+/* The main reason this function exists is, that the auto-hinting system uses
+ * this, to find out, which hints to execute. Returns 0 in case nothing has been
+ * triggered yet as well as in case only the 0 event has been executed. */
+size_t get_highest_active_event(){
+	
+	size_t highest = 0; 
+
+	for(size_t i = 0; i < state_cnt; i++){
+		if(state_trigger_status[i] == 0){
+			highest = i;
+		}
+	}
+
+	return highest;
 }

@@ -31,6 +31,8 @@
 size_t core_sequence_count = 0;
 struct sequence_dependency_t **core_sequential_dependencies = NULL;
 
+struct alltime_event* alltime_events = NULL;
+
 int init_core(){
 	
 	println("Initializing core components done!", DEBUG);
@@ -50,7 +52,6 @@ int init_core(){
                 game_duration = DEFAULT_GAME_TIME;
         }
         println("game duration configured to be %i",DEBUG,game_duration);
-
 
 	return 0;
 }
@@ -222,7 +223,10 @@ int core_check_dependency(json_object* dependency){
 		println("FOUND UNINITIALIZED SEQUENTIAL DEPENDENCY!!!", ERROR);
 		println("THIS SHOULD BE IMPOSSIBLE!!!!", ERROR);
 		return -3;
-
+	
+	}else if(strcasecmp(type,"never") == 0){
+		/* This is unable to return true at any time */
+		return 0;
 	}else{
 		println("invalid type specified in core dependency : %s",
 			ERROR, type);

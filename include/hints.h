@@ -25,10 +25,16 @@
 #define HINTS_H
 
 int init_hints();
+int start_hints();
+void* loop_hints();
+
+int check_autohints();
+
 json_object* get_hints_root();
 int execute_hint(size_t event_id, size_t hint_id);
 
 bool hints_enabled;
+bool auto_hinting;
 
 #endif /* HINTS_H */
 #endif /* NOHINTS */

@@ -69,6 +69,8 @@ json file:
    follows.
  - "hints": an array containing hints in a special order. please consult the
    chapter on hint configuration for further information.
+ - "hint_dependencies" : Dependencies used for auto hinting. Please consult the
+   the chapter on autohinting for more information.
  - "mtsp_device" : The mtsp device to which to connect. Can be ommitted and
    will be replaced with "/dev/ttyUSB0".
  - "mtsp_baud" : The mtsp baud rate with which to connect onto the bus. Can be
@@ -222,7 +224,26 @@ to be specified. The target is written to the device at the specified register.
 ## Hints
 
 Hins are, well obviously, meant to help the players. The global field "hints"
-is a 2-dimensional array.
+is a 3-dimensional array. The first array contains hints correlating to the
+events array. So each array in the second dimension, is directly linked to the
+corresponding event, in the event array. The second dimension contains arrays of
+triggers, with each array representing a hint, so an event may have any amount
+of hints, iwith each any amount of triggers.
+
+### Auto hinting
+
+The host is capable of automatically executing hints. As it's aim was to be as
+capable as possible, the auto-hinting system uses the global hint_depedencies
+field as reference for triggering. The hint_dependencies field contains a 
+2-dimensional array. The first array, defines the depth of hints, so the amount
+of hints for each event to be triggerable. The second dimension contains
+dependencies. If all dependencies are evaluated to be true, the highest
+triggered event get's looked up, it is decided, which event is set to be
+triggered the next time, and the correlating hint is executed. So for example if
+the latest event which has been executed is 10, and all dependencies are clear
+to execute in the first array, the hint 11,0 get's executed.
+
+## Auto hinting
 
 # ERRATA
 ## Raspberry Pi

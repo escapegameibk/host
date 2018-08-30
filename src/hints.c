@@ -21,13 +21,17 @@
 #include "config.h"
 #include "game.h"
 #include "log.h"
+#include "data.h"
 
+#include <sys/time.h>
 #include <json-c/json.h>
 #include <stddef.h>
+#include <unistd.h>
 
 int init_hints(){
 
 	hints_enabled = false;
+	auto_hinting = false;
 
 	json_object* hints = json_object_object_get(config_glob,"hints");
 
@@ -49,9 +53,145 @@ int init_hints(){
 	}
 
 	println("Configured a total of %i hints.", DEBUG, hintcnt);
+	
+	hints_enabled = true;
+
+	/* Attempt to load dependencies for auto-hinting */
+	
+	json_object* hint_dependencies = json_object_object_get(config_glob, 
+		"hint_dependencies");
+	if(hint_dependencies == NULL){
+		println("Auto-hinting not configured. Disabling", DEBUG);
+		return 0;
+	}
+	size_t hinting_depth = json_object_array_length(
+		hint_dependencies);
+	println("Hinting to a depth of %i. Correct hint amount assumed.", DEBUG,
+		hinting_depth);
+	for(size_t i = 0; i < hinting_depth; i++){
+		json_object * dependencies = json_object_array_get_idx(
+			hint_dependencies, i);
+		for(size_t dep = 0; dep < json_object_array_length(
+			dependencies); dep++){
+			
+			json_object* dependency = json_object_array_get_idx(dependencies,dep);
+
+			if(init_general_dependency(dependency) < 0){
+				println("Failed to init dependency for hint!",
+					ERROR);
+				return -1;
+			}
+		}
+	}
+
+	auto_hinting = true;
+
 	println("Hint system initialized.", DEBUG);
 
-	hints_enabled = true;
+	return 0;
+}
+
+int start_hints(){
+
+	if(!auto_hinting){
+		println("Not starting hint thread", DEBUG);
+		return 0;
+	}
+
+	pthread_t hintt;
+
+	if(pthread_create(&hintt, NULL, loop_hints,NULL)){
+                println("failed to create hints thread",ERROR);
+                return -1;
+        }
+
+	return 0;
+}
+
+void* loop_hints(){
+
+	while(!shutting_down){
+		struct timespec tim;
+	        tim.tv_sec = 0;
+                tim.tv_nsec = PATROL_INTERVAL_NS;
+                
+                if(nanosleep(&tim , NULL) < 0 ){
+                        println("interupt in game loop! sleep failed",ERROR);
+                }
+
+		if(check_autohints() < 0){
+			println("Failed to check autohints!!", ERROR);
+			continue;
+		}
+	
+	}
+
+	return NULL;
+}
+
+int check_autohints(){
+
+	json_object* root_dependencies = json_object_object_get(config_glob, 
+		"hint_depenencies");
+
+	/* This is used to only trigger an hint on a high flank, rather than a
+	 * low flank*/
+	static bool last = false;
+
+		for(size_t hint_lvl = 0; hint_lvl < 
+		json_object_array_length(root_dependencies); hint_lvl ++){
+
+		json_object* hints_lvl = json_object_array_get_idx(
+			root_dependencies, hint_lvl);
+
+		for(size_t i = 0; i < json_object_array_length(hints_lvl); i++){
+			
+			json_object* dependency = json_object_array_get_idx(
+				hints_lvl, i);
+
+			int eval = check_dependency(dependency);
+			if(eval >= 0){
+				if(eval > 0){
+					/* Continue to check until everything 
+					 * is done */
+					continue;
+				}else{
+					/* Quit if a dependency is not forfilled
+					 */
+					 goto hint_not_ready;
+				}
+			}else{
+				println("FAILED TO CHECK DEPENDENCY! DUMPING!",
+					ERROR);
+				json_object_to_fd(STDOUT_FILENO, dependency, 
+					JSON_C_TO_STRING_PRETTY);
+				return -1;
+			}
+
+		}
+
+		if(last){
+			break;
+		}
+
+		size_t event_id = get_highest_active_event() + 1;
+
+		/* End up here, if ready to execute hint */
+		println("Ready to execute hint for level %i and event %i", 
+			DEBUG, hint_lvl, event_id);
+		
+		/* I don't even pretend to bother, wether the hint has actually
+		 * been played, or nit */
+		 execute_hint(event_id, hint_lvl);
+		 
+		 last = true;
+		 break;
+		
+hint_not_ready:
+		/* Continue to check the other hints */
+		last = false;
+		continue;
+	}
 
 	return 0;
 }

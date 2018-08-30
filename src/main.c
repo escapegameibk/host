@@ -69,6 +69,21 @@ int main(int argc, char * const argv[]){
 		exit_code = EXIT_FAILURE;
                 goto shutdown;
         }
+        
+	if(init_game() < 0){
+                println("failed to init game!!",ERROR);
+		exit_code = EXIT_FAILURE;
+                goto shutdown;
+        }
+
+#ifndef NOHINTS
+        if(init_hints() < 0){
+                println("failed to init hints!!",ERROR);
+		exit_code = EXIT_FAILURE;
+                goto shutdown;
+        }
+	
+#endif
 
 
         /* initiate modules */
@@ -84,19 +99,6 @@ int main(int argc, char * const argv[]){
                 goto shutdown;
         }
         
-        if(init_game() < 0){
-                println("failed to init game!!",ERROR);
-		exit_code = EXIT_FAILURE;
-                goto shutdown;
-        }
-#ifndef NOHINTS
-        if(init_hints() < 0){
-                println("failed to init hints!!",ERROR);
-		exit_code = EXIT_FAILURE;
-                goto shutdown;
-        }
-	
-#endif
 
 #ifndef NOSER
         if(init_serial(DEFAULT_SERIAL_PORT) < 0){
@@ -134,6 +136,10 @@ int main(int argc, char * const argv[]){
 #endif
 #ifndef NOSER
         start_serial();
+#endif
+
+#ifndef NOHINTS
+	start_hints();
 #endif
 
 #ifndef NOMTSP

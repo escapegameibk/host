@@ -39,12 +39,7 @@ int load_config(const char* location){
         }else{
                 config_path = (char*)location;
         }
-
-        size_t intlen = strlen(config_path) + 50; 
-        char * debug = malloc(intlen);
-        memset(debug,0,intlen);
-        snprintf(debug,intlen,"parsing config from file: %s", config_path);
-        println(debug,DEBUG);
+	println("parsing config from file: %s",DEBUG, config_path);
 
         config_glob = json_object_from_file(config_path);
 
@@ -58,7 +53,87 @@ int load_config(const char* location){
                 return -2;
         }
 
-        free(debug);
+	/* Initialize language */
+	json_object* langs = json_object_object_get(config_glob, "langs");
+	if(langs == NULL){
+		println("No languages have been specified!", DEBUG);
+		println("Assuming single language mode!", DEBUG);
+		goto end_langs;
+	}else{
+		size_t langcnt = json_object_array_length(langs);
+		println("A total of %i languages have been specified:",
+			DEBUG, langcnt);
+		for(size_t i = 0; i < langcnt; i++){
+			println("\t%i:\t%s", DEBUG, i, 
+				json_object_get_string(
+				json_object_array_get_idx(langs,i)));
+		}
+	}
+
+	json_object* lang = json_object_object_get(config_glob, "default_lang");
+	if(lang == NULL){
+		println("No default language specified!", WARNING);
+		println("Assuming first language in definition!", WARNING);
+		language = 0;
+		goto end_langs;
+	}else{
+		language = json_object_get_int(lang);
+		if(language >= json_object_array_length(langs)){
+			println("Are you fucking kidding me?!", ERROR);
+			println("There are %i languages defined and you told \
+me to use No %i? Think about that for a moment please.", ERROR, 
+				json_object_array_length(langs), language + 1);
+			return -2;
+		}
+		println("Setting default language to be %i/%s", DEBUG, language,
+			json_object_get_string(json_object_array_get_idx(langs,
+			language)));
+	}
+end_langs:
+	println("Done initializing configuration", DEBUG);
 
         return 0;
+}
+
+const char* get_name_from_object(json_object* obj){
+
+	if(json_object_is_type(obj, json_type_string)){
+		/* Probably got a single-language name DIRECTLY passed. Very
+		 * edge case, and i wouldn't really recommend doing this, but it
+		 * should be fine. */
+		return json_object_get_string(obj);
+	}
+
+	json_object* name_obj = obj;
+	if(json_object_object_get(obj,"name") != NULL){
+		/* I hope i got passed the root-object rather than the name 
+		 * itself
+		 */
+		name_obj = json_object_object_get(obj,"name");
+	}
+
+	if(json_object_is_type(name_obj, json_type_string)){
+		/* It was a single-language name */
+		return json_object_get_string(name_obj);
+	}
+
+	if(json_object_is_type(name_obj, json_type_array)){
+		/* It is a multi-language name */
+		if(language >= json_object_array_length(name_obj)){
+			goto errored;
+
+		}
+
+		return json_object_get_string(json_object_array_get_idx(
+			name_obj, language));
+	}
+	
+errored:			
+	println("MISSCONFIGURED NAME OBJECT!!! DUMPING ROOT-OBJECT:",
+		WARNING);
+	json_object_to_fd(STDOUT_FILENO, obj, 
+		JSON_C_TO_STRING_PRETTY);
+
+	return "ERROR";
+
 }

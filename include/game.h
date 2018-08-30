@@ -28,12 +28,12 @@
 
 int init_game();
 int init_dependency(json_object* dependency, int event_id);
+int init_general_dependency(json_object* dependency);
 int start_game();
 
 /* checks for changes and act accordingly */
 int patrol();
 void* loop_game();
-
 
 int trigger_event(size_t event_id);
 void async_trigger_event(size_t event_id);
@@ -43,7 +43,9 @@ int check_dependency(json_object* dependency);
 /* utility functions */
 
 json_object** get_all_dependencies(size_t* depcn, size_t** event_idsp);
-int get_dependency_id();
+int get_dependency_id(json_object* dependency);
+size_t get_highest_active_event();
+
 json_object** dependency_list;
 size_t dependency_count;
 pthread_t game_thread;
@@ -51,5 +53,10 @@ pthread_t game_thread;
 /* For historic reasons these 2 variables are still named state. TODO */
 bool * state_trigger_status;
 size_t state_cnt;
+
+/* Pending autoresets. For events, which don't require a global reset, but are
+ * autoresetting. I can't reset them immediately, but have to wait until it
+ * should be possible to trigger it again.. */
+bool* reset_jobs;
 
 #endif

@@ -20,6 +20,9 @@
 
 #define SOCKET_LOCATION "/var/run/escape/socket"
 #include <pthread.h>
+#include <json-c/json.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 int init_interface();
 int start_interface();
@@ -30,6 +33,10 @@ int handle_comm(int fd);
 int unix_fd;
 pthread_t interface_thread; 
 
+size_t * printable_events;
+bool** printable_event_states;
+size_t printable_event_cnt;
+
 int execute_command(int sock_fd,char* command);
 int print_info_interface(int sockfd);
 int print_changeables_interface(int sockfd);
@@ -37,5 +44,8 @@ int print_events_interface(int sockfd);
 int print_dependencies_interface(int sockfd);
 int print_dependency_states_interface(int sockfd);
 int print_hints_interface(int sockfd);
+
+/* Helper functions */
+json_object** get_printables_dependencies(size_t* depcnt);
 
 #endif

@@ -21,6 +21,13 @@
 
 int load_config();
 
+const char* get_name_from_object(json_object* obj);
+
+
 struct json_object* config_glob;
+
+/* There may be a global object called */
+size_t language;
+
 
 #endif

@@ -37,12 +37,45 @@
 
 int init_interface(){
 
-#define INT_LEN 64
-        char * debug_out = malloc(INT_LEN);
-        memset(debug_out,0,INT_LEN);
-        sprintf(debug_out,"initiating unix socket at %s",SOCKET_LOCATION);
-        println(debug_out,DEBUG);
-        free(debug_out);
+	/* Load and map events to the interface events, as not all are
+	 * printable / should be printed */
+
+	json_object* events = json_object_object_get(config_glob,"events");
+	printable_event_cnt = 0;
+	printable_event_states = NULL;
+	printable_events = NULL;
+	
+
+	for(size_t i = 0; i < json_object_array_length(events); i++){
+		json_object* event = json_object_array_get_idx(events,i);
+		json_object* hid = json_object_object_get(event, "hidden");
+		if(hid != NULL){
+		
+			bool hidden = json_object_get_boolean(hid);
+
+			if(hidden){
+				println("Ommitting hidden event in interface \
+for %i/%s",
+					DEBUG, i,get_name_from_object(event));
+
+				continue;
+			}
+
+		}
+
+		/* I can display the event. Map it and add it to the array */
+		printable_events = realloc(printable_events, 
+			++printable_event_cnt * sizeof(size_t));
+		printable_events[printable_event_cnt - 1 ] = i;
+		
+		printable_event_states = realloc(printable_event_states, 
+			printable_event_cnt * sizeof(bool*));
+		printable_event_states[printable_event_cnt - 1] = 
+			&state_trigger_status[i];
+
+	}
+
+        println("initiating unix socket at %s",DEBUG, SOCKET_LOCATION);
         /* initiate the socket fd */
         struct sockaddr_un addr;
 
@@ -80,13 +113,8 @@ int init_interface(){
         memset(&interface_thread, 0, sizeof(interface_thread));
 
         /* Debug and init for the json library */
-        debug_out = malloc(INT_LEN);
-        memset(debug_out,0,INT_LEN);
-        sprintf(debug_out,"json library init. version: %s",JSON_C_VERSION);
-        println(debug_out,DEBUG);
-        free(debug_out);
+        println("json library init. version: %s",DEBUG ,JSON_C_VERSION);
         
-#undef INT_LEN
         /* init successfull */
         return 0;
 }
@@ -224,23 +252,26 @@ int execute_command(int sock_fd, char* command){
                          * dependencies. It will not be triggerable until the
                          * the game is reset to the start state.
                          */
+
 			println("Enforced trigger for event %i!", INFO, 
+				printable_events[json_object_get_int(
+				json_object_object_get(parsed,"event"))]);
+
+                        async_trigger_event(printable_events[
 				json_object_get_int(json_object_object_get(
-				parsed,"event")));
-                        async_trigger_event(json_object_get_int(
-                                json_object_object_get(parsed,"event")));
+				parsed,"event"))]);
 		break;
 	case 5:
 		/* Forced untrigger the incoming event. Does NOT reset
 		the triggers. */
 
 		println("Enforced un-trigger for event %i!", INFO, 
-			json_object_get_int(json_object_object_get(
-			parsed,"event")));
+			printable_events[json_object_get_int(
+			json_object_object_get(parsed,"event"))]);
 
 		/* This is REALLY dirty, but does the trick.*/
-		state_trigger_status[json_object_get_int(
-			json_object_object_get(parsed,"event"))] = false;
+		state_trigger_status[printable_events[json_object_get_int(
+			json_object_object_get(parsed,"event"))]] = false;
 
                 break;
 	case 6:
@@ -273,8 +304,8 @@ int execute_command(int sock_fd, char* command){
 		/* Enfoces the execution of a hint.
 		 */
 		
-		execute_hint(json_object_get_int(json_object_object_get(parsed,
-			"event_id")),json_object_get_int(
+		execute_hint(printable_events[json_object_get_int(
+		json_object_object_get(parsed,"event_id"))],json_object_get_int(
 			json_object_object_get(parsed, "hint_id")));
 		break;
 #endif /* NOHINTS */
@@ -288,6 +319,11 @@ int execute_command(int sock_fd, char* command){
 
 		break;
 #endif /* NOALARM */
+	case 11:
+		
+		/* Change the language to the passed lang_id if possible */
+		
+
         default:
                 /* OOPS */
                 debug = malloc(INT_LEN);
@@ -327,8 +363,7 @@ int print_info_interface(int sock_fd){
 
         n |= json_object_object_add(obj,"version",version);
         n |= json_object_object_add(obj,"game",json_object_new_string(
-                json_object_get_string(json_object_object_get(
-                config_glob,"name"))));
+		get_name_from_object(config_glob)));
                 
         n|= json_object_object_add(obj, "duration",
                 json_object_new_int64(game_duration));
@@ -351,6 +386,12 @@ int print_info_interface(int sock_fd){
         n|= json_object_object_add(obj, "alarm",
                 json_object_new_boolean(true));
 #endif
+	
+	json_object* langs = NULL;
+	json_object_deep_copy(json_object_object_get(config_glob, "langs"), 
+		&langs,json_c_shallow_copy_default);
+	json_object_object_add(obj, "langs",  langs);
+
 
         json_object_to_fd(sock_fd, obj, JSON_C_TO_STRING_PRETTY);
 
@@ -365,9 +406,9 @@ int print_changeables_interface(int sockfd){
         json_object* obj = json_object_new_object();
         json_object* stats = json_object_new_array();
         int n = 0;
-        for(size_t i = 0; i < state_cnt; i ++){
+        for(size_t i = 0; i < printable_event_cnt; i ++){
                 n |= json_object_array_add(stats, json_object_new_int(
-                        state_trigger_status[i]));
+                        *printable_event_states[i]));
 
                 if(n != 0){
                         println("Failed to add event to array!",ERROR);
@@ -380,7 +421,7 @@ int print_changeables_interface(int sockfd){
                 json_object_new_int64(game_timer_start));
         json_object_object_add(obj, "end_time", 
                 json_object_new_int64(game_timer_end));
-
+	
 #ifndef NOALARM
         n|= json_object_object_add(obj, "alarm",
                 json_object_new_boolean(alarm_on));
@@ -396,10 +437,10 @@ int print_events_interface(int sockfd){
 
         json_object* eventarr = json_object_object_get(config_glob, "events");
         json_object* arr_names = json_object_new_array();
-        for(size_t i = 0; i < json_object_array_length(eventarr); i ++){
+        for(size_t i = 0; i < printable_event_cnt; i ++){
                 json_object_array_add(arr_names, json_object_new_string(
-                json_object_get_string(json_object_object_get(
-                json_object_array_get_idx(eventarr,i),"name"))));
+                get_name_from_object(json_object_array_get_idx(eventarr,
+		printable_events[i]))));
         }
         json_object_to_fd(sockfd, arr_names, JSON_C_TO_STRING_PLAIN);
         json_object_put(arr_names);
@@ -409,23 +450,16 @@ int print_events_interface(int sockfd){
 
 int print_dependencies_interface(int sockfd){
 
-
-	json_object** dependencies = dependency_list;
+	size_t depcnt = 0;
+	json_object** dependencies = get_printables_dependencies(&depcnt);
 	json_object* dep_array = json_object_new_array();
-	for(size_t i = 0; i < dependency_count; i++){
+	for(size_t i = 0; i < depcnt; i++){
 		
-		const char* module = json_object_get_string(
-			json_object_object_get(dependencies[i], "module"));
-#ifndef ALLDEPENDS
-		/* Ommit core dependencies */
-		if(strcasecmp(module, "core") == 0){
-			continue;
-		}
-#endif	
 		json_object* dep = NULL;
-		json_object_deep_copy(dependencies[i], &dep, 
-			json_c_shallow_copy_default);
-		
+		json_object* orig_dep = dependencies[i];
+		json_object_object_add(dep,"name", json_object_new_string(
+			get_name_from_object(orig_dep)));
+			
 		json_object_array_add(dep_array, dep);
 	}
 
@@ -440,22 +474,16 @@ int print_dependency_states_interface(int sockfd){
 
 	json_object* stats = json_object_new_array();
 	
-	json_object** dependencies = dependency_list;
-	for(size_t i = 0; i < dependency_count; i++){
+	size_t depcnt = 0;
+	json_object** dependencies = get_printables_dependencies(&depcnt);
+	for(size_t i = 0; i < depcnt ; i++){
 		
-		const char* module = json_object_get_string(
-			json_object_object_get(dependencies[i], "module"));
-
-#ifndef ALLDEPENDS
-		/* Ommit core dependencies */
-		if(strcasecmp(module, "core") == 0){
-			continue;
-		}
-#endif
 		json_object* stat = json_object_new_int(check_dependency(
 			dependencies[i]));
 		json_object_array_add(stats, stat);
+
 	}
+	free(dependencies);
 
 	json_object_to_fd(sockfd, stats, JSON_C_TO_STRING_PLAIN);
 	json_object_put(stats);
@@ -466,6 +494,53 @@ int print_dependency_states_interface(int sockfd){
 
 int print_hints_interface(int sockfd){
 	
-	return json_object_to_fd(sockfd, get_hints_root(), 
+	json_object* hnt_print = json_object_new_array();
+	
+	for(size_t i = 0; (i < printable_event_cnt) && (printable_events[i] < 
+		json_object_array_length(get_hints_root())); i++){
+		
+		json_object* hnts = NULL;
+		json_object_deep_copy(json_object_array_get_idx(
+			get_hints_root(),printable_events[i]), &hnts, 
+			json_c_shallow_copy_default);
+
+		json_object_array_add(hnt_print, hnts);
+	}
+	
+	json_object_to_fd(sockfd, hnt_print, 
 		JSON_C_TO_STRING_PLAIN);
+
+	json_object_put(hnt_print);
+	return 0;
+}
+
+
+/* ############################################################################
+ * # Helper functions.							      #
+ * # Used to get all kinds of stuff, which has to be gotten mre than once.    #
+ * ############################################################################
+ */
+
+json_object** get_printables_dependencies(size_t *depcntp){
+
+	json_object** deps = NULL;
+	size_t depcnt = 0;
+
+	for(size_t i = 0; i < dependency_count; i++){
+
+		json_object* dep = dependency_list[i];
+#ifndef ALLDEPENDS
+		if(strcasecmp(json_object_get_string(json_object_object_get(dep,
+			"module")), "core") == 0){
+			continue;
+		}
+#endif
+		deps = realloc(deps,++depcnt * sizeof(json_object*));
+		deps[depcnt - 1] = dep;
+
+	}
+
+	*depcntp = depcnt;
+	return deps;
+
 }

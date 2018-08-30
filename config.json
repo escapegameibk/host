@@ -4,10 +4,15 @@
 	"name" : "Generic",
 	"mtsp_device" : "/dev/ttyUSB0",
 	"mtsp_baud" : 460800,
+	"angs" :[
+		"english"
+	],
+	"default_lang" : 0,
 	"events":
 	[
 		{
 			"name" : "Start",
+			"hidden" : true,
 			"dependencies" :
 			[
 				{
@@ -91,6 +96,19 @@
 		[
 			{
 				"name" : "Hinweis 1",
+				"triggers" :
+				[
+					{
+						"name" : "spiele",
+						"module" : "snd",
+						"resource" : "https://escpe.net/sounds/e1m1.ogg"
+					}
+				]
+			}
+		],
+		[
+			{
+				"name" : "Hinweis 2",
 				"triggers" :
 				[
 					{
