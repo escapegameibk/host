@@ -214,11 +214,11 @@ int patrol(){
 			if(reset_jobs[i]){
 				reset_jobs[i] = false;
 				state_trigger_status[i] = false;
+				println("Reset job for event %i done!", DEBUG);
 			}
 		}
                 
         }
-
         
         return 0;
 }
@@ -279,7 +279,8 @@ int trigger_event(size_t event_id){
 	}
 
         println("Triggering %i triggers for event %s/%i",DEBUG, 
-		json_object_array_length(triggers),get_name_from_object(event), event_id);
+		json_object_array_length(triggers),get_name_from_object(event), 
+		event_id);
 		
 	for(size_t triggercnt = 0; triggercnt < 
 		json_object_array_length(triggers); triggercnt++){
@@ -369,8 +370,7 @@ int execute_trigger(json_object* trigger){
 
 	const char* module = json_object_get_string(json_object_object_get(
                 trigger,"module"));
-	println("Executing trigger %s", DEBUG, json_object_get_string(
-		json_object_object_get(trigger,"name")));
+	println("Executing trigger %s", DEBUG, get_name_from_object(trigger));
         
         /* Find out which module is concerned and execute the trigger
          * in the specified function of the module.
