@@ -1,7 +1,11 @@
 {
 
 	"duration" : 3600,
-	"name" : "Generic",
+	"name" :
+	[
+		"Generic",
+		"Generisch"
+	],
 	"mtsp_device" : "/dev/ttyUSB0",
 	"mtsp_baud" : 460800,
 	"langs" :[
@@ -116,7 +120,11 @@
 		],
 		[
 			{
-				"name" : "Hinweis 2",
+				"name" :
+				[
+					"Hint 2",
+					"Hinweis 2"
+				],
 				"triggers" :
 				[
 					{

@@ -322,7 +322,12 @@ int execute_command(int sock_fd, char* command){
 	case 11:
 		
 		/* Change the language to the passed lang_id if possible */
-		
+		println("Global language change! From %i to %i!", DEBUG,
+			language,json_object_get_int(json_object_object_get(
+			parsed,"lang")));
+		language = json_object_get_int(json_object_object_get(parsed,
+			"lang"));
+		break;
 
         default:
                 /* OOPS */
@@ -505,10 +510,22 @@ int print_hints_interface(int sockfd){
 	for(size_t i = 0; (i < printable_event_cnt) && (printable_events[i] < 
 		json_object_array_length(get_hints_root())); i++){
 		
-		json_object* hnts = NULL;
-		json_object_deep_copy(json_object_array_get_idx(
-			get_hints_root(),printable_events[i]), &hnts, 
-			json_c_shallow_copy_default);
+		json_object* hnts = json_object_new_array();
+		json_object* real_hnts = json_object_array_get_idx(
+			get_hints_root(),printable_events[i]);
+
+		
+		for(size_t hnt_id = 0; hnt_id < 
+			json_object_array_length(real_hnts); hnt_id ++){
+			
+			json_object* hnt = json_object_new_object();
+
+			json_object_object_add(hnt,"name", 
+				json_object_new_string(get_name_from_object(
+				json_object_array_get_idx(real_hnts,hnt_id))));
+			json_object_array_add(hnts,hnt);
+
+		}
 
 		json_object_array_add(hnt_print, hnts);
 	}
