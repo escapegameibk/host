@@ -172,7 +172,7 @@ int patrol(){
 		 * if nescessary.
 		 */
 
-		if(state_trigger_status[i]){
+		if(state_trigger_status[i] && !reset_jobs[i]){
 			/* Ommit already triggered events */
 			continue;
 		}

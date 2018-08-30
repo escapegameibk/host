@@ -4,8 +4,9 @@
 	"name" : "Generic",
 	"mtsp_device" : "/dev/ttyUSB0",
 	"mtsp_baud" : 460800,
-	"angs" :[
-		"english"
+	"langs" :[
+		"english",
+		"deutsch"
 	],
 	"default_lang" : 0,
 	"events":
