@@ -245,6 +245,18 @@ to execute in the first array, the hint 11,0 get's executed.
 
 ## Auto hinting
 
+# Cutting stuff out
+
+Some things may be completely omitted via a preprocessor definition. You can,
+for example, add a -D NOMTSP to the gcc comandline inside the Makefile. The
+following is a list of these definitions:
+
+- NOMTSP : Completely disables and removes the MTSP module.
+- NOSER : Completely disables and removes the Serial module.
+- COLOR : Enables Color in the debug output.
+- HEADLESS : Completely disables and removes the interface.
+- NOHINTS : Completely disables ad removes the Hinting system.
+
 # ERRATA
 ## Raspberry Pi
 

@@ -36,5 +36,7 @@ int execute_hint(size_t event_id, size_t hint_id);
 bool hints_enabled;
 bool auto_hinting;
 
+bool* hint_reset_jobs;
+
 #endif /* HINTS_H */
 #endif /* NOHINTS */

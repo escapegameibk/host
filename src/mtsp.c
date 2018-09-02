@@ -552,6 +552,7 @@ int mtsp_send_request(uint8_t slave_id, uint8_t command_id, uint8_t* payload,
 		if(reply == NULL){
 			println("Failed to get reply from mtsp device %i!",
 				WARNING, slave_id);
+			sleep_ms(100);
 			return_value = -2;
 			continue;
 		}
@@ -561,6 +562,7 @@ int mtsp_send_request(uint8_t slave_id, uint8_t command_id, uint8_t* payload,
 		if( n < 0){
 			println("Failed to get VALID reply from mtsp device %i",
 				WARNING, slave_id);
+			sleep_ms(100);
 			return_value = -3;
 			continue;
 		}

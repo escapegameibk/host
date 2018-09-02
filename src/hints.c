@@ -27,6 +27,7 @@
 #include <json-c/json.h>
 #include <stddef.h>
 #include <unistd.h>
+#include <string.h>
 
 int init_hints(){
 
@@ -68,6 +69,10 @@ int init_hints(){
 		hint_dependencies);
 	println("Hinting to a depth of %i. Correct hint amount assumed.", DEBUG,
 		hinting_depth);
+	hint_reset_jobs = malloc(hinting_depth * sizeof(bool));
+
+	memset(hint_reset_jobs,0 ,hinting_depth * sizeof(bool));
+
 	for(size_t i = 0; i < hinting_depth; i++){
 		json_object * dependencies = json_object_array_get_idx(
 			hint_dependencies, i);
@@ -132,19 +137,22 @@ void* loop_hints(){
 int check_autohints(){
 
 	json_object* root_dependencies = json_object_object_get(config_glob, 
-		"hint_depenencies");
+		"hint_dependencies");
 
-	/* This is used to only trigger an hint on a high flank, rather than a
-	 * low flank*/
-	static bool last = false;
+	if(root_dependencies == NULL){
+		println("NO ROOT DEPENDENCIES FOR AUTOHINTING!", ERROR);
+		return -1;
+	}
 
-		for(size_t hint_lvl = 0; hint_lvl < 
+	for(size_t hint_lvl = 0; hint_lvl < 
 		json_object_array_length(root_dependencies); hint_lvl ++){
+		
 
 		json_object* hints_lvl = json_object_array_get_idx(
 			root_dependencies, hint_lvl);
-
+		bool met = true;
 		for(size_t i = 0; i < json_object_array_length(hints_lvl); i++){
+		
 			
 			json_object* dependency = json_object_array_get_idx(
 				hints_lvl, i);
@@ -158,7 +166,8 @@ int check_autohints(){
 				}else{
 					/* Quit if a dependency is not forfilled
 					 */
-					 goto hint_not_ready;
+					 met = false;
+					 break;
 				}
 			}else{
 				println("FAILED TO CHECK DEPENDENCY! DUMPING!",
@@ -169,9 +178,16 @@ int check_autohints(){
 			}
 
 		}
+		
+		if(!met){
+			if(hint_reset_jobs[hint_lvl]){
+				hint_reset_jobs[hint_lvl] = false;
+			}
+			continue;
+		}
 
-		if(last){
-			break;
+		if(hint_reset_jobs[hint_lvl]){
+			continue;
 		}
 
 		size_t event_id = get_highest_active_event() + 1;
@@ -182,17 +198,13 @@ int check_autohints(){
 		
 		/* I don't even pretend to bother, wether the hint has actually
 		 * been played, or nit */
-		 execute_hint(event_id, hint_lvl);
-		 
-		 last = true;
-		 break;
+		execute_hint(event_id, hint_lvl);
 		
-hint_not_ready:
-		/* Continue to check the other hints */
-		last = false;
+		hint_reset_jobs[hint_lvl] = true;
 		continue;
+		 
 	}
-
+	
 	return 0;
 }
 
@@ -234,8 +246,7 @@ int execute_hint(size_t event_id, size_t hint_id){
 		return -4;
 	}
 
-	const char* name = json_object_get_string(json_object_object_get(hint,
-		"name"));
+	const char* name = get_name_from_object(hint);
 
 	println("Executing Hint %s", DEBUG, name);
 	

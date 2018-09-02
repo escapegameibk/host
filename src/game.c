@@ -203,7 +203,7 @@ int patrol(){
 			}
 		}
 		
-		if(met){
+		if(met && !reset_jobs[i]){
 			println("All dependencies clear to execute event %i!",
 				 INFO, i);
 			trigger_event(i);
@@ -214,7 +214,8 @@ int patrol(){
 			if(reset_jobs[i]){
 				reset_jobs[i] = false;
 				state_trigger_status[i] = false;
-				println("Reset job for event %i done!", DEBUG);
+				println("Reset job for event %i done!", DEBUG,
+					i);
 			}
 		}
                 
@@ -248,6 +249,7 @@ void* loop_game(){
 }
 
 int trigger_event(size_t event_id){
+   
         
         if((state_cnt <= event_id) | (state_trigger_status[event_id])){
                 println("Tried to trigger invalid event %i", WARNING, event_id);
@@ -274,29 +276,29 @@ int trigger_event(size_t event_id){
 	if(triggers == NULL){
 		println("Attempted to trigger an event without triggers", INFO);
 		/* It was still a success i guess */
-		trigger_lock = false;
-		return 0;
-	}
+	}else{
 
-        println("Triggering %i triggers for event %s/%i",DEBUG, 
-		json_object_array_length(triggers),get_name_from_object(event), 
-		event_id);
+		println("Triggering %i triggers for event %s/%i",DEBUG, 
+			json_object_array_length(triggers),
+			get_name_from_object(event), event_id);
 		
-	for(size_t triggercnt = 0; triggercnt < 
-		json_object_array_length(triggers); triggercnt++){
+		for(size_t triggercnt = 0; triggercnt < 
+			json_object_array_length(triggers); triggercnt++){
 		
-		json_object* trigger = json_object_array_get_idx(triggers,
-                        triggercnt);
+			json_object* trigger = json_object_array_get_idx(
+				triggers,triggercnt);
 		
 
-		if(execute_trigger(trigger) < 0){
-			println("FAILED TO EXECUTE TRIGGER! RESETTING!", ERROR);
-                        state_trigger_status[event_id] = 0;
-			/* untrigger event */
-			trigger_lock = false;
-			return -1;
+			if(execute_trigger(trigger) < 0){
+				println("FAILED TO EXECUTE TRIGGER! RESETTING!", 
+					ERROR);
+				state_trigger_status[event_id] = 0;
+				/* untrigger event */
+				trigger_lock = false;
+				return -1;
+			}
+
 		}
-
 	}
 	
 	/* If the event was marked for autoreset, create a reset job for it */
@@ -370,6 +372,13 @@ int execute_trigger(json_object* trigger){
 
 	const char* module = json_object_get_string(json_object_object_get(
                 trigger,"module"));
+	if(module == NULL){
+		println("Trigger without module! dumping:", ERROR);
+		json_object_to_fd(STDOUT_FILENO,trigger, 
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+
+	}
 	println("Executing trigger %s", DEBUG, get_name_from_object(trigger));
         
         /* Find out which module is concerned and execute the trigger
@@ -517,7 +526,7 @@ size_t get_highest_active_event(){
 	size_t highest = 0; 
 
 	for(size_t i = 0; i < state_cnt; i++){
-		if(state_trigger_status[i] == 0){
+		if(state_trigger_status[i] == 1){
 			highest = i;
 		}
 	}

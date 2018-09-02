@@ -27,7 +27,7 @@
  */
 #define VERSION_MAJOR           0
 #define VERSION_MINOR           4
-#define VERSION_RELEASE         1
+#define VERSION_RELEASE         2
 
 #define SHUTDOWN_DELAY 5
 
