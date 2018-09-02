@@ -63,6 +63,16 @@ struct sequence_dependency_t** core_sequential_dependencies;
 size_t core_sequence_count;
 struct core_permanent_trigger_t* core_permanent_trigger;
 
+struct flank_dependency_t{
+	bool high;
+	bool low;
+	int last;
+	int id;
+};
+
+struct flank_dependency_t** flank_dependencies;
+size_t flank_dependency_count;
+
 /* Alarm related things. An alarm tries to get the operator's attention.*/
 #ifndef NOALARM
 bool alarm_on;

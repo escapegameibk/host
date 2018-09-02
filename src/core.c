@@ -31,7 +31,8 @@
 size_t core_sequence_count = 0;
 struct sequence_dependency_t **core_sequential_dependencies = NULL;
 
-struct alltime_event* alltime_events = NULL;
+size_t flank_dependency_count = 0;
+struct flank_dependency_t** flank_dependencies = NULL;
 
 int init_core(){
 	
@@ -111,6 +112,7 @@ int core_init_dependency(json_object* dependency){
 		}
 		println("Registered sequence with %i elements", DEBUG,
 			json_object_array_length(sequence));
+		
 		json_object* sub_dependencies = json_object_object_get(
 			dependency, "dependencies");
 		for(size_t i = 0; i < json_object_array_length(sub_dependencies
@@ -150,6 +152,35 @@ int core_init_dependency(json_object* dependency){
 		core_sequential_dependencies[core_sequence_count - 1] = seq;
 		println("Successfully initialized syequence with id %i", DEBUG, 
 			seq->dependency_id);
+	}else if(strcasecmp(type,"flank") == 0){
+		/* Flank dependencies have an internal struct wich has to be
+		 * initialized. */
+
+		struct flank_dependency_t* dep = malloc(sizeof(struct
+			flank_dependency_t));
+		memset(dep, 0, sizeof(struct flank_dependency_t));
+
+		json_object* high = json_object_object_get(dependency,"high");
+		if(high == NULL || json_object_get_boolean(high)){
+			dep->high = true;
+		}
+		
+		json_object* low = json_object_object_get(dependency,"low");
+		if(low == NULL || json_object_get_boolean(low)){
+			dep->low = true;
+		}
+		dep->id = get_dependency_id(dependency);
+
+		/* As initial state the dependency has -1 as it's last value */
+		dep->last = -1;
+		flank_dependencies = realloc(flank_dependencies, 
+			sizeof(struct flank_dependency_t*) * ++flank_dependency_count);
+		flank_dependencies[flank_dependency_count - 1] = dep;
+
+		/* Initialize the sub-dependency */
+		return init_dependency(json_object_object_get(dependency,
+			"dependency"),json_object_get_int(
+			json_object_object_get(dependency,"event_id")));
 	}
 	/* Ignore everything else */
 
@@ -224,9 +255,48 @@ int core_check_dependency(json_object* dependency){
 		println("THIS SHOULD BE IMPOSSIBLE!!!!", ERROR);
 		return -3;
 	
+	}else if(strcasecmp(type,"flank") == 0){
+		/* Look for the right flank dependency and check wether a
+		 * flank has occured or not and return accordingly */
+		 for(size_t i = 0; i < flank_dependency_count; i++){
+			struct flank_dependency_t* dep = flank_dependencies[i];
+			if(dep->id != get_dependency_id(dependency)){
+				continue;
+			}
+
+			/* We have a winner here */
+			int last = dep->last;
+			int now = check_dependency(json_object_object_get(
+				dependency,"dependency"));
+			if(now == last){
+				/* Boring */
+				return false;
+			}
+			
+			if(last == -1){
+				/* Error correction and init state */
+				dep->last = now;
+			}
+
+			if(last < now){
+				dep->last = now;
+				return dep->high;
+			}else{
+				dep->last = now;
+				return dep->low;
+
+			}
+
+		 }
+		
+		/* WTF?! */
+		println("FOUND UNINITIALIZED FLANK DEPENDENCY!!!", ERROR);
+		println("THIS SHOULD BE IMPOSSIBLE!!!!", ERROR);
+		return -3;
+		
 	}else if(strcasecmp(type,"never") == 0){
 		/* This is unable to return true at any time */
-		return 0;
+		return false;
 	}else{
 		println("invalid type specified in core dependency : %s",
 			ERROR, type);

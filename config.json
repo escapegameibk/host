@@ -17,15 +17,21 @@
 	[
 		{
 			"name" : "Start",
-			"hidden" : true,
+			"hidden" : false,
 			"dependencies" :
 			[
 				{
-					"name" : "Prevented by stop",
 					"module" : "core",
-					"type" : "event",
-					"event" : 1,
-					"target" : 0
+					"type" : "flank",
+					"name" : "Flank",
+					"dependency" :
+					{
+						"name" : "Prevented by stop",
+						"module" : "core",
+						"type" : "event",
+						"event" : 1,
+						"target" : 0
+					}
 				}
 			],
 			"triggers" :
