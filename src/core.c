@@ -181,6 +181,15 @@ int core_init_dependency(json_object* dependency){
 		return init_dependency(json_object_object_get(dependency,
 			"dependency"),json_object_get_int(
 			json_object_object_get(dependency,"event_id")));
+	}else if(strcasecmp(type,"or") == 0){
+		json_object* deps = json_object_object_get(dependency, 
+			"dependencies");
+		for(size_t i = 0; i < json_object_array_length(deps); i++){
+			init_dependency(json_object_array_get_idx(deps, i),
+				json_object_get_int(json_object_object_get(
+				dependency,"event_id")));
+		}
+
 	}
 	/* Ignore everything else */
 
@@ -276,6 +285,7 @@ int core_check_dependency(json_object* dependency){
 			if(last == -1){
 				/* Error correction and init state */
 				dep->last = now;
+				return 0;
 			}
 
 			if(last < now){
@@ -293,6 +303,24 @@ int core_check_dependency(json_object* dependency){
 		println("FOUND UNINITIALIZED FLANK DEPENDENCY!!!", ERROR);
 		println("THIS SHOULD BE IMPOSSIBLE!!!!", ERROR);
 		return -3;
+		
+	}else if(strcasecmp(type,"or") == 0){
+		/* This is an OR of all dependencies given in the dependencies
+		 * field */
+		json_object* deps = json_object_object_get(dependency,
+			"dependencies");
+		for(size_t i = 0; i < json_object_array_length(deps); i++){
+
+			int val = check_dependency(json_object_array_get_idx(
+				deps,i));
+
+			if(val != 0){
+				return val;
+			}
+
+		}
+		return false;
+
 		
 	}else if(strcasecmp(type,"never") == 0){
 		/* This is unable to return true at any time */

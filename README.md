@@ -1,7 +1,9 @@
 # Host
 
 ## About
-This is the host for games at the escape game innsbruck.
+This is the host for games at the escape game innsbruck. It's main purpose is,
+to control an escape room. Afterwars, it became apparent to me, that it would
+also be kinda suitable as a home-automation system.
 
 ## Interface
 
@@ -30,12 +32,49 @@ which permits you to use it commercially, but requires you to give users the
 source code. in any case, we don't sell the software itself any way,
 so it doesn't really matter.
 
-## Build Dependencies
+## Building
+
+The program only requires the linux operating system. 
+
+### Dependencies
 
 As of now, the program has the following dependencies:
 
 - json-c >= 0.13
 - libvlc >= 0.12
+- gcc >= 5.0
+- make
+
+The vlc includes are required to be in <vlc/> and the json-c includes are 
+required to be in <json-c/> of the global include path, as these are hard-coded
+into the program. This is meant ot change in the near future, or as soon as i
+find time to correctly configure the autotools.
+
+The json-c version of the \*bian operating system is heavily outdated, as it
+is version 0.12. Therefore the regular package doesn't work. You have to build
+it from scratch. The latest version can be downloaded at:
+
+https://s3.amazonaws.com/json-c_releases/releases/index.html
+
+Extract the downloaded tarball, go into the directory, execute the command
+'autogen', then run './configure --prefix=/usr --enable-threading', 'make',
+'make check' and 'sudo make install'. This should install the nescessary
+librarys and headers in the rght directories, and should allow the linker to
+find them.
+
+### Building an executable
+
+Building an executable is as easy as typing 'make' into the commandline of any
+linux terminal.
+
+The executable may be found at 'bin/host' afterwards, and should have been
+compiled for the target architecture. In case this will ever be needed (i
+do hopefor gods sake that it will not) support for non 8 bit per byte platorms
+has been implemented. 
+
+The executable itself is by default dynamicallylinked, so taking it from one
+computer to another should be possible, if the nescessary packages are installed
+and the libldlinux can find the libraries.
 
 ## Links
 
@@ -75,6 +114,9 @@ json file:
    will be replaced with "/dev/ttyUSB0".
  - "mtsp_baud" : The mtsp baud rate with which to connect onto the bus. Can be
    ommited and will be replaced with B460800
+ - "langs" : An array of strings representing the language. These values are
+   never touched inside of the program.
+ - "default_lang" : An integer defining which language is used at startup.
 
 This is where it get's a bit more complicated. I will try to explain the
 construction of the "events" array now to you. The events array contains an
@@ -150,6 +192,15 @@ what type of dependency it is. The following types have been defined as of now:
 	the first dependency to trigger would be the first one, the second the
 	second one, and the third the third one. Yes arrays start at 0. This
 	means the first element is the last one in the sequence array.
+3. flank:
+	A flank dependency is updated when it's read. This dependency has 1
+	subdependency declared in a "dependency" field. The flank dependency
+	is forefilled, in case the sub-dependency changes state. By default, any
+	state-change triggers the flank dependency. The boolean fields "high"
+	and "low" may specify, which change forefilles the dependency, with
+	"low" meaning a change from 1 to 0 and "high" meaning a change from 0
+	to 1. Both values are assumed to be true, and therefore forefilling the
+	dependency, by default.
 
 #### Triggers 
 The core module is specified via the module field inside of a trigger.
@@ -161,16 +212,18 @@ following actions:
 	unix time. No additional fields are required.
 
 2. timer_stop:
-	This action causes the start time to be set to 0, therefore causing it
-	to be stopped. No additional fields are required
-
-3. reset:
+	This action causes the startend to be set to the actual unix time,
+	therefore causing the timer to stop. No additional fields required.
+3. timer_reset:
+	This action causes the timer values timer_start and timer_stop to be
+	cleared.
+4. reset:
 	Reset all game critical things and modules to their initial state. This
 	DOESN't cause the game to automatically reset all values, but rather the
 	modules to perform a cleanup. It also resets all events to be not
 	triggered.  No additional fields are required.
 
-4. delay:
+5. delay:
 	A delay is performed. As all triggeres are executed in serial, this
 	can be used to wait a bit before triggereing the next thing. It
 	requires a delay field to be specified containing the time to be slept
@@ -243,7 +296,12 @@ triggered the next time, and the correlating hint is executed. So for example if
 the latest event which has been executed is 10, and all dependencies are clear
 to execute in the first array, the hint 11,0 get's executed.
 
-## Auto hinting
+## Language
+
+The "langs" field, which is an array of strings, declares, in which languages
+the game is available. The languages are internally represented by the
+corresponding index in the array. The "default_lang" inside of the root object
+defines, which index is used by default. 
 
 # Cutting stuff out
 
