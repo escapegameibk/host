@@ -33,5 +33,9 @@ libvlc_instance_t * vlc_inst;
 libvlc_media_player_t **vlc_mp;
 libvlc_media_player_t *effect_player;
 size_t playercnt;
+bool sound_muted;
+
+/* Helper functions */
+const char* get_lang_resource(json_object* obj);
 
 #endif

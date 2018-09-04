@@ -114,11 +114,17 @@
 		[
 			{
 				"name" : "Hinweis 1",
+				"content" :
+				[
+					"doom soundtrack",
+					"DOOM musik"
+				],
 				"triggers" :
 				[
 					{
 						"name" : "spiele",
 						"module" : "snd",
+						"action" : "play",
 						"resource" : "https://escpe.net/sounds/e1m1.ogg"
 					}
 				]
@@ -131,11 +137,17 @@
 					"Hint 2",
 					"Hinweis 2"
 				],
+				"content" :
+				[
+					"doom soundtrack",
+					"DOOM musik"
+				],
 				"triggers" :
 				[
 					{
 						"name" : "spiele",
 						"module" : "snd",
+						"action" : "play",
 						"resource" : "https://escpe.net/sounds/e1m1.ogg"
 					}
 				]

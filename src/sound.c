@@ -15,11 +15,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "sound.h"
-#include <stdlib.h>
-#include <strings.h>
 #include "config.h"
 #include "log.h"
 #include "tools.h"
+
+#include <stdlib.h>
+#include <strings.h>
+#include <unistd.h>
+
+bool sound_muted = false;
 
 int init_sound(){
 
@@ -53,7 +57,7 @@ int sound_trigger(json_object* trigger){
 		json_object* resource_obj = json_object_object_get(trigger, 
 			"resource");
 
-		const char* resource = json_object_get_string(resource_obj);
+		const char* resource = get_lang_resource(resource_obj);
 
 		println("Playing sound file from %s", DEBUG, resource);
 	
@@ -63,7 +67,7 @@ int sound_trigger(json_object* trigger){
 
 		json_object* resource_obj = json_object_object_get(trigger, 
 			"resource");
-
+		
 		const char* resource = json_object_get_string(resource_obj);
 
 		println("Playing sound effect from %s", DEBUG, resource);
@@ -98,6 +102,12 @@ int snd_init_dependency(json_object* dependency){
 }
 
 int play_sound(const char* url){
+
+	if(sound_muted){
+		/* Global mute is on! This means, that no new sounds will be
+		 * played. Old sounds will still remain*/
+		return 0;
+	}
         
 	libvlc_media_t *m = libvlc_media_new_location (vlc_inst, 
                 url);
@@ -160,5 +170,36 @@ int reset_sounds(){
 	playercnt = 0;
 
 	return 0;
+
+}
+
+/* Pass a json object wich somehow contains a resource field. Please try to only
+ * pass the root object in here, aka a trigger */
+const char* get_lang_resource(json_object* obj){
+
+	if(json_object_is_type(obj, json_type_string)){
+		/* Directly passed single language sound object. Common and
+		 * very well possible*/
+		return json_object_get_string(obj);
+	}
+
+	json_object* lang_obj = NULL;
+
+	if(json_object_is_type(obj, json_type_array)){
+		lang_obj = obj;
+	}else{
+		lang_obj = json_object_object_get(obj, "resource");
+	}
+	
+	if(!json_object_is_type(obj, json_type_array)){
+		println("Failed to get multilang resource! Dumping root: ",
+			WARNING);
+		json_object_to_fd(STDOUT_FILENO, obj, JSON_C_TO_STRING_PRETTY);
+		return "ERROR";
+	}
+	
+	/* The get name function can get passed an array, and will return the
+	 * array's index at the current language */
+	return get_name_from_object(lang_obj);
 
 }

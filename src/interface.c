@@ -395,8 +395,9 @@ int print_info_interface(int sock_fd){
 	json_object* langs = NULL;
 	json_object_deep_copy(json_object_object_get(config_glob, "langs"), 
 		&langs,json_c_shallow_copy_default);
-	json_object_object_add(obj, "langs",  langs);
-
+	if(langs != NULL){
+		json_object_object_add(obj, "langs",  langs);
+	}
 
         json_object_to_fd(sock_fd, obj, JSON_C_TO_STRING_PRETTY);
 
@@ -431,6 +432,10 @@ int print_changeables_interface(int sockfd){
         n|= json_object_object_add(obj, "alarm",
                 json_object_new_boolean(alarm_on));
 #endif
+        
+	n|= json_object_object_add(obj, "lang",
+                json_object_new_int(language));
+	
 
         json_object_to_fd(sockfd, obj, JSON_C_TO_STRING_PLAIN);
         
@@ -519,10 +524,24 @@ int print_hints_interface(int sockfd){
 			json_object_array_length(real_hnts); hnt_id ++){
 			
 			json_object* hnt = json_object_new_object();
-
+			json_object* hint = json_object_array_get_idx(real_hnts,
+				hnt_id);
+				
 			json_object_object_add(hnt,"name", 
 				json_object_new_string(get_name_from_object(
-				json_object_array_get_idx(real_hnts,hnt_id))));
+				hint)));
+			
+			/* Add content if existant */
+			json_object* content = json_object_object_get(hint,
+				"content");
+	
+			if(content != NULL){
+				json_object_object_add(hnt,"content", 
+					json_object_new_string(
+					get_name_from_object(content)));
+			}
+
+			
 			json_object_array_add(hnts,hnt);
 
 		}

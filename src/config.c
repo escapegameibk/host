@@ -95,7 +95,14 @@ end_langs:
         return 0;
 }
 
+/* Can get passed an array, which will be indexed and returned, an object of
+ * any  */
+
 const char* get_name_from_object(json_object* obj){
+
+	if(obj == NULL){
+		return "UNSPECIFIED";
+	}
 
 	if(json_object_is_type(obj, json_type_string)){
 		/* Probably got a single-language name DIRECTLY passed. Very
@@ -119,20 +126,22 @@ const char* get_name_from_object(json_object* obj){
 
 	if(json_object_is_type(name_obj, json_type_array)){
 		/* It is a multi-language name */
-		if(language >= json_object_array_length(name_obj)){
-			goto errored;
-
+		if(language < json_object_array_length(name_obj)){
+		
+			return json_object_get_string(json_object_array_get_idx(
+				name_obj, language));
+			
 		}
 
-		return json_object_get_string(json_object_array_get_idx(
-			name_obj, language));
 	}
 	
-errored:			
+	if(name_obj == NULL){
+		return "UNSPECIFIED";
+	}
+	
 	println("MISSCONFIGURED NAME OBJECT!!! DUMPING ROOT-OBJECT:",
 		WARNING);
-	json_object_to_fd(STDOUT_FILENO, obj, 
-		JSON_C_TO_STRING_PRETTY);
+	json_object_to_fd(STDOUT_FILENO, obj, JSON_C_TO_STRING_PRETTY);
 
 	return "ERROR";
 
