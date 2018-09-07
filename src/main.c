@@ -25,6 +25,7 @@
 #include "mtsp.h"
 #include "core.h"
 #include "hints.h"
+#include "ecproto.h"
 
 #include <unistd.h>
 #include <pthread.h>
@@ -100,15 +101,6 @@ int main(int argc, char * const argv[]){
         }
         
 
-#ifndef NOSER
-        if(init_serial(DEFAULT_SERIAL_PORT) < 0){
-                println("failed to init serial connection!!",ERROR);
-		exit_code = EXIT_FAILURE;
-                goto shutdown;
-        }
-
-#endif
-
 #ifndef NOMTSP
  
         if(init_mtsp() < 0){
@@ -133,9 +125,6 @@ int main(int argc, char * const argv[]){
         /* start modules */
 #ifndef HEADLESS
         start_interface();
-#endif
-#ifndef NOSER
-        start_serial();
 #endif
 
 #ifndef NOHINTS

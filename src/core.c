@@ -375,6 +375,14 @@ int core_trigger(json_object* trigger){
 
 #endif
 
+	json_object* default_lang = json_object_object_get(config_glob, 
+		"default_lang");
+	if(default_lang != NULL){
+		int lang = json_object_get_int(default_lang);
+		println("Reseting language to default %i", DEBUG, lang);
+		language = lang;
+	}
+
         }else if(strcasecmp(action_name,"delay") == 0){
 		uint32_t delay = json_object_get_int64(
 			json_object_object_get(trigger, "delay"));
