@@ -42,8 +42,10 @@ int init_core(){
         game_timer_start = 0;
 	game_timer_end = 0;
 
+#ifndef NOALARM
 	/* Initialize alarm */
 	alarm_on = false;
+#endif
 
         game_duration = json_object_get_int64(
                 json_object_object_get(config_glob,"duration"));
@@ -388,13 +390,14 @@ int core_trigger(json_object* trigger){
 			json_object_object_get(trigger, "delay"));
 		println("sleeping %ims!", DEBUG, delay);
 		return sleep_ms(delay);
-	
+#ifndef NOALARM
 	}else if(strcasecmp(action_name,"alarm") == 0){
 		core_trigger_alarm();
 		return 0;
 	}else if(strcasecmp(action_name,"alarm_release") == 0){
 		core_release_alarm();
 		return 0;
+#endif
 	}else{
                 println("Unknown core action specified: %s",ERROR, action_name);
                 return -1;
