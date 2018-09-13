@@ -39,6 +39,13 @@ bool auto_hinting;
 bool* hint_reset_jobs;
 
 bool** hint_exec_states;
+/* Contains the amount of levels of hints, that the globabl field contains */
+size_t hint_lvl_amount;
+/* Contains the amount of hints per level */
+extern size_t *hints_lvled;
+
+/* Returns the amount of already executed hints */
+size_t get_hint_exec_cnt();
 
 #endif /* HINTS_H */
 #endif /* NOHINTS */

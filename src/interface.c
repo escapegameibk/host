@@ -328,7 +328,16 @@ int execute_command(int sock_fd, char* command){
 		language = json_object_get_int(json_object_object_get(parsed,
 			"lang"));
 		break;
-
+#ifndef NOHINTS
+	case 12:
+		/* A hint extension. Get execution state. Returns the total
+		 * number of hints executed, as well as the hint execution per
+		 * hint. A of Version 5.0 this is nescessary if hints are 
+		 * enabled.
+		 */
+		print_hint_states_interface(sock_fd);
+		break;
+#endif /* NOHINTS */
         default:
                 /* OOPS */
                 debug = malloc(INT_LEN);
@@ -555,6 +564,41 @@ int print_hints_interface(int sockfd){
 	json_object_put(hnt_print);
 	return 0;
 }
+
+int print_hint_states_interface(int sockfd){
+	
+	json_object* hnt_print = json_object_new_array();
+	
+	for(size_t i = 0; (i < printable_event_cnt) && (printable_events[i] < 
+		json_object_array_length(get_hints_root())); i++){
+		
+		json_object* hnts = json_object_new_array();
+		json_object* real_hnts = json_object_array_get_idx(
+			get_hints_root(),printable_events[i]);
+		
+		for(size_t hnt_id = 0; hnt_id < 
+			json_object_array_length(real_hnts); hnt_id ++){
+			
+			json_object* hnt = json_object_new_boolean(hint_exec_states[i][hnt_id]);
+			json_object_array_add(hnts,hnt);
+		}
+
+		json_object_array_add(hnt_print, hnts);
+	}
+
+	json_object* hint_states = json_object_new_object();
+	json_object_object_add(hint_states, "hint_states", hnt_print);
+	json_object_object_add(hint_states, "hint_count", json_object_new_int(
+		get_hint_exec_cnt()));
+	
+	json_object_to_fd(sockfd, hint_states, 
+		JSON_C_TO_STRING_PLAIN);
+
+	json_object_put(hint_states);
+	return 0;
+}
+
+
 
 
 /* ############################################################################

@@ -44,6 +44,7 @@ int print_events_interface(int sockfd);
 int print_dependencies_interface(int sockfd);
 int print_dependency_states_interface(int sockfd);
 int print_hints_interface(int sockfd);
+int print_hint_states_interface(int sockfd);
 
 /* Helper functions */
 json_object** get_printables_dependencies(size_t* depcnt);

@@ -29,6 +29,8 @@
 #include <unistd.h>
 #include <string.h>
 
+size_t *hints_lvled = NULL;
+size_t hint_lvl_amount = 0;
 int init_hints(){
 
 	hints_enabled = false;
@@ -50,12 +52,20 @@ int init_hints(){
 	
 	hint_exec_states = malloc(json_object_array_length(hints));
 
-	for(size_t i = 0; i < json_object_array_length(hints); i++){
-		 size_t lvl_cnt = json_object_array_length(
+	hint_lvl_amount = json_object_array_length(hints);
+	hints_lvled = malloc(sizeof(size_t) * hint_lvl_amount);
+
+	for(size_t i = 0; i < hint_lvl_amount; i++){
+		 
+		  hints_lvled[i] = json_object_array_length(
 			json_object_array_get_idx(hints,i));
 		
-		 hintcnt += lvl_cnt;
-		 hint_exec_states[i] = malloc(lvl_cnt);
+		 hintcnt += hints_lvled[i];
+		 hint_exec_states[i] = malloc(hints_lvled[i] * sizeof(bool));
+
+		 memset(hint_exec_states[i], false, hints_lvled[i] * 
+			sizeof(bool));
+
 	}
 
 	println("Configured a total of %i hints.", DEBUG, hintcnt);
@@ -84,7 +94,8 @@ int init_hints(){
 		for(size_t dep = 0; dep < json_object_array_length(
 			dependencies); dep++){
 			
-			json_object* dependency = json_object_array_get_idx(dependencies,dep);
+			json_object* dependency = 
+				json_object_array_get_idx(dependencies,dep);
 
 			if(init_general_dependency(dependency) < 0){
 				println("Failed to init dependency for hint!",
@@ -250,7 +261,10 @@ int execute_hint(size_t event_id, size_t hint_id){
 			event_id, hint_id);
 		return -4;
 	}
-
+	/* By this time, it should have been verified that the hint in question
+	 * exists. Now mark it as executed.
+	 */
+	hint_exec_states[event_id][hint_id] = true;
 	const char* name = get_name_from_object(hint);
 
 	println("Executing Hint %s", DEBUG, name);
@@ -264,6 +278,16 @@ int execute_hint(size_t event_id, size_t hint_id){
 	println("Done executing hint!", DEBUG);
 
 	return 0;
+}
+
+size_t get_hint_exec_cnt(){
+	size_t cnt = 0;
+	for(size_t evnt = 0; evnt < hint_lvl_amount; evnt++){
+		for(size_t hnt = 0; hnt < hints_lvled[evnt]; hnt++){
+			cnt += hint_exec_states[evnt][hnt];
+		}
+	}
+	return cnt;
 }
 
 #endif /* NOHINTS */

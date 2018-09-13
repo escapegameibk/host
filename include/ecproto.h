@@ -31,6 +31,7 @@
 
 #define ECP_INPUT false
 #define ECP_OUTPUT true
+#define ECP_DEF_DEV "/dev/ttyACM0"
 
 struct ecproto_port_t{
 	uint8_t bit;
@@ -59,6 +60,9 @@ struct ecproto_device_t
 /* Storage for devices */
 extern size_t ecp_devcnt;
 struct ecproto_device_t *ecp_devs;
+
+/* THE FILE DESCRIPTOOOOR!! */
+int ecp_fd;
 
 int ecp_init_dependency(json_object* dependency);
 int ecp_register_input_pin(size_t device_id, char reg_id, size_t bit, 

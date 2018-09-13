@@ -125,6 +125,7 @@ int ecp_register_input_pin(size_t device_id, char reg_id, size_t bit, bool
 
 int init_ecp(){	
 
+	ecp_fd = open(ECP_DEF_DEV, O_RDWR);
 	return 0;
 }
 
