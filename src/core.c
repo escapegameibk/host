@@ -22,6 +22,7 @@
 #include "tools.h"
 #include "data.h"
 #include "mtsp.h"
+#include "hints.h"
 
 #include <string.h>
 #include <strings.h>
@@ -375,6 +376,13 @@ int core_trigger(json_object* trigger){
 			return -1;
 		}
 
+#endif
+
+#ifndef NOHINTS
+		if(reset_hints() < 0){
+			println("Failed to reset hints!", ERROR);
+			return -2;
+		}
 #endif
 
 	json_object* default_lang = json_object_object_get(config_glob, 

@@ -46,6 +46,7 @@ extern size_t *hints_lvled;
 
 /* Returns the amount of already executed hints */
 size_t get_hint_exec_cnt();
+int reset_hints();
 
 #endif /* HINTS_H */
 #endif /* NOHINTS */

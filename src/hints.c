@@ -290,4 +290,12 @@ size_t get_hint_exec_cnt(){
 	return cnt;
 }
 
+int reset_hints(){
+	for(size_t evnt = 0; evnt < hint_lvl_amount; evnt++){ 
+		memset(hint_exec_states[evnt], false, hints_lvled[evnt] * 
+			sizeof(bool));
+	}
+	return 0;
+}
+
 #endif /* NOHINTS */
