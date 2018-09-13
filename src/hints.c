@@ -47,10 +47,15 @@ int init_hints(){
 	}
 
 	unsigned int hintcnt = 0;
+	
+	hint_exec_states = malloc(json_object_array_length(hints));
 
 	for(size_t i = 0; i < json_object_array_length(hints); i++){
-		hintcnt += json_object_array_length(json_object_array_get_idx(
-			hints,i));	
+		 size_t lvl_cnt = json_object_array_length(
+			json_object_array_get_idx(hints,i));
+		
+		 hintcnt += lvl_cnt;
+		 hint_exec_states[i] = malloc(lvl_cnt);
 	}
 
 	println("Configured a total of %i hints.", DEBUG, hintcnt);

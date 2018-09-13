@@ -38,5 +38,7 @@ bool auto_hinting;
 
 bool* hint_reset_jobs;
 
+bool** hint_exec_states;
+
 #endif /* HINTS_H */
 #endif /* NOHINTS */
