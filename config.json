@@ -61,11 +61,6 @@
 					"name" : "stop timer",
 					"module" : "core",
 					"action" : "timer_stop"
-				},
-				{
-					"name" : "alarm",
-					"module" : "core",
-					"action" : "alarm"
 				}
 			]
 		},
@@ -160,6 +155,7 @@
 		"countdown" : "#FFFFFF", 
 		"footer" : "#B71C1C",
 		"body" : "#FFEBEE",
-		"alarm" : "#000000"
+		"alarm" : "#000000",
+		"logo" : "https://www.escpe.net/data/image/logos/painter_mask_white.svg"
 	}
 }

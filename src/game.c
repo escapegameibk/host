@@ -23,6 +23,7 @@
 #include "sound.h"
 #include "core.h"
 #include "tools.h"
+#include "ecproto.h"
 
 #include <stddef.h>
 #include <stdio.h>
@@ -129,6 +130,13 @@ int init_general_dependency(json_object* dependency){
 		/* Question the core module */
 		return snd_init_dependency(dependency);
 	}
+#ifndef NOEC
+	else if(strcasecmp(module_name,"ecp") == 0){
+		/* Question the ecp module */
+		return ecp_init_dependency(dependency);
+	
+	}
+#endif
 	else{
 		println("Unknown module specified [%s]!", ERROR, module_name);
 		return -2;

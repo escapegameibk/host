@@ -112,6 +112,16 @@ int main(int argc, char * const argv[]){
 
 #endif
 
+#ifndef  NOEC
+        if(init_ecp() < 0){
+
+                println("failed to init ecp connection!!",ERROR);
+		exit_code = EXIT_FAILURE;
+                goto shutdown;
+
+        }
+#endif
+
 	if(init_core() < 0){
 		println("Failed to initilize core!", ERROR);
 		exit_code = EXIT_FAILURE;

@@ -1,3 +1,5 @@
+% Documentation for the Escape Game Innsbruck's Host
+
 # Host
 
 ## About
@@ -201,6 +203,12 @@ what type of dependency it is. The following types have been defined as of now:
 	"low" meaning a change from 1 to 0 and "high" meaning a change from 0
 	to 1. Both values are assumed to be true, and therefore forefilling the
 	dependency, by default.
+4. or:
+	This dependency represents a logical or. It requires a "dependencies"
+	field, of which it will check all dependencies, until one of them is
+	forefilled, in which case it will return true. If it reaches the end
+	of the array, without ever encountering a forefilled dependency,
+	the dependency is considered not forefilled. 
 
 #### Triggers 
 The core module is specified via the module field inside of a trigger.
@@ -228,7 +236,13 @@ following actions:
 	can be used to wait a bit before triggereing the next thing. It
 	requires a delay field to be specified containing the time to be slept
 	in milliseconds aka 1s/1000.
-
+6. alarm: 
+	This triggers the alarm. It is part of the alarm system and, in any
+	case, activates the alarm. if it is already running, it will keep
+	running. No additional fields are required.
+7.alarm_release:
+	Releases the alarm. If the alarm isn't running, it will stay in that 
+	state. No additional fields are required.
 ### SND
 
 The sound module aka snd is specified inside the module section of a trigger
@@ -249,6 +263,21 @@ specified as of now:
 2. reset:
 	This clears ALL currently playing sounds. No additional fields are 
 	required.
+3. effect:
+	This action tells the sound module to play whatever URL is specified
+	inside the resource field. This differes from the play action, that
+	it is only possible to play one effect at a time. if a new effect is
+	played, the old effect gets cleared.
+
+#### Multilanguage sounds
+
+In order to be able to play multilanguage sounds, it was nescessary to
+implement it in a way, that avoids regression. The implementation, therefore,
+is basically the same as for the name object. Any amount of languages may be
+specified by putting an array of urls in the position of the "resource" field
+of the play and effect actions. The rest is basically the same as for the name
+object, and if the "resource" field contains a string, the string is used for
+any language. 
 
 ### MTSP
 
@@ -310,10 +339,10 @@ for example, add a -D NOMTSP to the gcc comandline inside the Makefile. The
 following is a list of these definitions:
 
 - NOMTSP : Completely disables and removes the MTSP module.
-- NOSER : Completely disables and removes the Serial module.
 - COLOR : Enables Color in the debug output.
 - HEADLESS : Completely disables and removes the interface.
 - NOHINTS : Completely disables ad removes the Hinting system.
+- NOALARM : Completely disables and removes the alarm system.
 
 # ERRATA
 ## Raspberry Pi
