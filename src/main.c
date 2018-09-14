@@ -25,6 +25,7 @@
 #include "mtsp.h"
 #include "core.h"
 #include "hints.h"
+#include "ecproto.h"
 
 #include <unistd.h>
 #include <pthread.h>

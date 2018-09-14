@@ -69,6 +69,8 @@ int ecp_register_input_pin(size_t device_id, char reg_id, size_t bit,
 	bool pulled);
 int init_ecp();
 
+int start_ecp();
+
 /* HELPER FUNCTIONS */
 
 struct ecproto_device_t* escp_get_dev_from_id(size_t id);

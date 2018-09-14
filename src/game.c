@@ -195,6 +195,7 @@ int patrol(){
 			,"dependencies");
 
 		if(event_depends == NULL){
+			/* I would consider this a bit stupid configured... */
 			println("event without dependencies!!! triggering", 
 				WARNING);
 			trigger_event(i);

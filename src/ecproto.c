@@ -19,12 +19,19 @@
 
 #include "ecproto.h"
 #include "log.h"
+#include "serial.h"
+#include "config.h"
+#include "tools.h"
 
 #include <json-c/json.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 size_t ecp_devcnt = 0;
 struct ecproto_device_t *ecp_devs = NULL;
@@ -74,8 +81,15 @@ int ecp_init_dependency(json_object* dependency){
 		pulled_high = json_object_get_boolean(pulled);
 	}
 	
-	return ecp_register_input_pin(device_id, reg_id, bit_id, pulled_high);
-
+	int ret = ecp_register_input_pin(device_id, reg_id, bit_id, 
+		pulled_high);
+	if(ret < 0){
+		println("Failed to register ecp pin! Dumping root: ", ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency, 
+			JSON_C_TO_STRING_PRETTY);
+		return -4;
+	}
+	return ret;
 }
 
 int ecp_register_input_pin(size_t device_id, char reg_id, size_t bit, bool 
@@ -107,57 +121,93 @@ int ecp_register_input_pin(size_t device_id, char reg_id, size_t bit, bool
 	}
 	
 	if(bit >= ECP_REG_WIDTH){
-		println("Bit number too high! Dumping root:", 
+		println("Bit number too high for ecp dependency!", 
 			ERROR);
-		json_object_to_fd(STDOUT_FILENO, dependency, 
-			JSON_C_TO_STRING_PRETTY);
 		return -1;
 	}
 
-	struct ecproto_port_t* pn = reg_p->bits[bit];
+	struct ecproto_port_t* pn = &reg_p->bits[bit];
 	pn->ddir = ECP_INPUT;
 
-	/* Enable pullup */
-	pn->target = true;
+	/* Set pullup */
+	pn->target = pulled;
 
 	return 0;
 }
 
 int init_ecp(){	
 
-	ecp_fd = open(ECP_DEF_DEV, O_RDWR);
-	return 0;
-}
+	const char* device = ECP_DEF_DEV;
 
-/* Returns < 0 on error and 0 < return < 256 on success 
- * Attempts to validate the frame length*/
-int get_frame_length(uint8_t* frame ){
-
-	if(frame == NULL){
-		
+	json_object* dev =  json_object_object_get(config_glob, "ecp_device");
+	if(dev != NULL){
+		device = json_object_get_string(dev);
 	}
 
+	ecp_fd = open(device, O_RDWR);
+	if(ecp_fd < 0){
+		println("Failed to open ECP device at %s!", ERROR, device);
+		return -1;
+	}
+
+	json_object* baud = json_object_object_get(config_glob, "ecp_baud");
+	int32_t baud_rate_rel = json_object_get_int(baud);
+
+	int baud_rate = get_baud_from_int(baud_rate_rel);
+	if(baud_rate == 0){
+		return -2;
+	}
+
+	if(set_interface_attribs(ecp_fd, baud_rate) < 0){
+		println("Failed to set atributes to mtsp serial interface!",
+			ERROR);
+		return 3;
+	}
+	/* Should now be ready. Serial init is performed on startup */
+
 	return 0;
 }
 
-uint8_t* recv_frame(int fd ){
-	uint8_t * frame = NULL;
-	size_t frame_length = 0;
+int start_ecp(){
 
-	while(frame_length < 255){
+
+	return 0;
+}
+
+uint8_t* recv_frame(int fd, size_t* len){
+	
+	*len = 0;
+
+	uint8_t * frame = malloc(sizeof(uint8_t));
+	ssize_t n = read(fd, &frame[0], sizeof(uint8_t));
+	
+	if(n < 0){
+		println("Failed to read from ecp devicep Device dead?", ERROR);
+		free(frame);
+		return NULL;
+	}else if(n == 0){
+		println("ECP Device didnt respond! possibly timeout.", WARNING);
+		return NULL;
+	}
+	/* Okay,now we should have received a valid length */
+	ssize_t frame_length = 1;
+	/* This is not an infinity loop, but it is ended in different ways */
+	while(true){
 		uint8_t octet;
+
 		if(read(fd, &octet, 1) == 0){
 			return NULL;
 		}
 
 		frame = realloc(frame, ++frame_length);
 		frame[frame_length - 1] = octet;
-		if(octet == 0xFF){
+		if((octet == 0xFF) && (frame_length >= (frame[0] - 1))){
+			*len = frame_length;
 			return frame;
 		}
 	}
 
-	return frame;
+	return NULL;
 
 }
 

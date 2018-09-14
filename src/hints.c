@@ -50,10 +50,11 @@ int init_hints(){
 
 	unsigned int hintcnt = 0;
 	
-	hint_exec_states = malloc(json_object_array_length(hints));
+	hint_exec_states = malloc(json_object_array_length(hints) *
+		 sizeof(size_t*));
 
 	hint_lvl_amount = json_object_array_length(hints);
-	hints_lvled = malloc(sizeof(size_t) * hint_lvl_amount);
+	hints_lvled = malloc(sizeof(size_t*) * hint_lvl_amount);
 
 	for(size_t i = 0; i < hint_lvl_amount; i++){
 		 
@@ -63,7 +64,7 @@ int init_hints(){
 		 hintcnt += hints_lvled[i];
 		 hint_exec_states[i] = malloc(hints_lvled[i] * sizeof(bool));
 
-		 memset(hint_exec_states[i], false, hints_lvled[i] * 
+		 memset(hint_exec_states[i], 0, hints_lvled[i] * 
 			sizeof(bool));
 
 	}
