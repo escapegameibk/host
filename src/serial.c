@@ -36,13 +36,8 @@
 int set_interface_attribs(int fd, int speed){
 
         struct termios tty;
-#define INT_LEN 256
-        char* debug = malloc(INT_LEN);
-        memset(debug,0,INT_LEN);
         if (tcgetattr(fd, &tty) < 0) {
-                sprintf(debug, "Error from tcgetattr: %s", strerror(errno));
-                println(debug, ERROR);
-                free(debug);
+                println("Error from tcgetattr: %s", ERROR, strerror(errno));
                 return -1;
         }
 
@@ -66,14 +61,9 @@ int set_interface_attribs(int fd, int speed){
         tty.c_cc[VTIME] = 1;
 
         if (tcsetattr(fd, TCSANOW, &tty) != 0) {
-                memset(debug,0,INT_LEN);
-                sprintf(debug, "Error from tcsetattr: %s\n", strerror(errno));
-                println(debug,ERROR);
-                free(debug);
+                println("Error from tcsetattr: %s\n",ERROR, strerror(errno));
                 return -2;
         }
-
-#undef INT_LEN
 
         return 0;
 }
