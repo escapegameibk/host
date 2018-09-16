@@ -68,4 +68,13 @@ int set_interface_attribs(int fd, int speed){
         return 0;
 }
 
+int wait_for_data(int timeout, int fd){
+
+	struct pollfd fds[1];
+	fds[0].fd=fd;
+	fds[0].events = POLLIN;
+
+	return poll(fds, sizeof(fds) / sizeof(struct pollfd), timeout);
+}
+
 

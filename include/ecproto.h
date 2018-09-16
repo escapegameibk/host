@@ -30,6 +30,9 @@
 #define ECP_REG_WIDTH 8
 #define ECPROTO_OVERHEAD 5
 
+// Timout in ms for fd poll
+#define ECP_TIMEOUT 100
+
 #define ECP_CMD_DEL 0xFF
 
 #define ECP_INPUT false

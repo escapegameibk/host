@@ -166,6 +166,7 @@ int ecp_register_device(size_t id){
 
 int init_ecp(){	
 	pthread_mutex_init(&ecp_lock, NULL);
+	
 
 	const char* device = ECP_DEF_DEV;
 
@@ -407,7 +408,20 @@ uint8_t* recv_ecp_frame(int fd, size_t* len){
 	while(frame_length < 255){
 		
 		uint8_t octet;
-		int n = read(fd, &octet, sizeof(uint8_t));
+		int n = wait_for_data(ECP_TIMEOUT, fd);
+		if(n == 0){
+			println("Timeout in poll on ecp fd!", WARNING);
+			free(frame);
+			return NULL;
+		}else if(n < 0){
+			println("Failed to read from ECP bus! Device dead?", 
+				ERROR);
+			free(frame);
+			return NULL;
+		}
+
+		
+		n = read(fd, &octet, sizeof(uint8_t));
 		if(n == 0){
 			free(frame);
 			println("ECP frame receive timed out!", WARNING);

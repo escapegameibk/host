@@ -19,7 +19,12 @@
 #define SERIAL_H
 
 #include <termios.h>
+#include <poll.h>
+#include <sys/types.h>
 
 int set_interface_attribs(int fd, int speed);
+
+/* Returns -1 on error, 0 on timeout and >0 on success */
+int wait_for_data(int, int fd);
 
 #endif
