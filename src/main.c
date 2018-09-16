@@ -144,6 +144,9 @@ int main(int argc, char * const argv[]){
 #ifndef NOMTSP
         start_mtsp();
 #endif
+#ifndef NOEC
+	start_ecp();
+#endif
         start_core();
 	start_game();
         println("STARTUP DONE",INFO);

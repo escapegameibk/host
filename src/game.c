@@ -405,13 +405,26 @@ int execute_trigger(json_object* trigger){
         }
  
 #ifndef NOMTSP
-	if(strcasecmp(module,"mtsp") == 0){
+	else if(strcasecmp(module,"mtsp") == 0){
                 /* The mtsp module is concerned. */
                 if(mtsp_trigger(trigger) < 0){
                         println("Failed to execute trigger for mtsp!",
                                 ERROR);
                         
-                        return -1;
+                        return -2;
+
+                }
+		return 0;
+	}
+#endif
+#ifndef NOEC
+	else if(strcasecmp(module,"ecp") == 0){
+                /* The mtsp module is concerned. */
+                if(ecp_trigger(trigger) < 0){
+                        println("Failed to execute trigger for ecp!",
+                                ERROR);
+                        
+                        return -3;
 
                 }
 		return 0;
@@ -420,19 +433,19 @@ int execute_trigger(json_object* trigger){
 
 #ifndef NOSOUND
 
-	if(strcasecmp(module,"snd") == 0){
+	else if(strcasecmp(module,"snd") == 0){
 		/* The sound module is concerned. */
 		if(sound_trigger(trigger) < 0){
 			println("Failed to execute trigger for snd!",
 				ERROR);
                        
-			return -1;
+			return -4;
 		}
 		return 0;
 	}
 #endif
         println("UNKNOWN MODULE %s!!",ERROR, module);
-	return -2;
+	return -5;
 
 }
 
@@ -453,6 +466,12 @@ int check_dependency(json_object* dependency){
 	else if(strcasecmp(module_name,"mtsp") == 0){
 		/* Question the MTSP module. yes QUESTION IT! */
 		return mtsp_check_dependency(dependency);
+	}
+#endif
+#ifndef NOEC
+	else if(strcasecmp(module_name,"ecp") == 0){
+		/* Question the ECP module. yes QUESTION IT! */
+		return ecp_check_dependency(dependency);
 	}
 #endif
 	else if(strcasecmp(module_name,"core") == 0){

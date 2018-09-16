@@ -25,6 +25,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <json-c/json.h>
+#include <pthread.h>
 
 #define ECP_REG_WIDTH 8
 #define ECPROTO_OVERHEAD 5
@@ -66,7 +67,7 @@ struct ecproto_device_t *ecp_devs;
 /* THE FILE DESCRIPTOOOOR!! */
 int ecp_fd;
 /* AAAAND THE IIIINNNNCCREEDDDIIBBBBLE LOOOOOOOOOOOOCK */
-bool ecp_fd_locked;
+pthread_mutex_t ecp_lock;
 
 int ecp_init_dependency(json_object* dependency);
 int ecp_register_input_pin(size_t device_id, char reg_id, size_t bit, 
@@ -76,6 +77,11 @@ int ecp_register_device(size_t id);
 int init_ecp();
 
 int start_ecp();
+void* loop_ecp();
+int ecp_get_updates();
+
+int ecp_check_dependency(json_object* dependency);
+int ecp_trigger(json_object* trigger);
 
 uint8_t* recv_ecp_frame(int fd, size_t* len);
 
@@ -101,6 +107,7 @@ struct ecproto_device_t* escp_get_dev_from_id(size_t id);
 struct ecproto_port_register_t* escp_get_reg_from_dev(char id, struct 
 	ecproto_device_t* dev);
 int init_ecp_port_reg(struct ecproto_port_register_t* prt_reg);
+int set_ecp_current_state(size_t dev_id, char reg_id, size_t bit, bool state);
 
 uint16_t ibm_crc(uint8_t* data, size_t len);
 
