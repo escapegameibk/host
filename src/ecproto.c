@@ -41,6 +41,8 @@ struct ecproto_device_t *ecp_devs = NULL;
 
 bool ecp_fd_locked = false;
 
+bool ecp_initialized = false;
+
 int ecp_init_dependency(json_object* dependency){
 
 	json_object* dev = json_object_object_get(dependency, "device");
@@ -255,7 +257,14 @@ void* loop_ecp(){
                 
                 if(nanosleep(&tim , &tim2) < 0 ){
                          println("interupt in ECP loop!! sleep failed!",ERROR);
-                 }
+		}
+		if(!ecp_initialized){
+
+			if(ecp_bus_init() < 0){
+				println("Failed to initialize ECP bus!", ERROR);
+				continue;
+			}
+		}
 
                 if(ecp_get_updates() < 0){
                         println("Failed to update ECP devices!!",ERROR);
@@ -275,6 +284,11 @@ int ecp_get_updates(){
 }
 
 int ecp_check_dependency(json_object* dependency){
+
+	if(!ecp_initialized){
+		/* Standby */
+		return false;
+	}
 	
 	json_object* dev = json_object_object_get(dependency, "device");
 	if(dev == NULL){
@@ -498,10 +512,7 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 		case 0:
 			println("The ECP slave has requested an initialisation",
 				DEBUG);
-			if(ecp_bus_init() < 0){
-				println("Failed to initialize ECP bus!", ERROR);
-				return -5;
-			}
+			ecp_initialized = false;
 			break;
 		case 2:
 			/* I will now get some more frames. Tell the overlying
@@ -574,30 +585,52 @@ int ecp_bus_init(){
 	/* Enumerate bus and initialize device structures */	
 	uint8_t start_id = 0;
 	int n = 0;
-	n |= ecp_send_message(3, &start_id, sizeof(uint8_t));
-	n |= ecp_send_message(10, NULL, 0);
+	
+	for(size_t errcnt = 0; errcnt < 100; errcnt++){
+		n |= ecp_send_message(3, &start_id, sizeof(uint8_t));
+		n |= ecp_send_message(10, NULL, 0);
+	
+		if(n){
+			goto error;
+		}
 
-	for(size_t dev = 0; dev < ecp_devcnt; dev++){
-		struct ecproto_device_t* device = &ecp_devs[dev];
-		
-		for(size_t reg = 0; reg < device->regcnt; reg++){
-			struct ecproto_port_register_t* regp = 
-				&device->regs[reg];
-
-			for(size_t bt = 0; bt < ECP_REG_WIDTH; bt++){
-				struct ecproto_port_t* bit = &regp->bits[bt];
-
-				n |= send_ecp_ddir(device->id, regp->id, 
-					bit->bit, bit->ddir); 
-				
-				n |= send_ecp_port(device->id, regp->id, 
-					bit->bit, bit->target); 
-				
-				n |= get_ecp_port(device->id, regp->id, 
-					bit->bit); 
+		for(size_t dev = 0; dev < ecp_devcnt; dev++){
+			struct ecproto_device_t* device = &ecp_devs[dev];
+			
+			for(size_t reg = 0; reg < device->regcnt; reg++){
+				struct ecproto_port_register_t* regp = 
+					&device->regs[reg];
+	
+				for(size_t bt = 0; bt < ECP_REG_WIDTH; bt++){
+					struct ecproto_port_t* bit = 
+						&regp->bits[bt];
+	
+					n |= send_ecp_ddir(device->id, regp->id, 
+						bit->bit, bit->ddir); 
+					if(n){
+						goto error;
+					}
+					
+					n |= send_ecp_port(device->id, regp->id, 
+						bit->bit, bit->target); 
+					if(n){
+						goto error;
+					}
+					
+					n |= get_ecp_port(device->id, regp->id, 
+						bit->bit); 
+					if(n){
+						goto error;
+					}
+				}
 			}
 		}
+	break;
+error:
+	continue;
 	}
+	println("ECP INITIALIZED", DEBUG);
+	ecp_initialized = true;
 
 	return 0;
 }
@@ -653,44 +686,39 @@ int ecp_send_message(uint8_t action_id, uint8_t* payload, size_t payload_len){
 
 	uint8_t* snd_frame = NULL;
 	size_t snd_len = 0;
-	
-	pthread_mutex_lock(&ecp_lock);
+ 	pthread_mutex_lock(&ecp_lock);
+	int n = wait_for_data(ecp_fd, 0);
+	if(n < 0){
+		println("Failed to poll on ECP fd! Device dead?", ERROR);
+		pthread_mutex_unlock(&ecp_lock);
+		return -1;
+	}else if(n > 0){
+		println("ECP found data in buffer. Assuming lost frame.",
+			WARNING);
+		if(ecp_receive_msgs(snd_frame, snd_len) < 0){
+			println("Failed to receive ECP message!", ERROR);
+			pthread_mutex_unlock(&ecp_lock);
+			return -1;
+		}
+	}
 
-	int n = write_ecp_msg(ecp_fd, action_id, payload, payload_len, 
+	n = write_ecp_msg(ecp_fd, action_id, payload, payload_len, 
 		&snd_frame, &snd_len);
 
 	if(n < 0){
 		println("Failed to send ecp message!", ERROR);
 		pthread_mutex_unlock(&ecp_lock);
-		return -1;
+		return -2;
 	}
 
-	size_t reads = 1;
-	for(size_t i = 0; i < reads; i++){
-
-		size_t recv_len = 0;
-
-		uint8_t* recv_frame = recv_ecp_frame(ecp_fd, &recv_len);
-			
-		if(recv_frame == NULL){
-			println("Failed to received ecp frame", WARNING);
-			free(snd_frame);
-			pthread_mutex_unlock(&ecp_lock);
-			return -2;
-		}
-
-		n = parse_ecp_input(recv_frame, recv_len, snd_frame, snd_len);
-		free(recv_frame);
-		
-		if( n < 0 ){
-			println("Failed to parse received ecp frame", WARNING);
-			free(snd_frame);
-			pthread_mutex_unlock(&ecp_lock);
-			return -3;
-		}
-		reads += n;
+	if(ecp_receive_msgs(snd_frame, snd_len) < 0){
+		println("Failed to receive ECP message!", ERROR);
+		ret = -3;
 	}
-	free(snd_frame);
+	
+	if(snd_frame != NULL){
+		free(snd_frame);
+	}
 	pthread_mutex_unlock(&ecp_lock);
 
 	return ret;
@@ -720,14 +748,37 @@ int write_ecp_msg(int fd, uint8_t action_id, uint8_t* payload,
 		memcpy(*frme, frame, sizeof(uint8_t) * *frame_length);
 	}
 	
-	while(ecp_fd_locked){ /* NOP */}
-	ecp_fd_locked = true;
-
-	int n = write(fd, frame, frame[0]);
-	
-	ecp_fd_locked = false;
-	
+	int n = write(fd, frame, frame[0]);	
 	return n;
+}
+
+int ecp_receive_msgs(uint8_t* snd_frame, size_t snd_len){
+	
+	size_t reads = 1;
+	int n = 0;
+	for(size_t i = 0; i < reads; i++){
+
+		size_t recv_len = 0;
+
+		uint8_t* recv_frame = recv_ecp_frame(ecp_fd, &recv_len);
+			
+		if(recv_frame == NULL){
+			println("Failed to received ecp frame", WARNING);
+			pthread_mutex_unlock(&ecp_lock);
+			return -1;
+		}
+
+		n = parse_ecp_input(recv_frame, recv_len, snd_frame, snd_len);
+		free(recv_frame);
+		
+		if( n < 0 ){
+			println("Failed to parse received ecp frame", WARNING);
+			pthread_mutex_unlock(&ecp_lock);
+			return -2;
+		}
+		reads += n;
+	}
+	return 0;
 }
 
 /*

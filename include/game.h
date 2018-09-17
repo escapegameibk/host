@@ -22,6 +22,7 @@
 #include <stdbool.h>
 #include <json-c/json.h>
 #include <stdint.h>
+#include <pthread.h>
 
 #define PATROL_INTERVAL_NS 5000000
 #define DEFAULT_GAME_TIME 3600
@@ -58,5 +59,7 @@ size_t state_cnt;
  * autoresetting. I can't reset them immediately, but have to wait until it
  * should be possible to trigger it again.. */
 bool* reset_jobs;
+
+pthread_mutex_t game_trigger_lock;
 
 #endif

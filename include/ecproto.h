@@ -72,6 +72,8 @@ int ecp_fd;
 /* AAAAND THE IIIINNNNCCREEDDDIIBBBBLE LOOOOOOOOOOOOCK */
 pthread_mutex_t ecp_lock;
 
+bool ecp_initialized;
+
 int ecp_init_dependency(json_object* dependency);
 int ecp_register_input_pin(size_t device_id, char reg_id, size_t bit, 
 	bool pulled);
@@ -103,6 +105,8 @@ int ecp_send_message(uint8_t action_id, uint8_t* payload, size_t payload_len);
 
 int write_ecp_msg(int fd, uint8_t action_id, uint8_t* payload, 
 	size_t payload_length, uint8_t** frme, size_t* frame_length);
+
+int ecp_receive_msgs(uint8_t* snd_frame, size_t snd_len);
 
 /* HELPER FUNCTIONS */
 

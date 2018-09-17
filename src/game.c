@@ -34,6 +34,8 @@
 
 int init_game(){
 
+	pthread_mutex_init(&game_trigger_lock, NULL);
+
         const char* name = get_name_from_object(config_glob);
 	dependency_list = malloc(0);
 	dependency_count = 0;
@@ -258,17 +260,13 @@ void* loop_game(){
 }
 
 int trigger_event(size_t event_id){
-   
         
         if((state_cnt <= event_id) | (state_trigger_status[event_id])){
                 println("Tried to trigger invalid event %i", WARNING, event_id);
                 return -1;
         }
 
-	static bool trigger_lock = false;
-	while(trigger_lock){/* NOP */}
-	trigger_lock = true;
-	
+	pthread_mutex_lock(&game_trigger_lock);
 	/* Sleep 1 ms to prevent unintended collisions */
 	sleep_ms(1);
         
@@ -278,9 +276,8 @@ int trigger_event(size_t event_id){
 		config_glob,"events"), event_id);
        
         /* Iterate through triggers */
-       
 
-         json_object* triggers = json_object_object_get(event,"triggers");
+        json_object* triggers = json_object_object_get(event,"triggers");
 
 	if(triggers == NULL){
 		println("Attempted to trigger an event without triggers", INFO);
@@ -303,7 +300,7 @@ int trigger_event(size_t event_id){
 					ERROR);
 				state_trigger_status[event_id] = 0;
 				/* untrigger event */
-				trigger_lock = false;
+				pthread_mutex_unlock(&game_trigger_lock);
 				return -1;
 			}
 
@@ -322,7 +319,7 @@ int trigger_event(size_t event_id){
 	}
 
 	println("Done triggering event!", DEBUG);
-	trigger_lock = false;
+	pthread_mutex_unlock(&game_trigger_lock);
 
         return 0;
 }
