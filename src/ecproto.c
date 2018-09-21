@@ -90,6 +90,7 @@ int ecp_init_dependency(json_object* dependency){
 	
 	int ret = ecp_register_input_pin(device_id, reg_id, bit_id, 
 		pulled_high);
+	
 	if(ret < 0){
 		println("Failed to register ecp pin! Dumping root: ", ERROR);
 		json_object_to_fd(STDOUT_FILENO, dependency, 
@@ -168,6 +169,7 @@ int ecp_register_device(size_t id){
 
 int init_ecp(){	
 	pthread_mutex_init(&ecp_lock, NULL);
+	pthread_mutex_init(&ecp_readlock, NULL);
 	
 
 	const char* device = ECP_DEF_DEV;
@@ -279,8 +281,20 @@ void* loop_ecp(){
 
 int ecp_get_updates(){
 
-	/* Yes, updating stuff is that easy */
-	return ecp_send_message(1, NULL, 0);
+	for(size_t errcnt = 0; errcnt < 10; errcnt++){
+
+		/* Yes, updating stuff is that easy */
+		for(size_t i = 0; i < ecp_devcnt; i++){
+		
+			if(ecp_send_message(ecp_devs[i].id, REQ_SEND, NULL, 0) 
+				< 0){
+				continue;
+			}
+
+		}
+		return 0;
+	}
+	return -1;
 }
 
 int ecp_check_dependency(json_object* dependency){
@@ -414,7 +428,8 @@ int ecp_trigger(json_object* trigger){
 }
 
 uint8_t* recv_ecp_frame(int fd, size_t* len){
-	
+ 	
+	pthread_mutex_lock(&ecp_readlock);
 
 	uint8_t * frame = NULL;
 	size_t frame_length = 0;
@@ -424,40 +439,43 @@ uint8_t* recv_ecp_frame(int fd, size_t* len){
 		uint8_t octet;
 		int n = wait_for_data(ECP_TIMEOUT, fd);
 		if(n == 0){
-			println("Timeout in poll on ecp fd!", WARNING);
+			println("Timeout in poll on ecp fd recv!", WARNING);
 			free(frame);
-			return NULL;
+			frame = NULL;
+			break;
 		}else if(n < 0){
 			println("Failed to read from ECP bus! Device dead?", 
 				ERROR);
 			free(frame);
-			return NULL;
+			frame = NULL;
+			break;
 		}
 
-		
 		n = read(fd, &octet, sizeof(uint8_t));
 		if(n == 0){
 			free(frame);
 			println("ECP frame receive timed out!", WARNING);
-			return NULL;
+			frame = NULL;
+			break;
 		}else if(n < 0){
 			println("Failed to read from ECP bus! Device dead?", 
 				ERROR);
 			free(frame);
-			return NULL;
+			frame = NULL;
+			break;
 		}
 	
 		frame = realloc(frame, ++frame_length);
 		frame[frame_length - 1] = octet;
-
-		if(octet == 0xFF && frame_length + 1 >= frame[0]){
+		if(octet == 0xFF){
 			*len = frame_length;
-			return frame;
+			break;
 		}
+
 	
 	}
-	
-	return NULL;
+	pthread_mutex_unlock(&ecp_readlock);
+	return frame;
 }
 
 
@@ -465,6 +483,7 @@ bool validate_ecp_frame(uint8_t* frame, size_t len){
 
 	if(frame[len - 1] != ECP_CMD_DEL){
 		/* No end char is present at the end! */
+		println("ECP frame not terminated!", ERROR);
 		return false;
 	}
 	
@@ -487,7 +506,7 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 		return -1;
 	}
 	
-	if(!validate_ecp_frame(snd_frm, snd_len)){
+	if(snd_frm != NULL && !validate_ecp_frame(snd_frm, snd_len)){
 		println("Sent invalid ecp frame! WTF?", ERROR);
 		println("Critical bug! This shouldn't occure.", ERROR);
 		return -2;
@@ -495,7 +514,7 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 
 	size_t recv_payload_len = recv_len - ECPROTO_OVERHEAD;
 	/* Switch by the receiving frame's id */
-	switch(recv_frm[1]){
+	switch(recv_frm[ECP_ID_IDX]){
 		case 8:
 			if(recv_frm[recv_len - 4] != 0){
 				println(
@@ -506,34 +525,34 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			/* Print error string */
 			println("ECP action %i aborted due to error response:",
 				ERROR);
-			println("%s\n", ERROR, &recv_frm[2]);
+			println("%s\n", ERROR, &recv_frm[ECP_PAYLOAD_IDX]);
 			return -4;
 			break;
 		case 0:
 			println("The ECP slave has requested an initialisation",
 				DEBUG);
+
 			ecp_initialized = false;
 			break;
 		case 2:
 			/* I will now get some more frames. Tell the overlying
 			 * function that it should read some more frames */
 			if(recv_payload_len >= 1){
-				return recv_frm[2];
+				return recv_frm[ECP_PAYLOAD_IDX];
 			}
 			break;
 		case 3:
 			/* Register device. If payload is longer than 1 byte,
-			 * connection is enumerated */
+			 * and the 2nd byte is 0xBB, the
+			 * connection is enumerated*/
 			
-			if(recv_payload_len < 1){
-				return -1;
-			}
-			ecp_register_device(recv_frm[2]);
-
-			if(recv_payload_len < 2){
-				return 1;
-			}else{
+			ecp_register_device(recv_frm[ECP_ADDR_IDX]);
+			if(recv_payload_len >= 1 && recv_frm[ECP_PAYLOAD_IDX] == 
+				recv_frm[ECP_ADDR_IDX]){
+				/* Bus is enumerated */
 				return 0;
+			}else{
+				return 1;
 			}
 
 			break;
@@ -545,7 +564,7 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 		case 7:
 		case 5:
 			/* The reply to a port definition or port write */
-			if(recv_payload_len < 1 || !recv_frm[2]){
+			if(recv_payload_len < 1 || !recv_frm[ECP_PAYLOAD_IDX]){
 				return -6;
 			}
 
@@ -554,12 +573,14 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			/* The reply to a port state get. */
 			if(recv_payload_len < 3){
 				println("Too few ecp params for action %i!",
-					ERROR, recv_frm[1]);
+					ERROR, recv_frm[ECP_ID_IDX]);
 				return -7;
 			}
 			
-			return set_ecp_current_state(0, recv_frm[2], 
-				recv_frm[3], recv_frm[4]);
+			return set_ecp_current_state(recv_frm[ECP_ADDR_IDX], 
+				recv_frm[ECP_PAYLOAD_IDX], 
+				recv_frm[ECP_PAYLOAD_IDX + 1], 
+				recv_frm[ECP_PAYLOAD_IDX + 2]);
 
 			break;
 
@@ -568,14 +589,15 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			/* All registers of a device are in the payload
 			 */
 			for(size_t i = 0; i < recv_payload_len; i++){
-				ecp_register_register(0, recv_frm[2 + i]);
+				ecp_register_register(recv_frm[ECP_ADDR_IDX], 
+					recv_frm[ECP_PAYLOAD_IDX + i]);
 			}
 			break;
 
 		default:
 			/* You lazy bastard! */
 			println("Unimplemented ECP response: %i!", WARNING,
-				recv_frm[1]);
+				recv_frm[ECP_ID_IDX]);
 			break;
 	}
 	return 0;
@@ -583,43 +605,51 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 
 int ecp_bus_init(){
 	/* Enumerate bus and initialize device structures */	
-	uint8_t start_id = 0;
 	int n = 0;
 	
 	for(size_t errcnt = 0; errcnt < 100; errcnt++){
-		n |= ecp_send_message(3, &start_id, sizeof(uint8_t));
-		n |= ecp_send_message(10, NULL, 0);
+		n = 0;
+		/* Enumerate bus */
+		n |= ecp_send_message(0, 3, NULL, 0);
 	
 		if(n){
+			println("Failed to enumerate ecp bus!", ERROR);
 			goto error;
 		}
 
 		for(size_t dev = 0; dev < ecp_devcnt; dev++){
 			struct ecproto_device_t* device = &ecp_devs[dev];
+			/* Get all registers */
+			n |= ecp_send_message(device->id, 
+				REGISTER_LIST, NULL, 0);
 			
 			for(size_t reg = 0; reg < device->regcnt; reg++){
 				struct ecproto_port_register_t* regp = 
 					&device->regs[reg];
+					/* INIT All registers */
 	
 				for(size_t bt = 0; bt < ECP_REG_WIDTH; bt++){
 					struct ecproto_port_t* bit = 
 						&regp->bits[bt];
-	
-					n |= send_ecp_ddir(device->id, regp->id, 
-						bit->bit, bit->ddir); 
 					if(n){
+						println("Failed to set ECP DDIR",
+							WARNING);
 						goto error;
 					}
 					
 					n |= send_ecp_port(device->id, regp->id, 
 						bit->bit, bit->target); 
 					if(n){
+						println("Failedto set ECP PORT",
+							WARNING);
 						goto error;
 					}
 					
 					n |= get_ecp_port(device->id, regp->id, 
 						bit->bit); 
 					if(n){
+						println("Failed to get ECP PRT",
+							WARNING);
 						goto error;
 					}
 				}
@@ -629,10 +659,12 @@ int ecp_bus_init(){
 error:
 	continue;
 	}
-	println("ECP INITIALIZED", DEBUG);
-	ecp_initialized = true;
+	if(n == 0){
+		println("ECP INITIALIZED", DEBUG);
+		ecp_initialized = true;
+	}
 
-	return 0;
+	return n;
 }
 
 /*
@@ -643,12 +675,9 @@ error:
 
 int get_ecp_port(size_t device_id, char reg_id, size_t pin_id){
 
-	if(device_id == 0){
-		uint8_t msg[] = {reg_id, pin_id};
-		return ecp_send_message(6, msg, sizeof(msg));
-	}
+	uint8_t msg[] = {reg_id, pin_id};
+	return ecp_send_message(device_id, GET_PORT_ACTION, msg, sizeof(msg));
 
-	/* Else is a TODO */
 	return 0;
 
 }
@@ -657,30 +686,27 @@ int get_ecp_port(size_t device_id, char reg_id, size_t pin_id){
  * is an input, this enables or disables the pullup resistor. */
 int send_ecp_port(size_t device_id, char reg_id, size_t pin_id, bool port){
 
-	if(device_id == 0){
-		uint8_t msg[] = {reg_id, pin_id, port};
-		return ecp_send_message(7, msg, sizeof(msg));
-	}
+	uint8_t msg[] = {reg_id, pin_id, port};
+	return ecp_send_message(device_id, WRITE_PORT_ACTION, msg, 
+		sizeof(msg));
 
-	/* Else is a TODO */
 	return 0;
 
 }
 
 int send_ecp_ddir(size_t device_id, char reg_id, size_t pin_id, bool ddir){
 
-	if(device_id == 0){
-		uint8_t msg[] = {reg_id, pin_id, ddir};
-		return ecp_send_message(5, msg, sizeof(msg));
+	printf("%li %i %li %i\n", device_id, reg_id, pin_id, ddir);
+	uint8_t msg[] = {reg_id, pin_id, ddir};
+	return ecp_send_message(device_id, DEFINE_PORT_ACTION, msg, 
+		sizeof(msg));
 
-	}
-
-	/* Else is a TODO */
 	return 0;
 
 }
 
-int ecp_send_message(uint8_t action_id, uint8_t* payload, size_t payload_len){
+int ecp_send_message(size_t device_id, 
+	uint8_t action_id, uint8_t* payload, size_t payload_len){
 	
 	int ret = 0;
 
@@ -702,7 +728,7 @@ int ecp_send_message(uint8_t action_id, uint8_t* payload, size_t payload_len){
 		}
 	}
 
-	n = write_ecp_msg(ecp_fd, action_id, payload, payload_len, 
+	n = write_ecp_msg(device_id, ecp_fd, action_id, payload, payload_len, 
 		&snd_frame, &snd_len);
 
 	if(n < 0){
@@ -724,31 +750,51 @@ int ecp_send_message(uint8_t action_id, uint8_t* payload, size_t payload_len){
 	return ret;
 }
 
-int write_ecp_msg(int fd, uint8_t action_id, uint8_t* payload, 
+int write_ecp_msg(size_t dev_id, int fd, uint8_t action_id, uint8_t* payload, 
 	size_t payload_length, uint8_t** frme, size_t* frame_length){
 
 	uint8_t frame[255];
+	memset(frame, 0, 255);
 
-	frame[0] = ECPROTO_OVERHEAD + payload_length;
-	frame[1] = action_id;
-	memcpy(&frame[2], payload, payload_length);
-	uint16_t crc = ibm_crc(frame,frame[0] - 3);
-	frame[frame[0] - 3] = (crc >> 8) & 0xFF;
-	frame[frame[0] - 2] = crc & 0xFF;
-	frame[frame[0] - 1] = 0xFF;
+	frame[ECP_LEN_IDX] = ECPROTO_OVERHEAD + payload_length;
+	frame[ECP_ADDR_IDX] = dev_id;
+	frame[ECP_ID_IDX] = action_id;
+	memcpy(&frame[ECP_PAYLOAD_IDX], payload, payload_length);
+	uint16_t crc = 0x0;
 	
-	if(!validate_ecp_frame(frame, frame[0])){
+	uint8_t crc_low = 0, crc_high = 0;
+	for(size_t ov = 0; ov < ( 255 - payload_length); ov++){
+		
+		crc = ibm_crc(frame,frame[ECP_LEN_IDX] - 3);
+		crc_high = (crc >> 8) & 0xFF;
+		crc_low = crc & 0xFF;
+		if(crc_high == 0xFF || crc_low == 0xFF){
+			
+			frame[ECP_LEN_IDX]++;
+			continue;
+		}else{
+			/* No 0xff bytes have ben found inside the checksum.
+			 * Stop 0-padding the frame */
+			break;
+		}
+	}
+
+	frame[frame[ECP_LEN_IDX] - 3] = crc_high;
+	frame[frame[ECP_LEN_IDX] - 2] = crc_low;
+	frame[frame[ECP_LEN_IDX] - 1] = 0xFF;
+	
+	if(!validate_ecp_frame(frame, frame[ECP_LEN_IDX])){
 		println("Failed to contruct ecp frame!", ERROR);
 		return -1;
 	}
 
 	if(frme != NULL){
-		*frame_length = frame[0] * sizeof(uint8_t);
-		*frme = malloc(frame[0] * sizeof(uint8_t));
+		*frame_length = frame[ECP_LEN_IDX] * sizeof(uint8_t);
+		*frme = malloc(frame[ECP_LEN_IDX] * sizeof(uint8_t));
 		memcpy(*frme, frame, sizeof(uint8_t) * *frame_length);
 	}
-	
-	int n = write(fd, frame, frame[0]);	
+
+	int n = write(fd, frame, frame[ECP_LEN_IDX]);	
 	return n;
 }
 

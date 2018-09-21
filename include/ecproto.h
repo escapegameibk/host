@@ -28,7 +28,25 @@
 #include <pthread.h>
 
 #define ECP_REG_WIDTH 8
-#define ECPROTO_OVERHEAD 5
+#define ECPROTO_OVERHEAD 6
+
+#define INIT_ACTION 0
+#define REQ_SEND 1
+#define SEND_NTOIFY 2
+#define ENUMERATEACTION 3
+#define REMOTE_COMMAND 4
+#define DEFINE_PORT_ACTION 5
+#define GET_PORT_ACTION 6
+#define WRITE_PORT_ACTION 7
+#define ERROR_ACTION 8
+#define REGISTER_COUNT 9
+#define REGISTER_LIST 10
+
+#define ECP_LEN_IDX 0
+#define ECP_ADDR_IDX 1
+#define ECP_ID_IDX 2
+#define ECP_PAYLOAD_IDX 3
+
 
 // Timout in ms for fd poll
 #define ECP_TIMEOUT 100
@@ -70,7 +88,7 @@ struct ecproto_device_t *ecp_devs;
 /* THE FILE DESCRIPTOOOOR!! */
 int ecp_fd;
 /* AAAAND THE IIIINNNNCCREEDDDIIBBBBLE LOOOOOOOOOOOOCK */
-pthread_mutex_t ecp_lock;
+pthread_mutex_t ecp_lock, ecp_readlock;
 
 bool ecp_initialized;
 
@@ -101,9 +119,10 @@ int ecp_bus_init();
 int get_ecp_port(size_t device_id, char reg_id, size_t pin_id);
 int send_ecp_port(size_t device_id, char reg_id, size_t pin_id, bool port);
 int send_ecp_ddir(size_t device_id, char reg_id, size_t pin_id, bool ddir);
-int ecp_send_message(uint8_t action_id, uint8_t* payload, size_t payload_len);
+int ecp_send_message(size_t device_id, uint8_t action_id, uint8_t* payload, 
+	size_t payload_len);
 
-int write_ecp_msg(int fd, uint8_t action_id, uint8_t* payload, 
+int write_ecp_msg(size_t dev_id, int fd, uint8_t action_id, uint8_t* payload, 
 	size_t payload_length, uint8_t** frme, size_t* frame_length);
 
 int ecp_receive_msgs(uint8_t* snd_frame, size_t snd_len);
