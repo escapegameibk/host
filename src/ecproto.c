@@ -696,7 +696,6 @@ int send_ecp_port(size_t device_id, char reg_id, size_t pin_id, bool port){
 
 int send_ecp_ddir(size_t device_id, char reg_id, size_t pin_id, bool ddir){
 
-	printf("%li %i %li %i\n", device_id, reg_id, pin_id, ddir);
 	uint8_t msg[] = {reg_id, pin_id, ddir};
 	return ecp_send_message(device_id, DEFINE_PORT_ACTION, msg, 
 		sizeof(msg));
