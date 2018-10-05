@@ -26,6 +26,7 @@
 #include "core.h"
 #include "hints.h"
 #include "ecproto.h"
+#include "module.h"
 
 #include <unistd.h>
 #include <pthread.h>
@@ -77,79 +78,29 @@ int main(int argc, char * const argv[]){
                 goto shutdown;
         }
 
-#ifndef NOHINTS
-        if(init_hints() < 0){
-                println("failed to init hints!!",ERROR);
+        if(init_modules() < 0){
+                println("failed to init modules!!",ERROR);
 		exit_code = EXIT_FAILURE;
                 goto shutdown;
         }
-	
-#endif
-
-
-        /* initiate modules */
-#ifndef HEADLESS
-        if(init_interface() < 0){
-                println("failed to init interface!!",ERROR);
-		exit_code = EXIT_FAILURE;
-                goto shutdown;
-        }
-#endif
-        if(init_sound() < 0){
-                println("failed to init sound!!",ERROR);
-                goto shutdown;
-        }
-        
-
-#ifndef NOMTSP
- 
-        if(init_mtsp() < 0){
-
-                println("failed to init mtsp connection!!",ERROR);
-		exit_code = EXIT_FAILURE;
-                goto shutdown;
-
-        }
-
-#endif
-
-#ifndef  NOEC
-        if(init_ecp() < 0){
-
-                println("failed to init ecp connection!!",ERROR);
-		exit_code = EXIT_FAILURE;
-                goto shutdown;
-
-        }
-#endif
-
-	if(init_core() < 0){
-		println("Failed to initilize core!", ERROR);
-		exit_code = EXIT_FAILURE;
-                goto shutdown;
-	}
-        
+	 
         println("INIT DONE",INFO);
 
         println("strating modules...",DEBUG);
-        /* start modules */
-#ifndef HEADLESS
-        start_interface();
-#endif
-
-#ifndef NOHINTS
-	start_hints();
-#endif
-
-#ifndef NOMTSP
-        start_mtsp();
-#endif
-#ifndef NOEC
-	start_ecp();
-#endif
-        start_core();
-	start_game();
-        println("STARTUP DONE",INFO);
+	if(start_modules() < 0){
+		println("failed to start modules", ERROR);
+		exit_code = EXIT_FAILURE;
+                goto shutdown;
+	}
+	
+	if(start_game() < 0){
+		println("failed to start game watcher", ERROR);
+		exit_code = EXIT_FAILURE;
+                goto shutdown;
+	}
+	
+        
+	println("Startup done",Debug);
         println("ENTERING REGULAR OPERATION",INFO);
         while(!shutting_down){sleep(1);}
 
@@ -186,6 +137,10 @@ void catch_signal(int sig){
 
 	case SIGHUP:
 		
+		/* There was an issue where systemd would randomly send me this
+		 * signal. I have quite literarily no idea why because the 
+		 * interval wasn't normal and nothing should've changed...
+		 */
 		println("Received SIGHUP. I hope i haven't really hung up...",
 			WARNING);
 		break;

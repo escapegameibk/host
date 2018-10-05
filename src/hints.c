@@ -22,6 +22,7 @@
 #include "game.h"
 #include "log.h"
 #include "data.h"
+#include "module.h"
 
 #include <sys/time.h>
 #include <json-c/json.h>

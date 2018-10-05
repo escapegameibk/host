@@ -29,7 +29,6 @@
 
 int init_game();
 int init_dependency(json_object* dependency, int event_id);
-int init_general_dependency(json_object* dependency);
 int start_game();
 
 /* checks for changes and act accordingly */
@@ -38,12 +37,10 @@ void* loop_game();
 
 int trigger_event(size_t event_id);
 void async_trigger_event(size_t event_id);
-int execute_trigger(json_object* trigger);
-int check_dependency(json_object* dependency);
 
 /* utility functions */
 
-json_object** get_all_dependencies(size_t* depcn, size_t** event_idsp);
+json_object** get_root_dependencies(size_t* depcn, size_t** event_idsp);
 int get_dependency_id(json_object* dependency);
 size_t get_highest_active_event();
 

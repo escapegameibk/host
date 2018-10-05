@@ -24,6 +24,7 @@
 #include "core.h"
 #include "tools.h"
 #include "ecproto.h"
+#include "module.h"
 
 #include <stddef.h>
 #include <stdio.h>
@@ -31,6 +32,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <unistd.h>
+
 
 int init_game(){
 
@@ -61,7 +63,7 @@ int init_game(){
 	/* initialize all dependencys of all events */
 	size_t depcnt = 0;
 	size_t* event_ids = NULL;
-	json_object** dependencies = get_all_dependencies(&depcnt, &event_ids);
+	json_object** dependencies = get_root_dependencies(&depcnt, &event_ids);
 	
 	for(size_t i = 0; i < depcnt; i++){
 		if(init_dependency(dependencies[i], event_ids[i]) < 0){
@@ -101,52 +103,6 @@ int init_dependency(json_object* dependency, int event_id){
 	return init_general_dependency(dependency);
 }
 
-/* This function passes the dependency to it's module. It may add metadata,
- * but still prepares the dependency so it may be retrieved via the check 
- * dependency function. */
-int init_general_dependency(json_object* dependency){
-	
-	/* Add metadata to dependency */
-	json_object_object_add(dependency, "id", json_object_new_int(
-		dependency_count - 1));
-
-	const char* module_name = json_object_get_string(
-				json_object_object_get(dependency,"module"));
-
-	if(module_name == NULL){
-		println("Specified no module in dependency!", ERROR);
-		return -1;
-	}
-#ifndef NOMTSP
-	else if(strcasecmp(module_name,"mtsp") == 0){
-		/* Question the MTSP module */
-		return mtsp_init_dependency(dependency);
-	}
-#endif
-	else if(strcasecmp(module_name,"core") == 0){
-		/* Question the core module */
-		return core_init_dependency(dependency);
-	}
-	
-	else if(strcasecmp(module_name,"snd") == 0){
-		/* Question the core module */
-		return snd_init_dependency(dependency);
-	}
-#ifndef NOEC
-	else if(strcasecmp(module_name,"ecp") == 0){
-		/* Question the ecp module */
-		return ecp_init_dependency(dependency);
-	
-	}
-#endif
-	else{
-		println("Unknown module specified [%s]!", ERROR, module_name);
-		return -2;
-	}
-
-	return 0;
-	
-}
 
 /* I may have to tell you, that this is NOT, and i repeat NOT a function used
  * to start a game, but rather to start a thread, which controlls the game.
@@ -372,121 +328,9 @@ void async_trigger_event(size_t event_id){
 
 }
 
-
-int execute_trigger(json_object* trigger){
-
-
-	const char* module = json_object_get_string(json_object_object_get(
-                trigger,"module"));
-	if(module == NULL){
-		println("Trigger without module! dumping:", ERROR);
-		json_object_to_fd(STDOUT_FILENO,trigger, 
-			JSON_C_TO_STRING_PRETTY);
-		return -1;
-
-	}
-	println("Executing trigger %s", DEBUG, get_name_from_object(trigger));
-        
-        /* Find out which module is concerned and execute the trigger
-         * in the specified function of the module.
-         */
-
-        if(strcasecmp(module,"core") == 0){
-                /* The core module is concerned. */
-                if(core_trigger(trigger) < 0){
-                        println("Failed to execute trigger for core!",
-                                ERROR);
-                        return -1;
-                }
-		return 0;
-        }
- 
-#ifndef NOMTSP
-	else if(strcasecmp(module,"mtsp") == 0){
-                /* The mtsp module is concerned. */
-                if(mtsp_trigger(trigger) < 0){
-                        println("Failed to execute trigger for mtsp!",
-                                ERROR);
-                        
-                        return -2;
-
-                }
-		return 0;
-	}
-#endif
-#ifndef NOEC
-	else if(strcasecmp(module,"ecp") == 0){
-                /* The mtsp module is concerned. */
-                if(ecp_trigger(trigger) < 0){
-                        println("Failed to execute trigger for ecp!",
-                                ERROR);
-                        
-                        return -3;
-
-                }
-		return 0;
-	}
-#endif
-
-#ifndef NOSOUND
-
-	else if(strcasecmp(module,"snd") == 0){
-		/* The sound module is concerned. */
-		if(sound_trigger(trigger) < 0){
-			println("Failed to execute trigger for snd!",
-				ERROR);
-                       
-			return -4;
-		}
-		return 0;
-	}
-#endif
-        println("UNKNOWN MODULE %s!!",ERROR, module);
-	return -5;
-
-}
-
-
-/* Checks wether a dependency is met
- * Returns < 0 on error, 0 if not, and > 0 if forfilled.
- */
-
-int check_dependency(json_object* dependency){
-	
-	const char* module_name = json_object_get_string(
-				json_object_object_get(dependency,"module"));
-	if(module_name == NULL){
-		println("Specified no module in dependency!", ERROR);
-		return -1;
-	}
-#ifndef NOMTSP
-	else if(strcasecmp(module_name,"mtsp") == 0){
-		/* Question the MTSP module. yes QUESTION IT! */
-		return mtsp_check_dependency(dependency);
-	}
-#endif
-#ifndef NOEC
-	else if(strcasecmp(module_name,"ecp") == 0){
-		/* Question the ECP module. yes QUESTION IT! */
-		return ecp_check_dependency(dependency);
-	}
-#endif
-	else if(strcasecmp(module_name,"core") == 0){
-		/* Question the core module */
-		return core_check_dependency(dependency);
-	}
-	else{
-		println("Unknown module specified [%s]!", ERROR, module_name);
-		return -2;
-	}
-
-
-	return 0;
-}
-
 /* This returns an array with all dependencies as elements. It can be 
  * free'd afterwards */
-json_object** get_all_dependencies(size_t* depcnt, size_t** event_idsp){
+json_object** get_root_dependencies(size_t* depcnt, size_t** event_idsp){
 
 	json_object** deps = NULL;
 	size_t* event_ids = NULL;

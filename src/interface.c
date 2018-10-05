@@ -23,6 +23,7 @@
 #include "game.h"
 #include "core.h"
 #include "hints.h"
+#include "module.h"
 
 #include <json-c/json.h>
 #include <sys/socket.h>

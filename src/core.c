@@ -23,6 +23,7 @@
 #include "data.h"
 #include "mtsp.h"
 #include "hints.h"
+#include "module.h"
 
 #include <string.h>
 #include <strings.h>
