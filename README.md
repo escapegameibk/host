@@ -303,6 +303,12 @@ is reset and may only be re-triggered from the very beginning. Triggeres are not
 checked during initialisation. A trigger requires a device, register and target
 to be specified. The target is written to the device at the specified register.
 
+### ECPROTO
+
+The ecproto or shortened ecp module is rosponsible for connection handling with
+ecproto capable devices. The ecproto protocol definition may be looked at at
+../microcontroller/ECPROTO.md
+
 ## Hints
 
 Hins are, well obviously, meant to help the players. The global field "hints"
