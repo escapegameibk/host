@@ -339,6 +339,25 @@ int execute_command(int sock_fd, char* command){
 		print_hint_states_interface(sock_fd);
 		break;
 #endif /* NOHINTS */
+
+#ifndef NOVIDEO
+
+	case 13:
+		/* A get for the desired video. The monitor variable should
+		 * specify what monitor is requesting this thing. */
+		
+
+		break;
+	case 14:
+		/* An acknowlegement of the requesting monitor, that it has
+		 * finished playing the current video, and that it requests
+		 * the next video.
+		 */
+
+
+		break;
+
+#endif /* NOVIDEO */ 
         default:
                 /* OOPS */
                 debug = malloc(INT_LEN);

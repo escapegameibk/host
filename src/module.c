@@ -25,6 +25,7 @@
 #include "log.h"
 #include "game.h"
 #include "config.h"
+#include "video.h"
 
 #include <string.h>
 #include <unistd.h>
@@ -87,11 +88,20 @@ int init_modules(){
 
         }
 #endif
+
+#ifndef NOVIDEO
+	
+	if(init_video() < 0){
+		println("failed to initialize video module", ERROR);
+		return -6;
+	}
+#endif
+
 	
 	/* The core module may NOT be disabled */
 	if(init_core() < 0){
 		println("Failed to initilize core!", ERROR);
-		return -6;
+		return -7;
 	}
 	
 

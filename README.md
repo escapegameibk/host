@@ -350,6 +350,13 @@ following is a list of these definitions:
 - NOHINTS : Completely disables ad removes the Hinting system.
 - NOALARM : Completely disables and removes the alarm system.
 
+# Maintainers
+
+This is a list of people involved in this project, what they did and how to
+contact them:
+
+- tyrolyean@tyrolyean.net:	Everything to date.
+
 # ERRATA
 ## Raspberry Pi
 
