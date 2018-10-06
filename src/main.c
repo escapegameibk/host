@@ -100,7 +100,7 @@ int main(int argc, char * const argv[]){
 	}
 	
         
-	println("Startup done",Debug);
+	println("Startup done",DEBUG);
         println("ENTERING REGULAR OPERATION",INFO);
         while(!shutting_down){sleep(1);}
 

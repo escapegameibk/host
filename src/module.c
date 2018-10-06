@@ -148,6 +148,38 @@ int start_modules(){
 	return 0;
 }
 
+/*
+ * Called on game reset. Gives all modules the chance to send new notifies to
+ * devices, reconnect tcp streams before a timeout occures, or do something 
+ * else which shouldn't be run whilest a game is in progress
+ */
+int reset_modules(){
+
+#ifndef NOSOUND	
+	if(reset_sounds() < 0){
+		println("Failed to reset sound module!", ERROR);
+		return -1;
+	}
+#endif
+
+#ifndef NOMTSP
+	if(reset_mtsp() < 0){
+		println("Failed to reset mtsp module!", ERROR);
+		return -2;
+	}
+
+#endif
+
+#ifndef NOHINTS
+	if(reset_hints() < 0){
+		println("Failed to reset hinting module!", ERROR);
+		return -3;
+	}
+
+#endif
+	return 0;
+}
+
 
 
 /* Checks wether a dependency is met
@@ -290,10 +322,6 @@ int init_general_dependency(json_object* dependency){
 		return core_init_dependency(dependency);
 	}
 	
-	else if(strcasecmp(module_name,"snd") == 0){
-		/* Question the core module */
-		return snd_init_dependency(dependency);
-	}
 #ifndef NOEC
 	else if(strcasecmp(module_name,"ecp") == 0){
 		/* Question the ecp module */

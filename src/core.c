@@ -371,28 +371,17 @@ int core_trigger(json_object* trigger){
 				memset(seq->sequence_so_far, 0, 
 					seq->sequence_length);
 		}
-#ifndef NOMTSP
-		if(reset_mtsp() < 0){
-			println("Failed to reset MTSP!", ERROR);
+		if(reset_modules() < 0){
+			println("Failed to reset modules!", ERROR);
 			return -1;
 		}
-
-#endif
-
-#ifndef NOHINTS
-		if(reset_hints() < 0){
-			println("Failed to reset hints!", ERROR);
-			return -2;
+		json_object* default_lang = json_object_object_get(config_glob, 
+			"default_lang");
+		if(default_lang != NULL){
+			int lang = json_object_get_int(default_lang);
+			println("Reseting language to default %i", DEBUG, lang);
+			language = lang;
 		}
-#endif
-
-	json_object* default_lang = json_object_object_get(config_glob, 
-		"default_lang");
-	if(default_lang != NULL){
-		int lang = json_object_get_int(default_lang);
-		println("Reseting language to default %i", DEBUG, lang);
-		language = lang;
-	}
 
         }else if(strcasecmp(action_name,"delay") == 0){
 		uint32_t delay = json_object_get_int64(

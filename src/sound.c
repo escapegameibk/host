@@ -94,13 +94,6 @@ int sound_trigger(json_object* trigger){
 
 }
 
-int snd_init_dependency(json_object* dependency){
-
-	/* Not really nescessary */
-
-	return 0;
-}
-
 int play_sound(const char* url){
 
 	if(sound_muted){
