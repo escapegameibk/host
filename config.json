@@ -1,6 +1,7 @@
 {
 
 	"duration" : 3600,
+	"boot_video" : "http://127.0.0.1/data/video/test.mp4",
 	"name" :
 	[
 		"Generic",
@@ -40,6 +41,12 @@
 					"name" : "start timer",
 					"module" : "core",
 					"action" : "timer_start"
+				},
+				{
+					"name" : "start video",
+					"module" : "video",
+					"action" : "immediate",
+					"resource" : "http://127.0.0.1/data/video/test.mp4"
 				}
 			]
 		},

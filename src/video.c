@@ -22,10 +22,19 @@
 #include "config.h"
 #include "log.h"
 
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+
+
 char** video_current_urls = NULL;
+char** video_perma_urls = NULL;
 size_t video_device_cnt = 1;
 
 int init_video(){
+
+	pthread_mutex_init(&video_urls_lock, NULL);
 	
 	json_object* display_count = json_object_object_get(config_glob,
 		"monitor_count");
@@ -45,6 +54,7 @@ int init_video(){
 	}
 
 	video_current_urls = malloc(video_device_cnt * sizeof(char*));
+	video_perma_urls = malloc(video_device_cnt * sizeof(char*));
 	
 	json_object* video_init_url = json_object_object_get(config_glob, 
 		"boot_video");
@@ -59,12 +69,22 @@ int init_video(){
 
 		for(size_t i = 0; i < video_device_cnt; i++){
 			video_current_urls[i] = NULL;
+			video_perma_urls[i] = NULL;
 		}
 
 	}else{
 		const char* boot_url = json_object_get_string(video_init_url);
 		println("Setting all %i monitors to display[%s]", DEBUG, 
 			video_device_cnt, boot_url);
+		
+		for(size_t i = 0; i < video_device_cnt; i++){
+			video_current_urls[i] = malloc(strlen(boot_url) + 
+				sizeof(char));
+			video_perma_urls[i] = malloc(strlen(boot_url) + 
+				sizeof(char));
+			strcpy(video_current_urls[i], boot_url);
+			strcpy(video_perma_urls[i], boot_url);
+		}
 	}
 
 
@@ -79,6 +99,90 @@ int video_finished(size_t device_no){
 		println("Attempted to finish video playback for invalid display"
 			, WARNING);
 		return -1;
+	}
+
+	pthread_mutex_lock(&video_urls_lock);
+	if(video_perma_urls[device_no] == NULL && 
+		video_current_urls[device_no]){
+
+		/* Both are already NULL, I don't have to do a thing */
+	
+	}else if(video_perma_urls[device_no] == NULL){
+		
+		/* Only the permanent URL is NULL, not the current one, I
+		 * will set the current one to NULL to let the device know
+		 * to play nothing */
+		free(video_current_urls[device_no]);
+		video_current_urls[device_no] = NULL;
+
+	}else{
+		free(video_current_urls[device_no]);
+		video_current_urls[device_no] = malloc(strlen(
+			video_perma_urls[device_no]) + sizeof(char));
+		strcpy(video_current_urls[device_no], 
+			video_perma_urls[device_no]);
+	}
+	pthread_mutex_unlock(&video_urls_lock);
+
+	return 0;
+}
+
+int video_trigger(json_object* trigger){
+
+	json_object* action = json_object_object_get(trigger, "action");
+	if(action == NULL){
+		println("Video trigger without action! Dumping root:", ERROR);
+		json_object_to_fd(STDOUT_FILENO, trigger, 
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+	}
+
+	const char* act = json_object_get_string(action);
+	
+	json_object* device = json_object_object_get(trigger, "monitor");
+	size_t dev = 0;
+
+	if(device == NULL){
+		println("Video trigger without device! Assuming 1", WARNING);
+	}else{
+		dev = json_object_get_int(device);
+	}
+
+	if(dev >= video_device_cnt){
+	println("Attempted to trigger invalid video dev! Dumping root:",
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, trigger, 
+			JSON_C_TO_STRING_PRETTY);
+		return -2;
+
+	}
+
+	if(strcasecmp(act, "immediate") == 0){
+	
+		json_object* resource = json_object_object_get(trigger, 
+			"resource");
+		if(resource == NULL){
+			println("Video immediate with no resource! Dumping rot:"
+				, ERROR);
+			json_object_to_fd(STDOUT_FILENO, trigger, 
+				JSON_C_TO_STRING_PRETTY);
+			return -3;
+		}
+		
+		const char* res = json_object_get_string(resource);
+
+		println("Immediately replacing video with targret: ", DEBUG);
+		println("%s --> %s ", DEBUG, video_current_urls[dev], res);
+		
+		pthread_mutex_lock(&video_urls_lock);
+		
+		free(video_current_urls[dev]);
+		video_current_urls[dev] = malloc(strlen(res) + sizeof(char));
+		strcpy(video_current_urls[dev], res);
+		
+		pthread_mutex_unlock(&video_urls_lock);
+
+
 	}
 
 	return 0;

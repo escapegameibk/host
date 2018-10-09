@@ -24,6 +24,7 @@
 #include "core.h"
 #include "hints.h"
 #include "module.h"
+#include "video.h"
 
 #include <json-c/json.h>
 #include <sys/socket.h>
@@ -345,7 +346,8 @@ int execute_command(int sock_fd, char* command){
 	case 13:
 		/* A get for the desired video. The monitor variable should
 		 * specify what monitor is requesting this thing. */
-		
+		print_video_url(sock_fd, json_object_object_get(parsed, 
+			"monitor"));
 
 		break;
 	case 14:
@@ -353,7 +355,9 @@ int execute_command(int sock_fd, char* command){
 		 * finished playing the current video, and that it requests
 		 * the next video.
 		 */
-
+		
+		video_finished(json_object_get_int(json_object_object_get(
+			parsed,"monitor")));
 
 		break;
 
@@ -618,7 +622,40 @@ int print_hint_states_interface(int sockfd){
 	return 0;
 }
 
+#ifndef NOVIDEO
+int print_video_url(int sockfd, json_object* device_no){
 
+	size_t dev_id = 0;
+
+	/* Assume monitor 0 when not specified */
+	if(device_no != NULL){
+		dev_id = json_object_get_int(device_no);
+	}
+
+	if(dev_id >= video_device_cnt){
+		println("Requested URL for non existing video monitor %i!", 
+			WARNING, dev_id);
+		return -1;
+	}
+
+	json_object* url = json_object_new_object();
+	if(video_current_urls[dev_id] != NULL){
+
+		json_object_object_add(url, "URL", 
+			json_object_new_string(video_current_urls[dev_id]));
+	}else{
+		json_object_object_add(url, "URL", NULL);
+
+	}
+
+	json_object_to_fd(sockfd, url, 
+		JSON_C_TO_STRING_PLAIN);
+
+	json_object_put(url);
+	
+	return 0;
+}
+#endif /* NOVIDEO */
 
 
 /* ############################################################################

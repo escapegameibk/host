@@ -300,8 +300,23 @@ int execute_trigger(json_object* trigger){
 		return 0;
 	}
 #endif
+
+#ifndef NOVIDEO
+
+	else if(strcasecmp(module,"video") == 0){
+		/* The sound module is concerned. */
+		if(video_trigger(trigger) < 0){
+			println("Failed to execute trigger for video!",
+				ERROR);
+
+			return -5;
+		}
+		return 0;
+	}
+#endif
+
         println("UNKNOWN MODULE %s!!",ERROR, module);
-	return -5;
+	return -6;
 
 }
 

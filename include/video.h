@@ -20,8 +20,9 @@
 #ifndef VIDEO_H
 #define VIDEO_H
 
-#include "config.h"
-#include "video.h"
+
+#include <json-c/json.h>
+#include <pthread.h>
 
 int init_video();
 
@@ -29,8 +30,15 @@ int init_video();
  * resources. */
 /* int start_video(); */
 
+int video_finished(size_t device_no);
+
+int video_trigger(json_object* trigger);
+
 extern char** video_current_urls;
 extern char** video_perma_urls;
+
+/* The lock for the two string arrays above */
+pthread_mutex_t video_urls_lock;
 
 extern size_t video_device_cnt;
 
