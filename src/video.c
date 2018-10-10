@@ -116,11 +116,23 @@ int video_finished(size_t device_no){
 		video_current_urls[device_no] = NULL;
 
 	}else{
-		free(video_current_urls[device_no]);
-		video_current_urls[device_no] = malloc(strlen(
-			video_perma_urls[device_no]) + sizeof(char));
-		strcpy(video_current_urls[device_no], 
-			video_perma_urls[device_no]);
+		if(strcmp(video_current_urls[device_no], 
+			video_perma_urls[device_no]) != 0){
+			
+			println("Updating video for monitor %i:", DEBUG,
+				device_no);
+
+			println("%s --> %s", DEBUG, 
+				video_current_urls[device_no], 
+				video_perma_urls[device_no]);
+
+			free(video_current_urls[device_no]);
+			video_current_urls[device_no] = malloc(strlen(
+				video_perma_urls[device_no]) + sizeof(char));
+			strcpy(video_current_urls[device_no], 
+				video_perma_urls[device_no]);
+			
+		}
 	}
 	pthread_mutex_unlock(&video_urls_lock);
 
@@ -143,7 +155,7 @@ int video_trigger(json_object* trigger){
 	size_t dev = 0;
 
 	if(device == NULL){
-		println("Video trigger without device! Assuming 1", WARNING);
+		println("Video trigger without device! Assuming 0", WARNING);
 	}else{
 		dev = json_object_get_int(device);
 	}
@@ -162,7 +174,7 @@ int video_trigger(json_object* trigger){
 		json_object* resource = json_object_object_get(trigger, 
 			"resource");
 		if(resource == NULL){
-			println("Video immediate with no resource! Dumping rot:"
+			println("Video imm with no resource! Dumping root:"
 				, ERROR);
 			json_object_to_fd(STDOUT_FILENO, trigger, 
 				JSON_C_TO_STRING_PRETTY);
@@ -181,6 +193,62 @@ int video_trigger(json_object* trigger){
 		strcpy(video_current_urls[dev], res);
 		
 		pthread_mutex_unlock(&video_urls_lock);
+
+
+	}
+	else if(strcasecmp(act, "permanent") == 0){
+	
+		json_object* resource = json_object_object_get(trigger, 
+			"resource");
+		if(resource == NULL){
+			println("Video perma with no resource! Dumping root:"
+				, ERROR);
+			json_object_to_fd(STDOUT_FILENO, trigger, 
+				JSON_C_TO_STRING_PRETTY);
+			return -3;
+		}
+		
+		const char* res = json_object_get_string(resource);
+
+		println("Permanently replacing video with targret: ", DEBUG);
+		println("%s --> %s ", DEBUG, video_perma_urls[dev], res);
+		
+		pthread_mutex_lock(&video_urls_lock);
+		
+		free(video_perma_urls[dev]);
+		video_perma_urls[dev] = malloc(strlen(res) + sizeof(char));
+		strcpy(video_perma_urls[dev], res);
+		
+		pthread_mutex_unlock(&video_urls_lock);
+
+
+	}
+	else if(strcasecmp(act, "reset") == 0){
+	
+		if( device == NULL){
+			println("Immediately halting all video playback.", 
+				DEBUG);
+		
+			pthread_mutex_lock(&video_urls_lock);
+			
+			for(size_t i = 0; i < video_device_cnt; i++){
+				free(video_perma_urls[i]);
+				free(video_current_urls[i]);
+				
+				video_perma_urls[i] = NULL;
+				video_current_urls[i] = NULL;
+			}
+
+		}else{
+			println("Immediately halting video playback on dev %i", 
+				DEBUG, dev);
+			free(video_perma_urls[dev]);
+			free(video_current_urls[dev]);
+				
+			video_perma_urls[dev] = NULL;
+			video_current_urls[dev] = NULL;
+
+		}
 
 
 	}
