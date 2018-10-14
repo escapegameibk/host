@@ -41,6 +41,8 @@
 #define ERROR_ACTION 8
 #define REGISTER_COUNT 9
 #define REGISTER_LIST 10
+#define PIN_ENABLED 11
+#define SECONDARY_PRINT 12
 
 #define ECP_LEN_IDX 0
 #define ECP_ADDR_IDX 1
@@ -64,6 +66,7 @@ struct ecproto_port_t{
 	 /* The default value which will be written to the port register.*/
 	bool target;
 	bool current; /* The value which is read from the pin register */
+	bool enabled; /* Wether the pin is disabled or not */
 };
 
 struct ecproto_port_register_t{

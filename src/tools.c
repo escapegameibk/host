@@ -24,6 +24,7 @@
 #include <time.h>
 #include <string.h>
 #include <termios.h>
+#include <stdio.h>
 
 int* remove_array_element(size_t array_length, int* array,int element){
 
@@ -117,4 +118,21 @@ int is_in_array(size_t element, size_t* arr, size_t arrlen){
 	}
 	
 	return position;
+}
+
+char* printable_bytes(uint8_t* data, size_t len){
+
+	if(data == NULL){
+		return NULL;
+	}
+	char* str = malloc(len * 4 + 1);
+	memset(str,0, len * 4 + 1);
+	
+	for(size_t i = 0; i < len; i++){
+
+		sprintf(&str[strlen(str)], "<%x>", data[i]);
+	}
+
+	return str;
+	
 }

@@ -185,8 +185,6 @@ int init_ecp(){
 		return -1;
 	}
 
-	sleep(4);
-
 	/* Set the timeout for the mtsp devices to reply*/
         struct termios termios;
         tcgetattr(ecp_fd, &termios);
@@ -214,8 +212,9 @@ int init_ecp(){
 			ERROR);
 		return -3;
 	}
-
-	/* Should now be ready. */
+	
+	/* Should now be ready. Initialize ports */
+	println("INITIALIZING ECP DEVICES. This might take some time!", INFO);
 	if(ecp_bus_init()){
 		println("Failed to init ECP bus!!!", ERROR);
 		return -4;
@@ -228,6 +227,14 @@ int init_ecp(){
 		println("%i : %i : ", DEBUG, dev, device->id, device->regcnt);
 		for(size_t reg = 0; reg < device->regcnt; reg++){
 			println("\t%i : %c", DEBUG, reg, device->regs[reg].id);
+		
+			/* If you want more debug enable this */
+			/*for(size_t bit = 0; bit < ECP_REG_WIDTH; bit++){
+				println("\t\t%i : %i", DEBUG, bit, 
+					device->regs[reg].bits[bit].enabled);
+				
+			} */
+
 		}
 	}
 
@@ -468,6 +475,12 @@ uint8_t* recv_ecp_frame(int fd, size_t* len){
 		frame = realloc(frame, ++frame_length);
 		frame[frame_length - 1] = octet;
 		if(octet == 0xFF){
+			if(frame_length < ECPROTO_OVERHEAD){
+				free(frame);
+				frame = NULL;
+				*len = 0;
+				break;
+			}
 			*len = frame_length;
 			break;
 		}
@@ -594,6 +607,52 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			}
 			break;
 
+		case 11:
+
+			if(recv_payload_len < 3){
+				println("Received too short ecp message 11",
+					ERROR);
+				return -8;
+			}
+			{
+				struct ecproto_device_t* dev = 
+					escp_get_dev_from_id(
+					recv_frm[ECP_ADDR_IDX]);
+				
+				if(dev == NULL){
+					println("Recv 11 from unknown dev! wut?"
+						, ERROR);
+					return -9;
+				}
+				
+				struct ecproto_port_register_t* reg = 
+					escp_get_reg_from_dev(
+					recv_frm[ECP_PAYLOAD_IDX], dev);
+				
+				if(reg == NULL){
+					println("Recv 11 with unknown reg! wut?"
+						, ERROR);
+					return -10;
+				}
+				
+				if(recv_frm[ECP_PAYLOAD_IDX + 1]  >= 
+					ECP_REG_WIDTH){
+					println("Recv 11 with too > bit! wut?"
+						, ERROR);
+					return -11;
+				}
+
+				struct ecproto_port_t* prt = &reg->bits[
+					recv_frm[ECP_PAYLOAD_IDX + 1]];
+
+				if(recv_frm[ECP_PAYLOAD_IDX + 2] > 1){
+					println("Recv 11 with invld value! wut?"
+						, ERROR);
+					return -12;
+				}
+				prt->enabled = recv_frm[ECP_PAYLOAD_IDX + 2];
+			}
+			break;
 		default:
 			/* You lazy bastard! */
 			println("Unimplemented ECP response: %i!", WARNING,
@@ -606,8 +665,9 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 int ecp_bus_init(){
 	/* Enumerate bus and initialize device structures */	
 	int n = 0;
+#define MAX_ERRCNT 100
 	
-	for(size_t errcnt = 0; errcnt < 100; errcnt++){
+	for(size_t errcnt = 0; errcnt < MAX_ERRCNT; errcnt++){
 		n = 0;
 		/* Enumerate bus */
 		n |= ecp_send_message(0, 3, NULL, 0);
@@ -627,10 +687,29 @@ int ecp_bus_init(){
 				struct ecproto_port_register_t* regp = 
 					&device->regs[reg];
 					/* INIT All registers */
-	
+
 				for(size_t bt = 0; bt < ECP_REG_WIDTH; bt++){
 					struct ecproto_port_t* bit = 
 						&regp->bits[bt];
+					
+					uint8_t enable_dat [] = {regp->id, 
+						bit->bit};
+					n |= ecp_send_message(device->id, 
+						PIN_ENABLED, enable_dat, 
+						sizeof(enable_dat));
+					
+					if(n){
+						println("Failed to get ECP en",
+							WARNING);
+						goto error;
+					}
+					if(!bit->enabled){
+						continue;
+					}
+					
+					n |= send_ecp_ddir(device->id, regp->id, 
+						bit->bit, bit->ddir); 
+
 					if(n){
 						println("Failed to set ECP DDIR",
 							WARNING);
@@ -656,8 +735,12 @@ int ecp_bus_init(){
 			}
 		}
 	break;
+
 error:
-	continue;
+		println("Failed to init ECP, retry %i/%i", WARNING, errcnt , 
+			MAX_ERRCNT);
+		continue;
+
 	}
 	if(n == 0){
 		println("ECP INITIALIZED", DEBUG);
@@ -803,7 +886,7 @@ int ecp_receive_msgs(uint8_t* snd_frame, size_t snd_len){
 	int n = 0;
 	for(size_t i = 0; i < reads; i++){
 
-		size_t recv_len = 0;
+	size_t recv_len = 0;
 
 		uint8_t* recv_frame = recv_ecp_frame(ecp_fd, &recv_len);
 			
@@ -814,13 +897,21 @@ int ecp_receive_msgs(uint8_t* snd_frame, size_t snd_len){
 		}
 
 		n = parse_ecp_input(recv_frame, recv_len, snd_frame, snd_len);
-		free(recv_frame);
 		
 		if( n < 0 ){
 			println("Failed to parse received ecp frame", WARNING);
+			char* dat = printable_bytes(recv_frame, recv_len);
+			if(dat != NULL){
+				println(dat, ERROR);
+				free(dat);
+			}
+			
+			free(recv_frame);
 			pthread_mutex_unlock(&ecp_lock);
 			return -2;
 		}
+		
+		free(recv_frame);
 		reads += n;
 	}
 	return 0;
@@ -867,6 +958,7 @@ int init_ecp_port_reg(struct ecproto_port_register_t* prt_reg){
 		prt->target = false;
 		/* This will be overwritten by a check at the beginning */
 		prt->current = false;
+		prt->enabled = false;
 	}
 
 	return 0;

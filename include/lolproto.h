@@ -1,37 +1,44 @@
-/* a tool colletion
+/* A EC-Proto implementation for the escape game innsbruck's host
  * Copyright © 2018 tyrolyean
- *
+ * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef TOOLS_H
-#define TOOLS_H
+#ifndef NOLOL
 
-#include <stddef.h>
+#ifndef LOLPROTO_H
+#define LOLPROTO_H
+
+#define LOLPROTO_OVERHEAD 7
+
 #include <stdint.h>
+#include <stdbool.h>
+#include <json-c/json.h>
 
-int *remove_array_element(size_t array_length, int* array,int element);
-int *add_array_element(size_t array_length, int* array, int element);
+#include <pthread.h>
 
-int first_free_in_array(size_t arrlen, int* array);
+#define LOL_DEFAULT_PORT "/dev/ttyUSB0"
+#define LOL_DEFAULT_BAUD B38400
 
-int sleep_ms(uint32_t ms);
+int lol_init_dependency(json_object* dependency);
 
-int get_baud_from_int(int baud_in);
+int init_lol();
+int start_lol();
 
-int is_in_array(size_t element, size_t* arr, size_t arrlen);
+int lolfd;
 
-char* printable_bytes(uint8_t* data, size_t len);
+pthread_mutex_t lol_lock;
 
-#endif
+#endif /* LOLPROTO_H */
+#endif /* NOLOL */
