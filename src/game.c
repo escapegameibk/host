@@ -132,7 +132,6 @@ int start_game(){
 
 int patrol(){
 
-       
         for(size_t i = 0; i < state_cnt; i++){
 		/* Check all dependencys of all states and trigger
 		 * if nescessary.

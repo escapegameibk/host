@@ -43,15 +43,15 @@
 #define REGISTER_LIST 10
 #define PIN_ENABLED 11
 #define SECONDARY_PRINT 12
+#define ADC_GET 13
 
 #define ECP_LEN_IDX 0
 #define ECP_ADDR_IDX 1
 #define ECP_ID_IDX 2
 #define ECP_PAYLOAD_IDX 3
 
-
 // Timout in ms for fd poll
-#define ECP_TIMEOUT 100
+#define ECP_TIMEOUT 1000
 
 #define ECP_CMD_DEL 0xFF
 
@@ -75,13 +75,17 @@ struct ecproto_port_register_t{
 	struct ecproto_port_t bits[ECP_REG_WIDTH];
 };
 
+struct ecproto_analog_t{
+	bool used;
+	uint8_t value;
+};
 
 struct ecproto_device_t
 {
-	/* If the id is 0, a direct connection is assumed */
 	size_t id;
 	size_t regcnt;
 	struct ecproto_port_register_t* regs;
+	struct ecproto_analog_t* analog;
 };
 
 /* Storage for devices */
@@ -96,6 +100,9 @@ pthread_mutex_t ecp_lock, ecp_readlock;
 bool ecp_initialized;
 
 int ecp_init_dependency(json_object* dependency);
+int ecp_init_port_dependency(json_object* dependency);
+int ecp_init_analog_dependency(json_object* dependency);
+
 int ecp_register_input_pin(size_t device_id, char reg_id, size_t bit, 
 	bool pulled);
 int ecp_register_register(size_t device_id, char reg_id);
@@ -107,7 +114,12 @@ void* loop_ecp();
 int ecp_get_updates();
 
 int ecp_check_dependency(json_object* dependency);
+int ecp_check_port_dependency(json_object* dependency);
+int ecp_check_analog_dependency(json_object* dependency);
+
 int ecp_trigger(json_object* trigger);
+int ecp_trigger_secondary_trans(json_object* trigger);
+int ecp_trigger_port(json_object* trigger);
 
 uint8_t* recv_ecp_frame(int fd, size_t* len);
 
@@ -122,6 +134,8 @@ int ecp_bus_init();
 int get_ecp_port(size_t device_id, char reg_id, size_t pin_id);
 int send_ecp_port(size_t device_id, char reg_id, size_t pin_id, bool port);
 int send_ecp_ddir(size_t device_id, char reg_id, size_t pin_id, bool ddir);
+int send_ecp_secondary(size_t device_id, const char* str);
+int send_ecp_analog_req(size_t device_id);
 int ecp_send_message(size_t device_id, uint8_t action_id, uint8_t* payload, 
 	size_t payload_len);
 
