@@ -1161,8 +1161,12 @@ int ecp_receive_msgs(uint8_t* snd_frame, size_t snd_len){
 		if(recv_frame == NULL){
 			println("Failed to receive ecp frame. Sent frame was:",
 				 WARNING);
-			println(printable_bytes(snd_frame,snd_len), ERROR);
-			
+			if(snd_frame == NULL){
+				println("Unprintable!", ERROR);
+			}else{
+				println(printable_bytes(snd_frame,snd_len), 
+					ERROR);
+			}
 			pthread_mutex_unlock(&ecp_lock);
 			return -1;
 		}
