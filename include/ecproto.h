@@ -104,7 +104,7 @@ int ecp_init_port_dependency(json_object* dependency);
 int ecp_init_analog_dependency(json_object* dependency);
 
 int ecp_register_input_pin(size_t device_id, char reg_id, size_t bit, 
-	bool pulled);
+	bool pulled, bool is_input);
 int ecp_register_register(size_t device_id, char reg_id);
 int ecp_register_device(size_t id);
 int init_ecp();

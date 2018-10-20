@@ -208,7 +208,7 @@ int check_autohints(){
 			continue;
 		}
 
-		size_t event_id = get_highest_active_event() + 1;
+		size_t event_id = get_hint_event();
 
 		/* End up here, if ready to execute hint */
 		println("Ready to execute hint for level %i and event %i", 

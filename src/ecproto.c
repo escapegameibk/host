@@ -118,8 +118,14 @@ int ecp_init_port_dependency(json_object* dependency){
 		pulled_high = json_object_get_boolean(pulled);
 	}
 	
+	json_object* isin = json_object_object_get(dependency, "isinput");
+	bool is_input = true;
+	if(isin != NULL){
+		is_input = json_object_get_boolean(isin);
+	}
+	
 	int ret = ecp_register_input_pin(device_id, reg_id, bit_id, 
-		pulled_high);
+		pulled_high, is_input);
 	
 	if(ret < 0){
 		println("Failed to register ecp pin! Dumping root: ", ERROR);
@@ -154,11 +160,14 @@ int ecp_init_analog_dependency(json_object* dependency){
 	}
 
 	escp_get_dev_from_id(device_id)->analog->used = true;
-	
+	println("Enabling ananlog pin on ECP dev id %i", DEBUG, device_id);
+
 	return 0;
 }
+/* Registers an input pin, there are input pins which are not really inputs,
+ * the is_input flag sets the ddir register accordingly */
 int ecp_register_input_pin(size_t device_id, char reg_id, size_t bit, bool 
-	pulled){
+	pulled, bool is_input){
 	
 	ecp_register_register(device_id, reg_id);
 	
@@ -174,8 +183,12 @@ int ecp_register_input_pin(size_t device_id, char reg_id, size_t bit, bool
 	}
 
 	struct ecproto_port_t* pn = &reg_p->bits[bit];
-	pn->ddir = ECP_INPUT;
+	if(is_input){
+		pn->ddir = ECP_INPUT;
+	}else{
+		pn->ddir = ECP_OUTPUT;
 
+	}
 	/* Set pullup */
 	pn->target = pulled;
 
