@@ -286,6 +286,25 @@ int init_ecp(){
 		return -3;
 	}
 	
+	println("Initial ECP device map:", DEBUG);
+	/* Debug output all devices and registers */
+	for(size_t dev = 0; dev < ecp_devcnt; dev++){
+		struct ecproto_device_t* device = &ecp_devs[dev];
+		
+		println("%i : %i : ", DEBUG, dev, device->id, device->regcnt);
+		for(size_t reg = 0; reg < device->regcnt; reg++){
+			println("\t%i : %c", DEBUG, reg, device->regs[reg].id);
+		
+			/* If you want more debug enable this */
+			for(size_t bit = 0; bit < ECP_REG_WIDTH; bit++){
+				println("\t\t%i : %i", DEBUG, bit, 
+					device->regs[reg].bits[bit].enabled);
+				
+			}
+
+		}
+	}
+	
 	/* Should now be ready. Initialize ports */
 	println("INITIALIZING ECP DEVICES. This might take some time!", INFO);
 	if(ecp_bus_init()){
@@ -669,6 +688,9 @@ uint8_t* recv_ecp_frame(int fd, size_t* len){
 		int n = wait_for_data(ECP_TIMEOUT, fd);
 		if(n == 0){
 			println("Timeout in poll on ecp fd recv!", WARNING);
+			if(frame != NULL){
+				println(printable_bytes(frame, frame_length), WARNING);
+			}
 			free(frame);
 			frame = NULL;
 			break;
@@ -1072,9 +1094,9 @@ int ecp_send_message(size_t device_id,
 		println("ECP found data in buffer. Assuming lost frame.",
 			WARNING);
 		if(ecp_receive_msgs(snd_frame, snd_len) < 0){
-			println("Failed to receive ECP message!", ERROR);
-			pthread_mutex_unlock(&ecp_lock);
-			return -1;
+			
+			println("Failed to receive ECP message!", WARNING);
+			println("INVALID DATA IN BUFFER, IGNORING",WARNING);
 		}
 	}
 
