@@ -1090,6 +1090,7 @@ int ecp_send_message(size_t device_id,
 		println("Failed to poll on ECP fd! Device dead?", ERROR);
 		pthread_mutex_unlock(&ecp_lock);
 		return -1;
+#ifndef NORECOVER
 	}else if(n > 0){
 		println("ECP found data in buffer. Assuming lost frame.",
 			WARNING);
@@ -1099,6 +1100,9 @@ int ecp_send_message(size_t device_id,
 			println("INVALID DATA IN BUFFER, IGNORING",WARNING);
 		}
 	}
+#else
+	}
+#endif
 
 	n = write_ecp_msg(device_id, ecp_fd, action_id, payload, payload_len, 
 		&snd_frame, &snd_len);
