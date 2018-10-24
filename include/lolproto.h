@@ -1,4 +1,4 @@
-/* sound controller for the escape game innsbruck
+/* A EC-Proto implementation for the escape game innsbruck's host
  * Copyright © 2018 tyrolyean
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -15,25 +15,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SOUND_H
-#define SOUND_H
+#ifndef NOLOL
 
-#include <vlc/vlc.h>
+#ifndef LOLPROTO_H
+#define LOLPROTO_H
+
+#define LOLPROTO_OVERHEAD 7
+
+#include <stdint.h>
+#include <stdbool.h>
 #include <json-c/json.h>
 
-int init_sound();
-int sound_trigger(json_object* trigger);
-int play_sound(const char* url);
-int play_effect(const char* url);
-int reset_sounds();
+#include <pthread.h>
 
-libvlc_instance_t * vlc_inst;
-libvlc_media_player_t **vlc_mp;
-libvlc_media_player_t *effect_player;
-size_t playercnt;
-bool sound_muted;
+#define LOL_DEFAULT_PORT "/dev/ttyUSB0"
+#define LOL_DEFAULT_BAUD B38400
 
-/* Helper functions */
-const char* get_lang_resource(json_object* obj);
+int lol_init_dependency(json_object* dependency);
 
-#endif
+int init_lol();
+int start_lol();
+
+int lolfd;
+
+pthread_mutex_t lol_lock;
+
+#endif /* LOLPROTO_H */
+#endif /* NOLOL */

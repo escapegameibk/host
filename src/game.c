@@ -132,7 +132,6 @@ int start_game(){
 
 int patrol(){
 
-       
         for(size_t i = 0; i < state_cnt; i++){
 		/* Check all dependencys of all states and trigger
 		 * if nescessary.
@@ -174,7 +173,7 @@ int patrol(){
 			println("All dependencies clear to execute event %i!",
 				 INFO, i);
 			trigger_event(i);
-		}else{
+		}else if(!met && reset_jobs[i]){
 			/* If there is a reset job pending for this event,
 			 * reset it, and clear the reset job. 
 			 */
@@ -390,15 +389,32 @@ int get_dependency_id(json_object* dependency){
 /* The main reason this function exists is, that the auto-hinting system uses
  * this, to find out, which hints to execute. Returns 0 in case nothing has been
  * triggered yet as well as in case only the 0 event has been executed. */
-size_t get_highest_active_event(){
+size_t get_hint_event(){
 	
 	size_t highest = 0; 
 
 	for(size_t i = 0; i < state_cnt; i++){
 		if(state_trigger_status[i] == 1){
-			highest = i;
+
+			json_object* evnt =  json_object_array_get_idx(
+				json_object_object_get(config_glob, "events"), 
+				i);
+
+			json_object* hint_allow = json_object_object_get(evnt, 
+				"hintable");
+			
+			bool hintable = true;
+			if(hint_allow != NULL){
+				hintable = json_object_get_boolean(hint_allow);
+			}
+			
+			if(hintable){
+				highest = i;
+
+			}
 		}
 	}
 
-	return highest;
+	return highest + 1;
 }
+

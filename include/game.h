@@ -42,7 +42,7 @@ void async_trigger_event(size_t event_id);
 
 json_object** get_root_dependencies(size_t* depcn, size_t** event_idsp);
 int get_dependency_id(json_object* dependency);
-size_t get_highest_active_event();
+size_t get_hint_event();
 
 json_object** dependency_list;
 size_t dependency_count;

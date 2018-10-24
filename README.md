@@ -119,6 +119,14 @@ json file:
  - "langs" : An array of strings representing the language. These values are
    never touched inside of the program.
  - "default_lang" : An integer defining which language is used at startup.
+ - "mtsp_device" : Defines the device of the mtsp connection. For further 
+   details please see the mtsp section further down.
+ - "mtsp_baud" : Defines the baud rate of the mtsp connection. For further 
+   details please see the mtsp section further down.
+ - "ecp_device" : Defines the device of the mecp connection. For further 
+   details please see the ecp section further down.
+ - "ecp_baud" : Defines the baud rate of the ecp connection. For further 
+   details please see the ecp section further down.
 
 This is where it get's a bit more complicated. I will try to explain the
 construction of the "events" array now to you. The events array contains an
@@ -131,7 +139,22 @@ contain at least the following fields:
  - "dependencies": an array containing all of the dependencies which have to be
    fullfilled in order to trigger the event
  - "triggers": an array containing all triggers to be executed in case the
-   event is triggered. 
+   event is triggered.
+
+Optionally, the following fields may be specified:
+
+ - "autoreset" : Defines wether an event is able to reset itself. The reset of
+    the event is performed, as soon as one of it's dependencies is changeing 
+    state to false. This is done in order to avoid iknstantly triggering the
+    reset event again. The default value for this field is false.
+ - "hidden" : Defines wether an event is shown in the interface. In case this is
+   set to true, the interface will not show any traces of the event, and it will
+   not be controllable. The default value for this field is false.
+
+ - "hintable" : Defines wether an event is taken into account for the 
+   auto-hinting system. If this is set to false, the auto-hinting calculation
+   should not use this event, and not attempt to exectute any of it's 
+   dependencies.
 
 ### Dependencies
 
@@ -209,6 +232,9 @@ what type of dependency it is. The following types have been defined as of now:
 	forefilled, in which case it will return true. If it reaches the end
 	of the array, without ever encountering a forefilled dependency,
 	the dependency is considered not forefilled. 
+5. never:
+	The never dependency is, as you may have guessed, never forefilled. It
+	requires no special fields.
 
 #### Triggers 
 The core module is specified via the module field inside of a trigger.
@@ -277,7 +303,7 @@ is basically the same as for the name object. Any amount of languages may be
 specified by putting an array of urls in the position of the "resource" field
 of the play and effect actions. The rest is basically the same as for the name
 object, and if the "resource" field contains a string, the string is used for
-any language. 
+any language.
 
 ### MTSP
 
@@ -286,7 +312,12 @@ Protocol* provides an interface for hardware from the esd team, a russian group
 of people which thought using a 480600 baud connection for more than 2m would
 be a good idea. It heavily uses caching and error checking as it is highly
 propable, that messages get lost from this protocol. It can be trigger, as well
-as dependency, and is specified as mtsp in the module field.
+as dependency, and is specified as mtsp in the module field. The MTSP takes 
+two global fields: mtsp_baud and mtsp_device, which specify the baud rate and
+the device to connect to respectively. On a linuy system, the baud rate may be
+for example 57600, and the device may be for example "/dev/ttyUSB0". By default,
+the baud rate is 460800 and the device is "/dev/ttyUSB0". These values may 
+change over time, and should be specified inside the configuration.
 
 #### Dependencies
 
@@ -303,9 +334,46 @@ is reset and may only be re-triggered from the very beginning. Triggeres are not
 checked during initialisation. A trigger requires a device, register and target
 to be specified. The target is written to the device at the specified register.
 
+### ECPROTO
+
+The ecproto or shortened ecp module is rosponsible for connection handling with
+ecproto capable devices. The ecproto protocol definition may be looked at at
+../microcontroller/ECPROTO.md. The ECPROTO module is caching all requests to the
+hardware and never aloows direct hardware access for reading, therefore all
+read requests are only accessing a cache and are never triggering a real
+hardware request. The ecproto allows for almost passive updates, and allows a
+client to only send what is needed to the master, though the protocoll also
+supports acively polling the desired values, though this module does not support
+this feature.
+
+Global configuration values are:
+
+- ecp_device: Specifies the ecp device to connect to, for example "/dev/ttyS1".
+  By default the value is "/dev/ttyACM0". Configuration of this value is
+  recommended.
+
+- ecp_baud: Specifies the ecp device baud rate, for example 115200. By default
+  the value 38400 is assumed. Configuration of this value is recommended.
+	
+
+
+#### Dependencies
+
+The ecproto module currently has two types of dependencies, each one declared
+with the type field within the dependency:
+
+- port: A port dependency is a requesting the state of a gpio pin. It requires
+  the device, register and bit fields to be populated with a integer, a 
+  character and an integer respectively. It has the following optional values:
+
+
+if not specified, the port dependency is automatically selected.
+
+#### Triggers
+
 ## Hints
 
-Hins are, well obviously, meant to help the players. The global field "hints"
+Hints are, well obviously, meant to help the players. The global field "hints"
 is a 3-dimensional array. The first array contains hints correlating to the
 events array. So each array in the second dimension, is directly linked to the
 corresponding event, in the event array. The second dimension contains arrays of
@@ -343,6 +411,18 @@ following is a list of these definitions:
 - HEADLESS : Completely disables and removes the interface.
 - NOHINTS : Completely disables ad removes the Hinting system.
 - NOALARM : Completely disables and removes the alarm system.
+- NOEC : Completely disables and removes the ECPROTO module.
+- NOLOL : Completely disables and removes the LOLPROTO
+- NOVIDEO : Completely disables and removes the Escape game video system.
+- NOSOUND : Completely disables and removes sound capabilities.
+- NORECOVER : Don't attempt message recovery. Flag for the ECPROTO
+
+# Maintainers
+
+This is a list of people involved in this project, what they did and how to
+contact them:
+
+- tyrolyean@tyrolyean.net:	Everything to date.
 
 # ERRATA
 ## Raspberry Pi

@@ -1,4 +1,4 @@
-/* sound controller for the escape game innsbruck
+/* Video module for the escape game's host --> RQ2018/01
  * Copyright © 2018 tyrolyean
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -15,25 +15,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SOUND_H
-#define SOUND_H
+#ifndef NOVIDEO
 
-#include <vlc/vlc.h>
+#ifndef VIDEO_H
+#define VIDEO_H
+
+
 #include <json-c/json.h>
+#include <pthread.h>
 
-int init_sound();
-int sound_trigger(json_object* trigger);
-int play_sound(const char* url);
-int play_effect(const char* url);
-int reset_sounds();
+int init_video();
 
-libvlc_instance_t * vlc_inst;
-libvlc_media_player_t **vlc_mp;
-libvlc_media_player_t *effect_player;
-size_t playercnt;
-bool sound_muted;
+/* The video module doesn't need a start function, as it only has to modify it's
+ * resources. */
+/* int start_video(); */
 
-/* Helper functions */
-const char* get_lang_resource(json_object* obj);
+int video_finished(size_t device_no);
 
-#endif
+int video_trigger(json_object* trigger);
+
+extern char** video_current_urls;
+extern char** video_perma_urls;
+
+/* The lock for the two string arrays above */
+pthread_mutex_t video_urls_lock;
+
+extern size_t video_device_cnt;
+
+#endif /* VIDEO_H */
+#endif /* NOVIDEO */

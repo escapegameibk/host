@@ -1,6 +1,7 @@
 {
 
 	"duration" : 3600,
+	"boot_video" : "http://127.0.0.1/data/video/test.mp4",
 	"name" :
 	[
 		"Generic",
@@ -40,6 +41,12 @@
 					"name" : "start timer",
 					"module" : "core",
 					"action" : "timer_start"
+				},
+				{
+					"name" : "start video",
+					"module" : "video",
+					"action" : "immediate",
+					"resource" : "https://sample-videos.com/video/mp4/720/big_buck_bunny_720p_1mb.mp4"
 				}
 			]
 		},
@@ -61,44 +68,6 @@
 					"name" : "stop timer",
 					"module" : "core",
 					"action" : "timer_stop"
-				}
-			]
-		},
-		{
-			"name" : "Reset",
-			"dependencies" :
-			[
-				{
-					"name" : "Prevented by start",
-					"module" : "core",
-					"type" : "event",
-					"event" : 0,
-					"target" : 0
-				},
-				{
-					"name" : "Prevented by stop",
-					"module" : "core",
-					"type" : "event",
-					"event" : 1,
-					"target" : 0
-				}
-			],
-			"triggers" :
-			[
-				{
-					"name" : "reset timer",
-					"module" : "core",
-					"action" : "timer_reset"
-				},
-				{
-					"name" : "reset",
-					"module" : "core",
-					"action" : "reset"
-				},
-				{
-					"name" : "clean alarm",
-					"module" : "core",
-					"action" : "alarm_release"
 				}
 			]
 		}

@@ -25,6 +25,7 @@
 #include "log.h"
 #include "game.h"
 #include "config.h"
+#include "video.h"
 
 #include <string.h>
 #include <unistd.h>
@@ -87,11 +88,20 @@ int init_modules(){
 
         }
 #endif
+
+#ifndef NOVIDEO
+	
+	if(init_video() < 0){
+		println("failed to initialize video module", ERROR);
+		return -6;
+	}
+#endif
+
 	
 	/* The core module may NOT be disabled */
 	if(init_core() < 0){
 		println("Failed to initilize core!", ERROR);
-		return -6;
+		return -7;
 	}
 	
 
@@ -145,6 +155,38 @@ int start_modules(){
 	
 	println("STEP 2/2: Module start successfull.", DEBUG);
 
+	return 0;
+}
+
+/*
+ * Called on game reset. Gives all modules the chance to send new notifies to
+ * devices, reconnect tcp streams before a timeout occures, or do something 
+ * else which shouldn't be run whilest a game is in progress
+ */
+int reset_modules(){
+
+#ifndef NOSOUND	
+	if(reset_sounds() < 0){
+		println("Failed to reset sound module!", ERROR);
+		return -1;
+	}
+#endif
+
+#ifndef NOMTSP
+	if(reset_mtsp() < 0){
+		println("Failed to reset mtsp module!", ERROR);
+		return -2;
+	}
+
+#endif
+
+#ifndef NOHINTS
+	if(reset_hints() < 0){
+		println("Failed to reset hinting module!", ERROR);
+		return -3;
+	}
+
+#endif
 	return 0;
 }
 
@@ -258,8 +300,23 @@ int execute_trigger(json_object* trigger){
 		return 0;
 	}
 #endif
+
+#ifndef NOVIDEO
+
+	else if(strcasecmp(module,"video") == 0){
+		/* The sound module is concerned. */
+		if(video_trigger(trigger) < 0){
+			println("Failed to execute trigger for video!",
+				ERROR);
+
+			return -5;
+		}
+		return 0;
+	}
+#endif
+
         println("UNKNOWN MODULE %s!!",ERROR, module);
-	return -5;
+	return -6;
 
 }
 
@@ -290,10 +347,6 @@ int init_general_dependency(json_object* dependency){
 		return core_init_dependency(dependency);
 	}
 	
-	else if(strcasecmp(module_name,"snd") == 0){
-		/* Question the core module */
-		return snd_init_dependency(dependency);
-	}
 #ifndef NOEC
 	else if(strcasecmp(module_name,"ecp") == 0){
 		/* Question the ecp module */

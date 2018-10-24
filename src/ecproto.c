@@ -44,7 +44,36 @@ bool ecp_fd_locked = false;
 bool ecp_initialized = false;
 
 int ecp_init_dependency(json_object* dependency){
+	
+	json_object* type = json_object_object_get(dependency, "type");
+	const char* type_name ;
+	if(type == NULL){
+		type_name = "port";
+	}else{
+		type_name = json_object_get_string(type);
+	}	
 
+	if(strcasecmp(type_name, "port") == 0){
+		
+		return ecp_init_port_dependency(dependency);
+	}else if(strcasecmp(type_name, "analog") == 0){
+		
+		return ecp_init_analog_dependency(dependency);
+
+	}else{
+		println("Invalid type in ECP dependecy! Duming root:"
+			, ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency, 
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+	}
+
+	return 0;
+
+}
+
+int ecp_init_port_dependency(json_object* dependency){
+	
 	json_object* dev = json_object_object_get(dependency, "device");
 	if(dev == NULL){
 		println("Device not defined in ECP dependency! Dumping root: ", 
@@ -53,6 +82,7 @@ int ecp_init_dependency(json_object* dependency){
 			JSON_C_TO_STRING_PRETTY);
 		return -1;
 	}
+
 
 	size_t device_id = json_object_get_int(dev);
 
@@ -88,8 +118,14 @@ int ecp_init_dependency(json_object* dependency){
 		pulled_high = json_object_get_boolean(pulled);
 	}
 	
+	json_object* isin = json_object_object_get(dependency, "isinput");
+	bool is_input = true;
+	if(isin != NULL){
+		is_input = json_object_get_boolean(isin);
+	}
+	
 	int ret = ecp_register_input_pin(device_id, reg_id, bit_id, 
-		pulled_high);
+		pulled_high, is_input);
 	
 	if(ret < 0){
 		println("Failed to register ecp pin! Dumping root: ", ERROR);
@@ -98,10 +134,40 @@ int ecp_init_dependency(json_object* dependency){
 		return -4;
 	}
 	return ret;
+
 }
 
+
+int ecp_init_analog_dependency(json_object* dependency){
+	
+	json_object* dev = json_object_object_get(dependency, "device");
+	if(dev == NULL){
+		println("Device not defined in ECP dependency! Dumping root: ", 
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency, 
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+	}
+
+	size_t device_id = json_object_get_int(dev);
+
+	if(ecp_register_device(device_id) < 0){
+		println("Failed to initialize ECP device! Dumping root:",
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency, 
+			JSON_C_TO_STRING_PRETTY);
+		return -2;
+	}
+
+	escp_get_dev_from_id(device_id)->analog->used = true;
+	println("Enabling ananlog pin on ECP dev id %i", DEBUG, device_id);
+
+	return 0;
+}
+/* Registers an input pin, there are input pins which are not really inputs,
+ * the is_input flag sets the ddir register accordingly */
 int ecp_register_input_pin(size_t device_id, char reg_id, size_t bit, bool 
-	pulled){
+	pulled, bool is_input){
 	
 	ecp_register_register(device_id, reg_id);
 	
@@ -117,8 +183,12 @@ int ecp_register_input_pin(size_t device_id, char reg_id, size_t bit, bool
 	}
 
 	struct ecproto_port_t* pn = &reg_p->bits[bit];
-	pn->ddir = ECP_INPUT;
+	if(is_input){
+		pn->ddir = ECP_INPUT;
+	}else{
+		pn->ddir = ECP_OUTPUT;
 
+	}
 	/* Set pullup */
 	pn->target = pulled;
 
@@ -162,6 +232,9 @@ int ecp_register_device(size_t id){
 		device->id = id;
 		device->regcnt = 0;
 		device->regs = NULL;
+		device->analog = malloc(sizeof(struct ecproto_analog_t));
+		device->analog->used = false;
+		device->analog->value = 0;
 	}
 	
 	return 0;
@@ -184,8 +257,6 @@ int init_ecp(){
 		println("Failed to open ECP device at %s!", ERROR, device);
 		return -1;
 	}
-
-	sleep(4);
 
 	/* Set the timeout for the mtsp devices to reply*/
         struct termios termios;
@@ -214,8 +285,28 @@ int init_ecp(){
 			ERROR);
 		return -3;
 	}
+	
+	println("Initial ECP device map:", DEBUG);
+	/* Debug output all devices and registers */
+	for(size_t dev = 0; dev < ecp_devcnt; dev++){
+		struct ecproto_device_t* device = &ecp_devs[dev];
+		
+		println("%i : %i : ", DEBUG, dev, device->id, device->regcnt);
+		for(size_t reg = 0; reg < device->regcnt; reg++){
+			println("\t%i : %c", DEBUG, reg, device->regs[reg].id);
+		
+			/* If you want more debug enable this */
+			for(size_t bit = 0; bit < ECP_REG_WIDTH; bit++){
+				println("\t\t%i : %i", DEBUG, bit, 
+					device->regs[reg].bits[bit].enabled);
+				
+			}
 
-	/* Should now be ready. */
+		}
+	}
+	
+	/* Should now be ready. Initialize ports */
+	println("INITIALIZING ECP DEVICES. This might take some time!", INFO);
 	if(ecp_bus_init()){
 		println("Failed to init ECP bus!!!", ERROR);
 		return -4;
@@ -228,6 +319,14 @@ int init_ecp(){
 		println("%i : %i : ", DEBUG, dev, device->id, device->regcnt);
 		for(size_t reg = 0; reg < device->regcnt; reg++){
 			println("\t%i : %c", DEBUG, reg, device->regs[reg].id);
+		
+			/* If you want more debug enable this */
+			/*for(size_t bit = 0; bit < ECP_REG_WIDTH; bit++){
+				println("\t\t%i : %i", DEBUG, bit, 
+					device->regs[reg].bits[bit].enabled);
+				
+			} */
+
 		}
 	}
 
@@ -285,12 +384,18 @@ int ecp_get_updates(){
 
 		/* Yes, updating stuff is that easy */
 		for(size_t i = 0; i < ecp_devcnt; i++){
-		
+			
 			if(ecp_send_message(ecp_devs[i].id, REQ_SEND, NULL, 0) 
 				< 0){
 				continue;
 			}
+			
+			if(ecp_devs[i].analog->used){
 
+				if(send_ecp_analog_req(ecp_devs[i].id) < 0){
+					continue;
+				}
+			}
 		}
 		return 0;
 	}
@@ -298,12 +403,41 @@ int ecp_get_updates(){
 }
 
 int ecp_check_dependency(json_object* dependency){
-
+	
 	if(!ecp_initialized){
 		/* Standby */
 		return false;
 	}
 	
+	json_object* type = json_object_object_get(dependency, "type");
+	const char* type_name ;
+	if(type == NULL){
+		type_name = "port";
+	}else{
+		type_name = json_object_get_string(type);
+	}	
+
+	if(strcasecmp(type_name, "port") == 0){
+		
+		return ecp_check_port_dependency(dependency);
+	}else if(strcasecmp(type_name, "analog") == 0){
+		
+		return ecp_check_analog_dependency(dependency);
+
+	}else{
+		println("Invalid type in ECP dependecy! Duming root:"
+			, ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency, 
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+	}
+
+	return 0;
+
+}
+
+int ecp_check_port_dependency(json_object* dependency){
+
 	json_object* dev = json_object_object_get(dependency, "device");
 	if(dev == NULL){
 		println("Device not defined in ECP dependency! Dumping root: ", 
@@ -349,7 +483,7 @@ int ecp_check_dependency(json_object* dependency){
 
 	struct ecproto_device_t* devp = escp_get_dev_from_id(device_id);
 	if(devp == NULL){
-		println("Uninitialized dependency! THis shouldn't happen!",
+		println("Uninitialized dependency! This shouldn't happen!",
 			ERROR);
 		json_object_to_fd(STDOUT_FILENO, dependency, 
 			JSON_C_TO_STRING_PRETTY);
@@ -379,7 +513,120 @@ int ecp_check_dependency(json_object* dependency){
 	return regp->bits[bit_id].current == target;
 }
 
+int ecp_check_analog_dependency(json_object* dependency){
+	
+	json_object* dev = json_object_object_get(dependency, "device");
+	if(dev == NULL){
+		println("Device not defined in ECP dependency! Dumping root: ", 
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency, 
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+	}
+
+	size_t device_id = json_object_get_int(dev);
+	
+	json_object* val = json_object_object_get(dependency, "value");
+	if(dev == NULL){
+		println("Value not defined in ECP dependency! Dumping root: ", 
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency, 
+			JSON_C_TO_STRING_PRETTY);
+		return -2;
+	}
+
+	uint8_t value = json_object_get_int(val);
+
+	json_object* threshold = json_object_object_get(dependency,"threshold");
+	const char* th;
+
+	if(threshold == NULL){
+		th = "above";
+	}else{
+		th = json_object_get_string(threshold);
+	}
+
+	if(strcasecmp(th, "above") == 0){
+		return value < escp_get_dev_from_id(device_id)->analog->value;
+	}
+	else if(strcasecmp(th, "below") == 0){
+		return value > escp_get_dev_from_id(device_id)->analog->value;
+	}
+	else if(strcasecmp(th, "is") == 0){
+		return value == escp_get_dev_from_id(device_id)->analog->value;
+	}
+	else{
+		println("Unknown ECP analog threshold specified! Dumping root:",
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency, 
+			JSON_C_TO_STRING_PRETTY);
+		return -3;
+	}
+
+	return 0;
+}
+
 int ecp_trigger(json_object* trigger){
+	json_object* type = json_object_object_get(trigger, "type");
+	const char* type_name;
+	/* By default a port trigger is assumed */
+	if(type == NULL){
+		type_name = "port";
+	}else{
+		type_name = json_object_get_string(type);
+	}
+
+	if(strcasecmp(type_name, "port") == 0){
+		return ecp_trigger_port(trigger);
+	}else if(strcasecmp(type_name, "secondary_trans") == 0){
+		/* Send a specified string  */
+		return ecp_trigger_secondary_trans(trigger);
+		
+	}else{
+		println("Failed to execute ECP trigger with invalid type! Dump:"
+			, ERROR);
+		
+		json_object_to_fd(STDOUT_FILENO, trigger, 
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+	}
+
+	return 0;
+}
+
+int ecp_trigger_secondary_trans(json_object* trigger){
+	
+	json_object* str = json_object_object_get(trigger, "string");
+	if(str == NULL){
+
+		println("ECP secondary trigger without string! Dumping root:",
+			ERROR);
+
+		json_object_to_fd(STDOUT_FILENO, trigger, 
+			JSON_C_TO_STRING_PRETTY);
+
+		return -1;
+
+	}
+
+	const char* strin = json_object_get_string(str);
+	
+	json_object* dev = json_object_object_get(trigger, "device");
+	if(dev == NULL){
+		println("Device not defined in ECP dependency! Dumping root: ", 
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, trigger, 
+			JSON_C_TO_STRING_PRETTY);
+		return -2;
+	}
+	
+	size_t device_id = json_object_get_int(dev);
+
+	return send_ecp_secondary(device_id, (char*) strin);
+}
+
+/* Execute a port trigger. Set a GPIO pin to the desired value */
+int ecp_trigger_port(json_object* trigger){
 	
 	json_object* dev = json_object_object_get(trigger, "device");
 	if(dev == NULL){
@@ -425,6 +672,7 @@ int ecp_trigger(json_object* trigger){
 	}
 
 	return send_ecp_port(device_id, reg_id, bit_id, target);
+
 }
 
 uint8_t* recv_ecp_frame(int fd, size_t* len){
@@ -440,6 +688,9 @@ uint8_t* recv_ecp_frame(int fd, size_t* len){
 		int n = wait_for_data(ECP_TIMEOUT, fd);
 		if(n == 0){
 			println("Timeout in poll on ecp fd recv!", WARNING);
+			if(frame != NULL){
+				println(printable_bytes(frame, frame_length), WARNING);
+			}
 			free(frame);
 			frame = NULL;
 			break;
@@ -468,6 +719,12 @@ uint8_t* recv_ecp_frame(int fd, size_t* len){
 		frame = realloc(frame, ++frame_length);
 		frame[frame_length - 1] = octet;
 		if(octet == 0xFF){
+			if(frame_length < ECPROTO_OVERHEAD){
+				free(frame);
+				frame = NULL;
+				*len = 0;
+				break;
+			}
 			*len = frame_length;
 			break;
 		}
@@ -523,7 +780,7 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 				return -3;
 			}
 			/* Print error string */
-			println("ECP action %i aborted due to error response:",
+			println("ECP action aborted due to error response:",
 				ERROR);
 			println("%s\n", ERROR, &recv_frm[ECP_PAYLOAD_IDX]);
 			return -4;
@@ -594,6 +851,73 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			}
 			break;
 
+		case 11:
+
+			if(recv_payload_len < 3){
+				println("Received too short ecp message 11",
+					ERROR);
+				return -8;
+			}
+			{
+				struct ecproto_device_t* dev = 
+					escp_get_dev_from_id(
+					recv_frm[ECP_ADDR_IDX]);
+				
+				if(dev == NULL){
+					println("Recv 11 from unknown dev! wut?"
+						, ERROR);
+					return -9;
+				}
+				
+				struct ecproto_port_register_t* reg = 
+					escp_get_reg_from_dev(
+					recv_frm[ECP_PAYLOAD_IDX], dev);
+				
+				if(reg == NULL){
+					println("Recv 11 with unknown reg! wut?"
+						, ERROR);
+					return -10;
+				}
+				
+				if(recv_frm[ECP_PAYLOAD_IDX + 1]  >= 
+					ECP_REG_WIDTH){
+					println("Recv 11 with too > bit! wut?"
+						, ERROR);
+					return -11;
+				}
+
+				struct ecproto_port_t* prt = &reg->bits[
+					recv_frm[ECP_PAYLOAD_IDX + 1]];
+
+				if(recv_frm[ECP_PAYLOAD_IDX + 2] > 1){
+					println("Recv 11 with invld value! wut?"
+						, ERROR);
+					return -12;
+				}
+				prt->enabled = recv_frm[ECP_PAYLOAD_IDX + 2];
+			}
+			break;
+		case 12:
+			if(recv_payload_len < 1){
+				println("Received ecp frame 12 with <1 params",
+					ERROR);
+				return -13;
+			}
+			if(!recv_frm[ECP_PAYLOAD_IDX]){
+				println("Failed to transmit serial", ERROR);
+			}
+			break;
+
+		case 13:
+			
+			if(recv_payload_len < 1){
+				println("Received ecp frame 13 with <1 params",
+					ERROR);
+				return -14;
+			}
+			escp_get_dev_from_id(recv_frm[ECP_ADDR_IDX])
+				->analog->value = recv_frm[ECP_PAYLOAD_IDX];
+			break;
 		default:
 			/* You lazy bastard! */
 			println("Unimplemented ECP response: %i!", WARNING,
@@ -606,8 +930,9 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 int ecp_bus_init(){
 	/* Enumerate bus and initialize device structures */	
 	int n = 0;
+#define MAX_ERRCNT 100
 	
-	for(size_t errcnt = 0; errcnt < 100; errcnt++){
+	for(size_t errcnt = 0; errcnt < MAX_ERRCNT; errcnt++){
 		n = 0;
 		/* Enumerate bus */
 		n |= ecp_send_message(0, 3, NULL, 0);
@@ -618,7 +943,16 @@ int ecp_bus_init(){
 		}
 
 		for(size_t dev = 0; dev < ecp_devcnt; dev++){
+			
 			struct ecproto_device_t* device = &ecp_devs[dev];
+			if(device->analog->used){
+
+				if(send_ecp_analog_req(device->id) < 0){
+					println("Failed to init ecp analog!",
+						ERROR);
+					goto error;
+				}
+			}
 			/* Get all registers */
 			n |= ecp_send_message(device->id, 
 				REGISTER_LIST, NULL, 0);
@@ -627,10 +961,29 @@ int ecp_bus_init(){
 				struct ecproto_port_register_t* regp = 
 					&device->regs[reg];
 					/* INIT All registers */
-	
+
 				for(size_t bt = 0; bt < ECP_REG_WIDTH; bt++){
 					struct ecproto_port_t* bit = 
 						&regp->bits[bt];
+					
+					uint8_t enable_dat [] = {regp->id, 
+						bit->bit};
+					n |= ecp_send_message(device->id, 
+						PIN_ENABLED, enable_dat, 
+						sizeof(enable_dat));
+					
+					if(n){
+						println("Failed to get ECP en",
+							WARNING);
+						goto error;
+					}
+					if(!bit->enabled){
+						continue;
+					}
+					
+					n |= send_ecp_ddir(device->id, regp->id, 
+						bit->bit, bit->ddir); 
+
 					if(n){
 						println("Failed to set ECP DDIR",
 							WARNING);
@@ -656,8 +1009,12 @@ int ecp_bus_init(){
 			}
 		}
 	break;
+
 error:
-	continue;
+		println("Failed to init ECP, retry %i/%i", WARNING, errcnt , 
+			MAX_ERRCNT);
+		continue;
+
 	}
 	if(n == 0){
 		println("ECP INITIALIZED", DEBUG);
@@ -704,6 +1061,22 @@ int send_ecp_ddir(size_t device_id, char reg_id, size_t pin_id, bool ddir){
 
 }
 
+/* This sends a null terminated string to a secondary connection, though it 
+ * doesn't transmit the nul terminator.
+ */
+int send_ecp_secondary(size_t device_id, const char* str){
+
+	return ecp_send_message(device_id, SECONDARY_PRINT, (uint8_t*) str, 
+		strlen(str) + sizeof(char));
+
+}
+
+int send_ecp_analog_req(size_t device_id){
+	
+	return ecp_send_message(device_id, ADC_GET, NULL, 0);
+	
+}
+
 int ecp_send_message(size_t device_id, 
 	uint8_t action_id, uint8_t* payload, size_t payload_len){
 	
@@ -717,15 +1090,19 @@ int ecp_send_message(size_t device_id,
 		println("Failed to poll on ECP fd! Device dead?", ERROR);
 		pthread_mutex_unlock(&ecp_lock);
 		return -1;
+#ifndef NORECOVER
 	}else if(n > 0){
 		println("ECP found data in buffer. Assuming lost frame.",
 			WARNING);
 		if(ecp_receive_msgs(snd_frame, snd_len) < 0){
-			println("Failed to receive ECP message!", ERROR);
-			pthread_mutex_unlock(&ecp_lock);
-			return -1;
+			
+			println("Failed to receive ECP message!", WARNING);
+			println("INVALID DATA IN BUFFER, IGNORING",WARNING);
 		}
 	}
+#else
+	}
+#endif
 
 	n = write_ecp_msg(device_id, ecp_fd, action_id, payload, payload_len, 
 		&snd_frame, &snd_len);
@@ -783,7 +1160,7 @@ int write_ecp_msg(size_t dev_id, int fd, uint8_t action_id, uint8_t* payload,
 	frame[frame[ECP_LEN_IDX] - 1] = 0xFF;
 	
 	if(!validate_ecp_frame(frame, frame[ECP_LEN_IDX])){
-		println("Failed to contruct ecp frame!", ERROR);
+		println("Failed to construct ecp frame!", ERROR);
 		return -1;
 	}
 
@@ -803,24 +1180,39 @@ int ecp_receive_msgs(uint8_t* snd_frame, size_t snd_len){
 	int n = 0;
 	for(size_t i = 0; i < reads; i++){
 
-		size_t recv_len = 0;
+	size_t recv_len = 0;
 
 		uint8_t* recv_frame = recv_ecp_frame(ecp_fd, &recv_len);
 			
 		if(recv_frame == NULL){
-			println("Failed to received ecp frame", WARNING);
+			println("Failed to receive ecp frame. Sent frame was:",
+				 WARNING);
+			if(snd_frame == NULL){
+				println("Unprintable!", ERROR);
+			}else{
+				println(printable_bytes(snd_frame,snd_len), 
+					ERROR);
+			}
 			pthread_mutex_unlock(&ecp_lock);
 			return -1;
 		}
 
 		n = parse_ecp_input(recv_frame, recv_len, snd_frame, snd_len);
-		free(recv_frame);
 		
 		if( n < 0 ){
 			println("Failed to parse received ecp frame", WARNING);
+			char* dat = printable_bytes(recv_frame, recv_len);
+			if(dat != NULL){
+				println(dat, ERROR);
+				free(dat);
+			}
+			
+			free(recv_frame);
 			pthread_mutex_unlock(&ecp_lock);
 			return -2;
 		}
+		
+		free(recv_frame);
 		reads += n;
 	}
 	return 0;
@@ -867,6 +1259,7 @@ int init_ecp_port_reg(struct ecproto_port_register_t* prt_reg){
 		prt->target = false;
 		/* This will be overwritten by a check at the beginning */
 		prt->current = false;
+		prt->enabled = false;
 	}
 
 	return 0;

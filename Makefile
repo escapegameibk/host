@@ -14,7 +14,8 @@ SRCDIR := $(CWD)/src
 INCLUDEDIR := $(CWD)/include
 
 # flags
-CFLAGS := -I$(INCLUDEDIR) -D COLOR -Wall -ggdb3 -Wextra -std=gnu11 -D NOEC
+GAME := -D NOEC -D NOLOL -D NOVIDEO
+CFLAGS := -I$(INCLUDEDIR) -D COLOR -Wall -ggdb3 -Wextra -std=gnu11 -O2 $(GAME)
 LDFLAGS := -pthread -ljson-c -lvlc
 
 # target files
