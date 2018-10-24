@@ -118,3 +118,20 @@ int is_in_array(size_t element, size_t* arr, size_t arrlen){
 	
 	return position;
 }
+
+size_t get_arr_match_from_start(size_t* arr1, size_t* arr2, size_t len){
+
+	size_t mtch = 0;
+	if(arr1 == NULL || arr2 == NULL){
+		println("Attempted array compare with NULL!", ERROR);
+		return 0;
+	}
+
+	for(; mtch < len; mtch++){
+		if(arr1[mtch] != arr2[mtch]){
+			return mtch;
+		}
+	}
+
+	return mtch;
+}

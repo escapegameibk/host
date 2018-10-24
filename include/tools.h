@@ -31,4 +31,6 @@ int sleep_ms(uint32_t ms);
 int get_baud_from_int(int baud_in);
 
 int is_in_array(size_t element, size_t* arr, size_t arrlen);
+
+size_t get_arr_match_from_start(size_t* arr1, size_t* arr2, size_t len);
 #endif

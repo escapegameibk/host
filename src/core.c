@@ -149,6 +149,13 @@ int core_init_dependency(json_object* dependency){
 			seq->target_sequence[i] = dep;
 
 		}
+		/* In order to avoid unintended updates prevent them from 
+		 * happening! Saves the real value of the match to do so.
+		 */
+		seq->match_count_so_far = get_arr_match_from_start(
+			seq->target_sequence, seq->sequence_so_far, 
+			sequence_length);
+
 		/* Append the struct to the array */
 		core_sequential_dependencies = realloc(
 			core_sequential_dependencies, ++core_sequence_count 
@@ -455,15 +462,20 @@ DUMPING:",
 					JSON_C_TO_STRING_PLAIN);
 				return -2;
 			}else{
+				/* If the dependency isn't even fullfilled, 
+				 * don't bother
+				 */
+				
 				bool evaluated = !!(state);
 				
 				if(!evaluated){
 					continue;
 				}
-				/* The dependency is fullfilles and the last
+				/* The dependency is fullfilled and the last
 				 * one written to the so far array is NOT the
 				 * same one. Write this one to the beginning
-				 * and shift the rest.*/
+				 * and shift the rest.
+				 */
 				 memmove(&sequence->sequence_so_far[1], 
 					&sequence->sequence_so_far[0], 
 					(sequence->sequence_length - 1) * 
@@ -474,7 +486,18 @@ DUMPING:",
 					DEBUG, dep, sequence->dependency_id);
 				json_object* trigger = json_object_object_get(
 					sequence->dependency, "update_trigger");
+		
+				size_t match_cnt = get_arr_match_from_start(
+					sequence->target_sequence, 
+					sequence->sequence_so_far, 
+					sequence->sequence_length);
 
+				if(match_cnt <= sequence->match_count_so_far){
+
+				}else if(match_cnt > 
+					sequence->match_count_so_far){
+				}
+					
 				if(trigger != NULL){
 					println(
 "Triggering aditional dependencies for sequence update."
