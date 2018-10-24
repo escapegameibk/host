@@ -56,8 +56,7 @@ struct sequence_dependency_t{
 	/* These 2 objects contain the sequences of triggered dependencies */
 	size_t* target_sequence;
 	size_t* sequence_so_far;
-	size_t match_count_so_far;
-
+	size_t pointer; /* Where we are right now */
 };
 
 struct sequence_dependency_t** core_sequential_dependencies;

@@ -120,7 +120,10 @@ int is_in_array(size_t element, size_t* arr, size_t arrlen){
 	return position;
 }
 
-size_t get_arr_match_from_start(size_t* arr1, size_t* arr2, size_t len){
+/*
+ * Matches two arrays, but the second array is used from the back to the front
+ */
+size_t get_arr_match_inverted(size_t* arr1, size_t* arr2, size_t len){
 
 	size_t mtch = 0;
 	if(arr1 == NULL || arr2 == NULL){

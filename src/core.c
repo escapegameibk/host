@@ -152,9 +152,7 @@ int core_init_dependency(json_object* dependency){
 		/* In order to avoid unintended updates prevent them from 
 		 * happening! Saves the real value of the match to do so.
 		 */
-		seq->match_count_so_far = get_arr_match_from_start(
-			seq->target_sequence, seq->sequence_so_far, 
-			sequence_length);
+		seq->pointer = 0;
 
 		/* Append the struct to the array */
 		core_sequential_dependencies = realloc(
@@ -371,12 +369,15 @@ int core_trigger(json_object* trigger){
 		for(size_t i = 0; i < state_cnt; i++){
                         state_trigger_status[i] = 0;
                 }
+
 		/* Reset sequence states */
 		for(size_t i = 0; i < core_sequence_count; i++){
 			struct sequence_dependency_t* seq = 
 				core_sequential_dependencies[i];
-				memset(seq->sequence_so_far, 0, 
-					seq->sequence_length);
+			memset(seq->sequence_so_far, 0, 
+				seq->sequence_length);
+			seq->pointer = 0;
+
 		}
 		if(reset_modules() < 0){
 			println("Failed to reset modules!", ERROR);
@@ -473,19 +474,52 @@ DUMPING:",
 
 				println("Adding %i to sequence with id %i:", 
 					DEBUG, dep, sequence->dependency_id);
-				json_object* trigger = json_object_object_get(
-					sequence->dependency, "update_trigger");
-		
-				size_t match_cnt = get_arr_match_from_start(
-					sequence->target_sequence, 
-					sequence->sequence_so_far, 
-					sequence->sequence_length);
 
-				if(match_cnt <= sequence->match_count_so_far){
-
-				}else if(match_cnt > 
-					sequence->match_count_so_far){
+				size_t seq_pointer_old = sequence->pointer;
+				bool pointer_reset = false;
+				if(sequence->pointer >= 
+					sequence->sequence_length){
+					/* Overflow */
+					sequence->pointer = 0;
+					pointer_reset = true;
 				}
+
+				for(size_t i = 0; i <= sequence->pointer; i++){
+					if(sequence->sequence_so_far[
+						sequence->pointer - i] !=
+						sequence->target_sequence[
+						sequence->sequence_length - i
+						- 1]){
+						sequence->pointer = 0;
+						pointer_reset = true;
+						break;
+					}
+				}
+
+				/* Yep that looks weired, but it should be 
+				 * pretty much valid. Increment if false.
+				 */
+				if(!pointer_reset){
+					sequence->pointer++;
+
+				}
+
+				if(sequence->pointer <= seq_pointer_old){
+					/* The current pointer of the first
+					 * element to match the sequence has
+					 * been reset 
+					 */
+					println("Wrong element added to sequence", DEBUG);
+
+				}else{
+					/* Successfully added an element to the
+					 * sequence cue.
+					 */
+					println("Correct element added to sequence", DEBUG);
+				}
+				
+				json_object* trigger = json_object_object_get(
+					sequence->dependency, "update_trigger");	
 					
 				if(trigger != NULL){
 					println(
