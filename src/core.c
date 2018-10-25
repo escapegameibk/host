@@ -485,20 +485,28 @@ DUMPING:",
 				}
 
 				for(size_t i = 0; i <= sequence->pointer; i++){
+					
+					/* I'm sorry for this code mess, but I
+					 * wanted to implement that this way. So
+					 * what this is doing, is it is looking,
+					 * if everything up to the currently
+					 * added sequence match the targeted
+					 * sequence. If not, then reset,
+					 * if it does, continue to check. 
+					 */
+
 					if(sequence->sequence_so_far[
 						sequence->pointer - i] !=
 						sequence->target_sequence[
 						sequence->sequence_length - i
 						- 1]){
-						sequence->pointer = 0;
-						pointer_reset = true;
-						break;
+
+							sequence->pointer = 0;
+							pointer_reset = true;
+							break;
 					}
 				}
 
-				/* Yep that looks weired, but it should be 
-				 * pretty much valid. Increment if false.
-				 */
 				if(!pointer_reset){
 					sequence->pointer++;
 
@@ -509,13 +517,53 @@ DUMPING:",
 					 * element to match the sequence has
 					 * been reset 
 					 */
-					println("Wrong element added to sequence", DEBUG);
+					println("Added wrong input to sequence."
+						, DEBUG);
+					
+					json_object* restri = 
+						json_object_object_get(
+						sequence->dependency,
+						"trigger_wrong");
 
+					if(restri != NULL){
+						if(trigger_array(restri) < 0){
+							println(
+"Failed to trigger wrong array in sequence dependency!",
+								ERROR);
+						}
+					}
 				}else{
 					/* Successfully added an element to the
 					 * sequence cue.
 					 */
-					println("Correct element added to sequence", DEBUG);
+					println("Added right input to sequence."
+						, DEBUG);
+					json_object* cortri = 
+						json_object_object_get(
+						sequence->dependency,
+						"trigger_right");
+
+					if(cortri != NULL){
+						if(trigger_array(cortri) < 0){
+							println(
+"Failed to trigger correct array in sequence dependency!",
+								ERROR);
+						}
+					}
+
+				}
+
+				/* Covers an edge-case where the dependency
+				 * was wring for the last attempt, but is 
+				 * correct for the next one
+				 */
+				if((sequence->sequence_so_far[0] == 
+					sequence->target_sequence[
+					sequence->sequence_length - 1]) && 
+					pointer_reset){
+					
+					sequence->pointer++;
+					
 				}
 				
 				json_object* trigger = json_object_object_get(
@@ -526,13 +574,11 @@ DUMPING:",
 "Triggering aditional dependencies for sequence update."
 						, DEBUG);
 
-					for(size_t i = 0; i < 
-						json_object_array_length(
-						trigger); i++){
-						execute_trigger(
-						json_object_array_get_idx(
-						trigger,i));
-					}
+						if(trigger_array(trigger) < 0){
+							println(
+"Failed to trigger additional array in sequence dependency!",
+								ERROR);
+						}
 					
 
 				}

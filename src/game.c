@@ -417,4 +417,29 @@ size_t get_hint_event(){
 
 	return highest + 1;
 }
+int trigger_array(json_object* triggers){
+	
+	if(json_object_get_type(triggers) == json_type_array){
+		
+		for(size_t i = 0; i < json_object_array_length(triggers); i++){
+			json_object* trigger = 
+				json_object_array_get_idx(triggers, i);
 
+			if(execute_trigger(trigger) < 0){
+				println("Failed to execute %i trigger in array",
+					ERROR, i);
+				return -2;
+			}
+		}
+		return 0;
+	}else{
+		println("Required array, but got single object! Dumping:", 
+			ERROR);
+	
+		json_object_to_fd(STDOUT_FILENO,triggers, 
+			JSON_C_TO_STRING_PRETTY);
+
+		return -1;
+
+	}
+}
