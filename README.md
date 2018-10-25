@@ -217,6 +217,16 @@ what type of dependency it is. The following types have been defined as of now:
 	the first dependency to trigger would be the first one, the second the
 	second one, and the third the third one. Yes arrays start at 0. This
 	means the first element is the last one in the sequence array.
+
+	Additionally on updates triggers may be executed. In case the trigger
+	are always wanted to be executed, the "update_trigger" field may be used
+	to specify an array of triggers. In case the trigger is only wanted to
+	be executed when the added dependency was a correct one for the 
+	sequence, the "trigger_right" field may be used. In case the opposite
+	is wanted, and you want a bunch of triggers to execute if the added
+	dependency is wrong, the "trigger_wrong" field may be used. The very
+	first specified field 
+
 3. flank:
 	A flank dependency is updated when it's read. This dependency has 1
 	subdependency declared in a "dependency" field. The flank dependency

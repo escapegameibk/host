@@ -57,6 +57,7 @@ struct sequence_dependency_t{
 	size_t* target_sequence;
 	size_t* sequence_so_far;
 	size_t pointer; /* Where we are right now */
+	int* last_dependencies;
 };
 
 struct sequence_dependency_t** core_sequential_dependencies;

@@ -153,12 +153,19 @@ int core_init_dependency(json_object* dependency){
 		 * happening! Saves the real value of the match to do so.
 		 */
 		seq->pointer = 0;
+		
+		/* Setup flanks */
+		seq->last_dependencies = malloc(sequence_length * sizeof(int));
+		memset(seq->last_dependencies, 0, 
+			sequence_length * sizeof(int));
 
 		/* Append the struct to the array */
 		core_sequential_dependencies = realloc(
 			core_sequential_dependencies, ++core_sequence_count 
 			* sizeof(struct sequence_dependency_t *));
+
 		core_sequential_dependencies[core_sequence_count - 1] = seq;
+
 		println("Successfully initialized syequence with id %i", DEBUG, 
 			seq->dependency_id);
 	}else if(strcasecmp(type,"flank") == 0){
@@ -437,9 +444,6 @@ DUMPING:",
 		for(size_t dep = 0; dep < 
 			json_object_array_length(dependencies); 
 			dep++){
-			if(sequence->sequence_so_far[0] == dep){
-				continue;
-			}
 			
 			json_object* dependency = json_object_array_get_idx(
 				dependencies,dep);
@@ -452,15 +456,20 @@ DUMPING:",
 					JSON_C_TO_STRING_PLAIN);
 				return -2;
 			}else{
-				/* If the dependency isn't even fullfilled, 
-				 * don't bother
-				 */
-				
 				bool evaluated = !!(state);
 				
-				if(!evaluated){
+				if(evaluated <=
+					sequence->last_dependencies[dep]){
+					sequence->last_dependencies[dep] = 
+						state;
 					continue;
+
+				}else{
+					sequence->last_dependencies[dep] = 
+						state;
+
 				}
+
 				/* The dependency is fullfilled and the last
 				 * one written to the so far array is NOT the
 				 * same one. Write this one to the beginning
