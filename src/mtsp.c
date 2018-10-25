@@ -149,6 +149,8 @@ int mtsp_register_register(uint8_t device, uint8_t reg){
 
 int init_mtsp(){
 	
+	pthread_mutex_init(&mtsp_lock, NULL);
+
 	/* Attempt to get mtsp config from config file, otherwise use defaults 
 	 */
 	const char* device = MTSP_DEFAULT_PORT;
@@ -306,8 +308,8 @@ int reset_mtsp(){
  * states back to me, reads their messages and processes them.
  */
 int update_mtsp_states(){
-
-        for(size_t i = 0; i < mtsp_device_count; i++){
+        
+	for(size_t i = 0; i < mtsp_device_count; i++){
                 struct mtsp_device_t *dev = &mtsp_devices[i];
 
 		uint8_t* regs = malloc(dev->port_cnt);
@@ -360,10 +362,8 @@ uint8_t* mtsp_assemble_frame(uint8_t slave_id, uint8_t command_id,
 
 /* Locks the write command and writes to the fd */
 int mtsp_write(uint8_t* frame, size_t length){
-        
-        static bool lock = false;
-        while(lock){ /* NOOP */}
-        lock = true;
+
+	pthread_mutex_lock(&mtsp_lock);        
 
 	/* wait to give MTSP devices time to react */
 	struct timespec sleeper;
@@ -375,20 +375,18 @@ int mtsp_write(uint8_t* frame, size_t length){
         if (n < length){
                 println("Failed to write %i bytes to mtsp device! Returned %i!",
                                 ERROR, length, n);
-                lock = false;
+		pthread_mutex_unlock(&mtsp_lock);        
                 return -1;
         }
-        lock = false;
-        
+	
+	pthread_mutex_unlock(&mtsp_lock);
         return 0;
 }
 
 /* This function is thread save, by locking itself when called */
 uint8_t* mtsp_receive_message(){
-        
-        static bool recv_lock = false;
-        while(recv_lock){ /* NOP */}
-        recv_lock = true;
+
+	pthread_mutex_lock(&mtsp_lock);        
 
         uint8_t start = 0;
         for (int i = 0; !((i > 1000) || (start == MTSP_START_BYTE)); i ++){
@@ -397,19 +395,19 @@ uint8_t* mtsp_receive_message(){
                 if(rd < 1){
                         println("Failed to read for mtsp! possibly timeout",
                                 WARNING);
-                        recv_lock = false;
+			pthread_mutex_unlock(&mtsp_lock);        
                         return NULL;
                 }
         }
 
         if(start == 0){
                 println("MTSP failed to receive ANYTHING!",DEBUG);
-                recv_lock = false;
+		pthread_mutex_unlock(&mtsp_lock);        
                 return NULL;
 
         }else if(start != MTSP_START_BYTE){
                 println("MTSP received too much garbage!",DEBUG);
-                recv_lock = true;
+		pthread_mutex_unlock(&mtsp_lock);        
                 return NULL;
         }
 
@@ -418,8 +416,8 @@ uint8_t* mtsp_receive_message(){
         read(mtsp_fd, &frame_length,sizeof(uint8_t));
         
         if(frame_length < MTSP_FRAME_OVERHEAD){
-                recv_lock = false;
                 println("too small frame length %i",DEBUG, frame_length);
+		pthread_mutex_unlock(&mtsp_lock);        
                 return NULL;
         }
 
@@ -442,8 +440,8 @@ uint8_t* mtsp_receive_message(){
                 free(frame);
                 frame = NULL;
         }
+	pthread_mutex_unlock(&mtsp_lock);        
         
-        recv_lock = false;
         return frame; 
 }
 
@@ -521,12 +519,7 @@ int mtsp_send_request(uint8_t slave_id, uint8_t command_id, uint8_t* payload,
         /* Assemble a frame */
         uint8_t* request =  mtsp_assemble_frame(slave_id,command_id, payload, 
                 payload_length);
-
-        /* Lock out anyone else or be locked out */
-        static bool lock = false;
-        while(lock){ /* NOP */ }
-        lock = true;
-        
+ 
 #define ERROR_THRESHOLD 10
 
 	int return_value = -1;
@@ -575,7 +568,6 @@ int mtsp_send_request(uint8_t slave_id, uint8_t command_id, uint8_t* payload,
 
         free(request);
         free(reply);
-        lock = false;
 
         return return_value;
 
@@ -726,6 +718,7 @@ RFID/MP3 Devices",
 			}
 		}
 	 }
+
 
 	return 0;
 
