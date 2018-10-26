@@ -150,6 +150,7 @@ int mtsp_register_register(uint8_t device, uint8_t reg){
 int init_mtsp(){
 	
 	pthread_mutex_init(&mtsp_lock, NULL);
+	pthread_mutex_init(&mtsp_lock_large, NULL);
 
 	/* Attempt to get mtsp config from config file, otherwise use defaults 
 	 */
@@ -519,6 +520,9 @@ int mtsp_send_request(uint8_t slave_id, uint8_t command_id, uint8_t* payload,
         /* Assemble a frame */
         uint8_t* request =  mtsp_assemble_frame(slave_id,command_id, payload, 
                 payload_length);
+	
+	pthread_mutex_lock(&mtsp_lock_large);        
+
  
 #define ERROR_THRESHOLD 10
 
@@ -568,7 +572,8 @@ int mtsp_send_request(uint8_t slave_id, uint8_t command_id, uint8_t* payload,
 
         free(request);
         free(reply);
-
+	
+	pthread_mutex_unlock(&mtsp_lock_large);
         return return_value;
 
 }

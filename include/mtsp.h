@@ -56,7 +56,7 @@ int mtsp_send_notify();
 pthread_t mtsp_thread;
 int mtsp_fd;
 
-pthread_mutex_t mtsp_lock;
+pthread_mutex_t mtsp_lock, mtsp_lock_large;
 
 /* ############################################################################
    # DEFINITION OF MTSP STATE STORAGE					      #
