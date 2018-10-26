@@ -56,7 +56,7 @@ int mtsp_send_notify();
 pthread_t mtsp_thread;
 int mtsp_fd;
 
-pthread_mutex_t mtsp_lock, mtsp_lock_large;
+pthread_mutex_t mtsp_lock, mtsp_lock_transmission;
 
 /* ############################################################################
    # DEFINITION OF MTSP STATE STORAGE					      #
@@ -72,6 +72,7 @@ pthread_mutex_t mtsp_lock, mtsp_lock_large;
 /* All values are set to this value before the device has really answered it's
  * state
  */
+
 #define MTSP_DEFAULT_STATE 0
 
 /* The stuff from before was only for non-active storage of stuff. Now we get
