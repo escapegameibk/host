@@ -112,12 +112,18 @@ int ecp_init_port_dependency(json_object* dependency){
 
 	size_t bit_id = json_object_get_int(bit);
 	
+	/* Is the bit puled high or low. In case isinput is set below, this
+	 * also determines the initial state of a pin.
+	 */
 	json_object* pulled = json_object_object_get(dependency, "pulled");
 	bool pulled_high = true;
 	if(pulled != NULL){
 		pulled_high = json_object_get_boolean(pulled);
 	}
 	
+	/* Wether the dependency pin is an input or not. This enabled outputs
+	 * to be used as dependencies.
+	 */
 	json_object* isin = json_object_object_get(dependency, "isinput");
 	bool is_input = true;
 	if(isin != NULL){
@@ -1256,7 +1262,17 @@ int init_ecp_port_reg(struct ecproto_port_register_t* prt_reg){
 		 */
 		prt->bit = i;
 		prt->ddir = ECP_OUTPUT;
+		
+		/* Determines wheter a pin is driven high or low by default.
+		 * All non-input pins are required to be set to a defined
+		 * value.
+		 */
+#ifndef ECP_DEFAULT_HIGH
 		prt->target = false;
+#else
+		prt->target = true;
+
+#endif
 		/* This will be overwritten by a check at the beginning */
 		prt->current = false;
 		prt->enabled = false;

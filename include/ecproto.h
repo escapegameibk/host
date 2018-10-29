@@ -66,7 +66,9 @@ struct ecproto_port_t{
 	 /* The default value which will be written to the port register.*/
 	bool target;
 	bool current; /* The value which is read from the pin register */
-	bool enabled; /* Wether the pin is disabled or not */
+	bool enabled; /* Wether the pin is disabled or not. Set by the device's
+		       * internal blacklist. Transmitted at startup.
+		       */
 };
 
 struct ecproto_port_register_t{
