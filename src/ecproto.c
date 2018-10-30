@@ -996,12 +996,19 @@ int ecp_bus_init(){
 						goto error;
 					}
 					
-					n |= send_ecp_port(device->id, regp->id, 
+					if(bit->ddir != ECP_OUTPUT){
+					
+						n |= send_ecp_port(
+						device->id, regp->id, 
 						bit->bit, bit->target); 
-					if(n){
-						println("Failedto set ECP PORT",
-							WARNING);
-						goto error;
+						
+						if(n){
+							println(
+							"Failed to set ECP PORT"
+								,WARNING);
+							goto error;
+						}
+
 					}
 					
 					n |= get_ecp_port(device->id, regp->id, 
@@ -1010,6 +1017,11 @@ int ecp_bus_init(){
 						println("Failed to get ECP PRT",
 							WARNING);
 						goto error;
+					}
+					
+					
+					if(bit->ddir == ECP_OUTPUT){
+						bit->target = bit->current;
 					}
 				}
 			}
@@ -1263,19 +1275,10 @@ int init_ecp_port_reg(struct ecproto_port_register_t* prt_reg){
 		prt->bit = i;
 		prt->ddir = ECP_OUTPUT;
 		
-		/* Determines wheter a pin is driven high or low by default.
-		 * All non-input pins are required to be set to a defined
-		 * value.
-		 */
-#ifndef ECP_DEFAULT_HIGH
-		prt->target = false;
-#else
-		prt->target = true;
-
-#endif
 		/* This will be overwritten by a check at the beginning */
 		prt->current = false;
 		prt->enabled = false;
+		prt->target = true;
 	}
 
 	return 0;
