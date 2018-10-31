@@ -36,6 +36,9 @@ struct sequence_dependency_t **core_sequential_dependencies = NULL;
 size_t flank_dependency_count = 0;
 struct flank_dependency_t** flank_dependencies = NULL;
 
+struct length_dependency_t** length_dependencies = NULL;
+size_t length_dependency_count = 0;
+
 int init_core(){
 	
 	println("Initializing core components done!", DEBUG);
@@ -205,6 +208,64 @@ int core_init_dependency(json_object* dependency){
 				json_object_get_int(json_object_object_get(
 				dependency,"event_id")));
 		}
+
+	}else if(strcasecmp(type,"length") == 0){
+		/* Length depenencies are used to see, wheter a dependenncy
+		 * is triggered for longer than a certain amount of time.
+		 */
+		json_object* dependency = json_object_object_get(dependency,
+			"dependency");
+
+		if(dependency == NULL){
+			println("Specified length dep. without inner dep!:",
+				ERROR);
+				
+			json_object_to_fd(STDOUT_FILENO, dependency,
+				JSON_C_TO_STRING_PRETTY);
+			return -1;
+		}
+
+		json_object* threshold = json_object_object_get(dependency, 
+			"length");
+		if(threshold == NULL){
+			
+			println("Specified length dep. without length:",
+				ERROR);
+				
+			json_object_to_fd(STDOUT_FILENO, dependency,
+				JSON_C_TO_STRING_PRETTY);
+			return -2;
+			
+		}
+		
+		json_object* below = json_object_object_get(dependency, 
+			"below");
+		
+		
+		bool below_val = false;
+
+		if(below != NULL){
+			below_val = json_object_get_boolean(below);
+		}
+		
+		json_object* above = json_object_object_get(dependency, 
+			"above");
+		
+		
+		bool above_val = true;
+
+		if(above != NULL){
+			above_val = json_object_get_boolean(above);
+		}
+
+		if(above_val && below_val){
+			println("You specified a sependency which needs to be \
+either below or above a certain threshold. Do you know what a threshold is?",
+				WARNING);
+		}
+
+		
+
 
 	}
 	/* Ignore everything else */
@@ -434,9 +495,12 @@ int core_update_sequential(){
 			println("FAILED TO GET DEPENENDENCIES FOR SEQUENCE! \
 DUMPING:",
 				ERROR);
-				/*json_object_to_fd(STDOUT_FILENO,
+				/* I don't know why this was commented out, but
+				 * it should be pretty useful for debugging..
+				 */
+				json_object_to_fd(STDOUT_FILENO,
 					sequence->dependency,
-					JSON_C_TO_STRING_PRETTY);*/
+					JSON_C_TO_STRING_PRETTY);
 				return -1;
 
 		}

@@ -60,19 +60,34 @@ struct sequence_dependency_t{
 	int* last_dependencies;
 };
 
-struct sequence_dependency_t** core_sequential_dependencies;
-size_t core_sequence_count;
-struct core_permanent_trigger_t* core_permanent_trigger;
+extern struct sequence_dependency_t** core_sequential_dependencies;
+extern size_t core_sequence_count;
 
 struct flank_dependency_t{
 	bool high;
 	bool low;
+	/* The dependencies last value */
 	int last;
 	int id;
 };
 
-struct flank_dependency_t** flank_dependencies;
-size_t flank_dependency_count;
+struct length_dependency_t{
+
+	/* Contains wether the duration the dependency is fullfilled is under
+	 * or over the given threshold.
+	 */	
+	bool below;
+	bool above;
+	
+	int id;
+	size_t threshold; /* The threshold in seconds */
+};
+
+extern struct length_dependency_t** length_dependencies;
+extern size_t length_dependency_count;
+
+extern struct flank_dependency_t** flank_dependencies;
+extern size_t flank_dependency_count;
 
 /* Alarm related things. An alarm tries to get the operator's attention.*/
 #ifndef NOALARM

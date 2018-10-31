@@ -41,13 +41,12 @@ int init_lol(){
 	
 	if(port== NULL){
 		port_name = LOL_DEFAULT_PORT;
-		println("LOL device not defined. asumeing default", WARNING);
+		println("LOL device not defined. assumeing default", WARNING);
 	}else{
 		port_name = json_object_get_string(port);
-		
 	}
 	int baud;
-	json_object* baud_ob = json_object_object_get(config_glob, "lol_port");
+	json_object* baud_ob = json_object_object_get(config_glob, "lol_baud");
 	if(baud_ob == NULL){
 		baud = LOL_DEFAULT_BAUD;
 	}else{

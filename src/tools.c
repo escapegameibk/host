@@ -94,6 +94,14 @@ int get_baud_from_int(int baud_in){
 		case 57600:
 			baud = B57600;
 		break;
+		
+		case 115200:
+			baud = B115200;
+		break;
+		
+		case 38400:
+			baud = B38400;
+		break;
 		default:
 			println("Invalid baud rate specified: %i", ERROR,
 				baud_in);

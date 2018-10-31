@@ -447,3 +447,11 @@ known that it won't work, unless you change the following things:
 If you forget to disable bluetooth you will be able to send stuff via uart, but
 you are unable to controll the clock speed and if bluetooth changes clock speed,
 so does your connection. This is probably not what you want.
+
+# TODO
+
+# Orphanage
+
+There was a dependency which required having a threshold be reached for multiple
+seconds. At the beginning there should be a noise, when the threshold is 
+undertaken. 

@@ -26,6 +26,7 @@
 #include "game.h"
 #include "config.h"
 #include "video.h"
+#include "lolproto.h"
 
 #include <string.h>
 #include <unistd.h>
@@ -97,11 +98,19 @@ int init_modules(){
 	}
 #endif
 
+#ifndef NOLOL
+	
+	if(init_lol() < 0){
+		println("failed to initialize lolproto module", ERROR);
+		return -7;
+	}
+#endif
+
 	
 	/* The core module may NOT be disabled */
 	if(init_core() < 0){
 		println("Failed to initilize core!", ERROR);
-		return -7;
+		return -8;
 	}
 	
 
