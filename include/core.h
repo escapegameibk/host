@@ -30,6 +30,7 @@ int core_check_dependency(json_object* dependency);
 int core_trigger(json_object *trigger);
 
 int core_update_sequential();
+int core_update_lengths();
 
 #ifndef NOALARM
 void core_trigger_alarm();
@@ -71,6 +72,9 @@ struct flank_dependency_t{
 	int id;
 };
 
+extern struct length_dependency_t** length_dependencies;
+extern size_t length_dependency_count;
+
 struct length_dependency_t{
 
 	/* Contains wether the duration the dependency is fullfilled is under
@@ -81,10 +85,13 @@ struct length_dependency_t{
 	
 	int id;
 	size_t threshold; /* The threshold in seconds */
+	json_object* root_dependency;
+	json_object* sub_dependency;
+	unsigned long long int activation; /* When the dependency was fullfilled
+					    * for the first time. UNIX 
+					    * Timestamp. 0 is never.
+					    */
 };
-
-extern struct length_dependency_t** length_dependencies;
-extern size_t length_dependency_count;
 
 extern struct flank_dependency_t** flank_dependencies;
 extern size_t flank_dependency_count;

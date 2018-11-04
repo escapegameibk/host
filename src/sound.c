@@ -74,6 +74,12 @@ int sound_trigger(json_object* trigger){
 	
 		return play_effect(resource);
 
+	
+	} else if(strcasecmp(action, "reset_effect") == 0){
+
+		libvlc_media_player_stop(effect_player);
+		return 0;
+
 	} else if(strcasecmp(action, "reset") == 0){
 
 		return reset_sounds();

@@ -9,6 +9,8 @@
 	],
 	"mtsp_device" : "/dev/ttyUSB0",
 	"mtsp_baud" : 460800,
+	"ecp_device" : "/dev/ttyUSB0",
+	"ecp_device_count" : 2,
 	"langs" :[
 		"english",
 		"deutsch"
@@ -33,6 +35,12 @@
 						"event" : 1,
 						"target" : 0
 					}
+				},
+				{
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 1
 				}
 			],
 			"triggers" :

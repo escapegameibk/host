@@ -78,8 +78,15 @@ void* core_loop(){
 	while(!shutting_down){
 
 		if(core_update_sequential() < 0){
-			println("Failed to check sequential dependency!", 
-				DEBUG);
+			println("Failed to check sequential dependencies!", 
+				ERROR);
+		}
+
+		if(core_update_lengths() < 0){
+			
+			println("Failed to check length dependencies!", 
+				ERROR);
+
 		}
 		struct timespec tim;
 		tim.tv_sec = 0;
@@ -213,12 +220,13 @@ int core_init_dependency(json_object* dependency){
 		/* Length depenencies are used to see, wheter a dependenncy
 		 * is triggered for longer than a certain amount of time.
 		 */
-		json_object* dependency = json_object_object_get(dependency,
+		json_object* sub_dependency = json_object_object_get(dependency,
 			"dependency");
 
-		if(dependency == NULL){
-			println("Specified length dep. without inner dep!:",
-				ERROR);
+		if(sub_dependency == NULL){
+
+			println("Specfied length dep. without inner dependency!"
+				, ERROR);
 				
 			json_object_to_fd(STDOUT_FILENO, dependency,
 				JSON_C_TO_STRING_PRETTY);
@@ -237,6 +245,8 @@ int core_init_dependency(json_object* dependency){
 			return -2;
 			
 		}
+
+		size_t length = json_object_get_int(threshold);
 		
 		json_object* below = json_object_object_get(dependency, 
 			"below");
@@ -263,9 +273,29 @@ int core_init_dependency(json_object* dependency){
 either below or above a certain threshold. Do you know what a threshold is?",
 				WARNING);
 		}
-
 		
+		struct length_dependency_t* dep = malloc(sizeof(struct 
+			length_dependency_t));
 
+		memset(dep, 0, sizeof(struct length_dependency_t));
+
+		dep->below = below_val;
+		dep->above = above_val;
+		dep->id = get_dependency_id(dependency);
+		dep->root_dependency = dependency;
+		dep->sub_dependency = sub_dependency;
+		dep->threshold = length;
+		dep->activation = 0;	/* 0 represents never */
+
+		/* Store the struct to the global array */
+		length_dependencies = realloc(length_dependencies, 
+			sizeof(struct length_dependency_t**) * 
+			++length_dependency_count);
+		length_dependencies[length_dependency_count-1] = dep;
+
+		/* Initialize the sub-dependency */
+		return init_dependency(sub_dependency, json_object_get_int(
+			json_object_object_get(dependency,"event_id")));
 
 	}
 	/* Ignore everything else */
@@ -402,6 +432,48 @@ int core_check_dependency(json_object* dependency){
 	}else if(strcasecmp(type,"never") == 0){
 		/* This is unable to return true at any time */
 		return false;
+	}else if(strcasecmp(type,"length") == 0){
+		/* This is unable to return true at any time */
+		for(size_t i = 0; i < length_dependency_count; i++){
+			struct length_dependency_t* dep = 
+				length_dependencies[i];
+
+			if(dep->id != get_dependency_id(dependency)){
+				continue;
+			}
+			/* Found my struct */
+			
+			/* Currently the dependency is not fullfilled */
+			if(dep->activation == 0){
+				return 0;
+			}
+
+			unsigned long long int current_time = 
+				(unsigned long long int) time(NULL);
+
+			if(dep->below && current_time < (dep->activation + 
+				dep->threshold)){
+				return 1;
+			}
+			
+			if(dep->above && current_time > (dep->activation + 
+				dep->threshold)){
+				return 2;
+			}
+			
+			if(current_time == (dep->activation + dep->threshold)){
+				return 3;
+			}
+
+			return 0;
+		}
+		
+		/* WTF?! */
+		println("FOUND UNINITIALIZED LENGTH DEPENDENCY!!!", ERROR);
+		println("THIS SHOULD BE IMPOSSIBLE!!!!", ERROR);
+		return -3;
+
+
 	}else{
 		println("invalid type specified in core dependency : %s",
 			ERROR, type);
@@ -668,6 +740,82 @@ DUMPING:",
 
 		}
 
+	}
+
+	return 0;
+}
+
+int core_update_lengths(){
+
+	for(size_t i = 0; i < length_dependency_count; i++){
+		struct length_dependency_t* dep = length_dependencies[i];
+
+		int state = check_dependency(dep->sub_dependency);
+
+		if(state < 0){
+			println("Failed to check a sub-dep. of a length dep.!",
+				ERROR);
+			
+			json_object_to_fd(STDOUT_FILENO, dep->root_dependency,
+				JSON_C_TO_STRING_PRETTY);
+			
+			return -1;
+		}
+
+		if((state == 1) && (dep->activation == 0)){
+			/* This is my time to shine! */
+			dep->activation = (unsigned long long int) time(NULL);
+
+			json_object* start_trigger = json_object_object_get(
+				dep->root_dependency, "start_triggers");
+
+			if(start_trigger != NULL){
+				return trigger_array(start_trigger);
+			}
+
+		}else if((state == 0) && (dep->activation != 0)){
+			
+			json_object* fail_trigger = json_object_object_get(
+				dep->root_dependency, "fail_triggers");
+			
+			json_object* success_trigger = json_object_object_get(
+				dep->root_dependency, "success_end_triggers");
+			
+			unsigned long long int current_time = 
+				(unsigned long long int) time(NULL);
+
+			if((dep->below && current_time < (dep->activation + 
+				dep->threshold)) || 
+				(dep->above && current_time > (dep->activation + 
+				dep->threshold)) ||
+				(current_time == (dep->activation + 
+				dep->threshold))){
+				
+				dep->activation = 0;
+				
+				if(success_trigger == NULL){
+					continue;
+				}
+				if(trigger_array(success_trigger) < 0){
+					println("Failed to trigger len arr!",
+						ERROR);
+					return -1;
+				}
+
+			}else{
+				dep->activation = 0;
+				
+				if(fail_trigger == NULL){
+					continue;
+				}
+				if(trigger_array(fail_trigger) < 0){
+					println("Failed to trigger len arr!",
+						ERROR);
+					return -1;
+				}
+
+			}
+		}
 	}
 
 	return 0;

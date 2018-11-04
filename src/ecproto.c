@@ -291,8 +291,27 @@ int init_ecp(){
 			ERROR);
 		return -3;
 	}
+
+	/* Add all devices. */
+
+	json_object* decnt = json_object_object_get(config_glob,
+		"ecp_device_count");
+	size_t devn_cnt = 1;
+
+	if(decnt != NULL){
+		devn_cnt = json_object_get_int(decnt);
+	}
+	println("initially known device count: %i", DEBUG, devn_cnt);
+
+	for(size_t i = 0; i < devn_cnt; i++){
+		if(ecp_register_device(i) < 0){
+			println("FAILED TO ADD ECP DEVICE %i!!", ERROR, i);
+			return -1;
+		}
+	}
 	
 	println("Initial ECP device map:", DEBUG);
+	
 	/* Debug output all devices and registers */
 	for(size_t dev = 0; dev < ecp_devcnt; dev++){
 		struct ecproto_device_t* device = &ecp_devs[dev];
@@ -805,9 +824,6 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			}
 			break;
 		case 3:
-			/* Register device. If payload is longer than 1 byte,
-			 * and the 2nd byte is 0xBB, the
-			 * connection is enumerated*/
 			
 			ecp_register_device(recv_frm[ECP_ADDR_IDX]);
 			if(recv_payload_len >= 1 && recv_frm[ECP_PAYLOAD_IDX] == 
@@ -940,13 +956,7 @@ int ecp_bus_init(){
 	
 	for(size_t errcnt = 0; errcnt < MAX_ERRCNT; errcnt++){
 		n = 0;
-		/* Enumerate bus */
-		n |= ecp_send_message(0, 3, NULL, 0);
-	
-		if(n){
-			println("Failed to enumerate ecp bus!", ERROR);
-			goto error;
-		}
+		/* Initialize devices */
 
 		for(size_t dev = 0; dev < ecp_devcnt; dev++){
 			
@@ -962,6 +972,12 @@ int ecp_bus_init(){
 			/* Get all registers */
 			n |= ecp_send_message(device->id, 
 				REGISTER_LIST, NULL, 0);
+			if(n){
+
+				println("Failed to list ecp regs for dev %i",
+					ERROR, dev);
+				goto error;
+			}
 			
 			for(size_t reg = 0; reg < device->regcnt; reg++){
 				struct ecproto_port_register_t* regp = 
