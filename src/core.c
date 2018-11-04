@@ -762,6 +762,12 @@ int core_update_lengths(){
 			return -1;
 		}
 
+		if(check_dependency(json_object_object_get(dep->root_dependency,
+			"lock")) > 0){
+			/* This is now locked. DON'T DO ANYTHING ANYMORE */
+			continue;
+		}
+
 		if((state == 1) && (dep->activation == 0)){
 			/* This is my time to shine! */
 			dep->activation = (unsigned long long int) time(NULL);
