@@ -428,6 +428,22 @@ int core_check_dependency(json_object* dependency){
 		}
 		return false;
 
+	}else if(strcasecmp(type,"and") == 0){
+		/* This is an OR of all dependencies given in the dependencies
+		 * field */
+		json_object* deps = json_object_object_get(dependency,
+			"dependencies");
+		for(size_t i = 0; i < json_object_array_length(deps); i++){
+
+			int val = check_dependency(json_object_array_get_idx(
+				deps,i));
+
+			if(val <= 0){
+				return val;
+			}
+
+		}
+		return false;
 		
 	}else if(strcasecmp(type,"never") == 0){
 		/* This is unable to return true at any time */
