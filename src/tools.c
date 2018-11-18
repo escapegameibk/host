@@ -163,3 +163,36 @@ char* printable_bytes(uint8_t* data, size_t len){
 	return str;
 
 }
+
+/* 
+ * May return any time. Continuity should be given! May NOT return real
+ * system time!
+ */
+
+time_t get_current_ec_time(){
+
+	struct timespec tp;
+
+	if(clock_gettime(CLOCK_MONOTONIC_RAW, &tp) < 0){
+		println("Failed to get system time!! assuming 0", ERROR);
+		return 0;
+	}
+
+	/* The cast shouldn't be nescessary, but I'm doing it anyways */
+	return (time_t)tp.tv_sec;
+
+}
+
+time_t get_ec_time_unix_offset(){
+
+	return time(NULL) - get_current_ec_time();
+
+}
+
+time_t ec_time_to_unix(time_t ec_tim){
+	if(ec_tim != 0){
+		return ec_tim + get_ec_time_unix_offset();
+	}else{
+		return 0;
+	}
+}

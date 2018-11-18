@@ -20,6 +20,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/time.h>
 
 int *remove_array_element(size_t array_length, int* array,int element);
 int *add_array_element(size_t array_length, int* array, int element);
@@ -33,5 +34,11 @@ int get_baud_from_int(int baud_in);
 int is_in_array(size_t element, size_t* arr, size_t arrlen);
 
 size_t get_arr_match_inverted(size_t* arr1, size_t* arr2, size_t len);
+
 char* printable_bytes(uint8_t* data, size_t len);
+
+/* Time related functions */
+time_t get_current_ec_time();
+time_t get_ec_time_unix_offset();
+time_t ec_time_to_unix(time_t ec_tim);
 #endif

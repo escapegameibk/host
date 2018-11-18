@@ -37,7 +37,7 @@ void core_trigger_alarm();
 void core_release_alarm();
 #endif /* NOALARM */
 
-long long int game_timer_start, game_timer_end, game_duration;
+time_t game_timer_start, game_timer_end, game_duration;
 
 struct{
 
@@ -100,5 +100,9 @@ extern size_t flank_dependency_count;
 #ifndef NOALARM
 bool alarm_on;
 #endif /* NOALARM */
+
+/* Helper functions */
+
+time_t get_expired_game_time();
 
 #endif /* CORE_H */

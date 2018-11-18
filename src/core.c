@@ -385,7 +385,7 @@ int core_check_dependency(json_object* dependency){
 			int now = check_dependency(json_object_object_get(
 				dependency,"dependency"));
 			if(now == last){
-				/* Boring */
+				/* Boring. Nothing has happenend */
 				return false;
 			}
 			
@@ -448,8 +448,86 @@ int core_check_dependency(json_object* dependency){
 	}else if(strcasecmp(type,"never") == 0){
 		/* This is unable to return true at any time */
 		return false;
+	}else if(strcasecmp(type,"timer") == 0){
+		/* This is to return based on the game expiration timer. 
+		 * Operations are required to be relative to the game time since
+		 * start. NO abolute times **MUST** be used!
+		 */
+
+		 json_object* after = json_object_object_get(dependency, 
+			"after");
+		 json_object* left = json_object_object_get(dependency, 
+			"left");
+ 
+		 if((after != NULL) && (left != NULL)){
+			println("Timer dependency with multiple values!!",
+				ERROR);
+			return -2;
+		 }
+			
+		json_object* above_o = json_object_object_get(dependency, 
+			"above");
+			
+		json_object* below_o = json_object_object_get(dependency, 
+			"below");
+		
+		time_t target;
+		time_t real;
+		bool above, below;
+
+		if(left != NULL){
+			/* If the dependency should be forefilled when a
+			 * certain amount of time is "left".
+			 */
+
+			 /* Default values! */
+			above = false;
+			below = true;
+			
+			target = json_object_get_int(left);
+			real = game_duration - get_expired_game_time();
+			
+
+		}else if(after != NULL){
+			/* If the dependency should be forefilled "after" a
+			 * certain amount of time.
+			 */
+			above = true;
+			below = false;
+			
+			target = json_object_get_int(after);
+			real = get_expired_game_time();
+			
+		}else{
+			println("Timer dependency with no value specified!!",
+				ERROR);
+			return -1;
+		}
+		
+		if(above_o != NULL){
+			above = json_object_get_boolean(above_o);
+		}
+			
+		if(below_o != NULL){
+			below = json_object_get_boolean(below_o);
+		}
+			
+			
+		if(below && (real < target)){
+			return true;
+		}
+		else if(above && (real > target)){
+			return true;
+		}
+		else if(real == target){
+			return true;
+		}else{
+			return false;
+		}
+
+			
 	}else if(strcasecmp(type,"length") == 0){
-		/* This is unable to return true at any time */
+		/* This is used to specify a length dependency. */
 		for(size_t i = 0; i < length_dependency_count; i++){
 			struct length_dependency_t* dep = 
 				length_dependencies[i];
@@ -507,12 +585,12 @@ int core_trigger(json_object* trigger){
                         WARNING);
                 return 0;
         }else if(strcasecmp(action_name,"timer_start") == 0){
-                println("Starting game timer", INFO);
-                game_timer_start = (unsigned long long)time(NULL);
+                game_timer_start = get_current_ec_time();
+                println("Starting game timer at %li", INFO, game_timer_start);
 
         }else if(strcasecmp(action_name,"timer_stop") == 0){
-                println("Stopping game timer", INFO);
-                game_timer_end = (unsigned long long)time(NULL);
+                game_timer_end = get_current_ec_time();
+                println("Stopping game timer at %li", INFO, game_timer_end);
         
 	}else if(strcasecmp(action_name,"timer_reset") == 0){
                 println("Clearing game timer", INFO);
@@ -859,6 +937,15 @@ void core_release_alarm(){
 	println("Released alarm!", DEBUG);
 	alarm_on = false;
 	return;
+}
+
+time_t get_expired_game_time(){
+
+	if(game_timer_end != 0){
+		return get_current_ec_time() - game_timer_start;
+	}else{
+		return game_timer_end - game_timer_start;
+	}
 }
 
 #endif

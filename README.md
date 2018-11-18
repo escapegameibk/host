@@ -201,6 +201,7 @@ what type of dependency it is. The following types have been defined as of now:
 	inside the event field. Optionally a target field may be specified 
 	containing a boolean which will be compared agaist the event's trigger-
 	state.
+
 2. sequence:
 	Sequence dependencies are fullfilled, if a specific sequence of sub-
 	dependencies is matched to a target. Imagine you want a series of
@@ -236,15 +237,38 @@ what type of dependency it is. The following types have been defined as of now:
 	"low" meaning a change from 1 to 0 and "high" meaning a change from 0
 	to 1. Both values are assumed to be true, and therefore forefilling the
 	dependency, by default.
+
 4. or:
 	This dependency represents a logical or. It requires a "dependencies"
 	field, of which it will check all dependencies, until one of them is
 	forefilled, in which case it will return true. If it reaches the end
 	of the array, without ever encountering a forefilled dependency,
 	the dependency is considered not forefilled. 
+
 5. never:
 	The never dependency is, as you may have guessed, never forefilled. It
 	requires no special fields.
+
+6. length:
+	A length dependency is, by default, forefilled, if it's sub dependency
+	(specified with the "dependency" field) has been forefilled for >= the 
+	amount of seconds sepcified with the "length" field. It has been
+	implemented to support the Escape Game Munich orphanage behaviour.
+	Optionally, the below and/or above fields may be specified, to specify,
+	wether the sub-dependency has to be continuously forefilled for
+	> length, <length respectively. If the specifed length is equal to the
+	expired length, the dependency is ALWAYS forefilled.
+
+	Additionally a fail_triggers, a success_end_triggers or a start_triggers
+	field may be specified, containing an array of triggers, which will be
+	run at the end of a continuous forefillment, if it was forefilled at the
+	end of a continuous forefillment, if it was not forefilled, or if the
+	forefillment has started respectively.
+7. and:
+	This dependency represents a logical and. It requires a "dependencies"
+	field, of which it will check all dependencys, until it encounters one,
+	which is NOT forefilled, in which case it will abort and return 0. In
+	case all dependencies are forefilled, the dependency is forefilled.
 
 #### Triggers 
 The core module is specified via the module field inside of a trigger.
@@ -450,8 +474,12 @@ so does your connection. This is probably not what you want.
 
 # TODO
 
-# Orphanage
+## Postgresql
 
-There was a dependency which required having a threshold be reached for multiple
-seconds. At the beginning there should be a noise, when the threshold is 
-undertaken. 
+It was requested, athat all data may be dumped into a postgresql database for
+later analysys. This is required to be added very carefully.
+
+## Timer length based dependency
+
+It was requested, that the program should be able to do something, in case the
+
