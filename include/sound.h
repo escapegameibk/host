@@ -22,7 +22,7 @@
 #include <json-c/json.h>
 
 int init_sound();
-int sound_trigger(json_object* trigger);
+int sound_trigger(json_object* trigger, bool dry);
 int play_sound(const char* url);
 int play_effect(const char* url);
 int reset_sounds();

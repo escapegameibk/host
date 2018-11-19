@@ -93,6 +93,12 @@ int main(int argc, char * const argv[]){
                 goto shutdown;
 	}
 	
+	if(test_modules() < 0){
+		println("failed to test modules", ERROR);
+		exit_code = EXIT_FAILURE;
+                goto shutdown;
+	}
+	
 	if(start_game() < 0){
 		println("failed to start game watcher", ERROR);
 		exit_code = EXIT_FAILURE;

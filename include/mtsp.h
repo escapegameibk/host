@@ -48,7 +48,7 @@ int mtsp_process_frame(uint8_t* frame);
 int mtsp_send_request(uint8_t slave_id, uint8_t command_id, 
         uint8_t* payload, size_t palyoad_length);
 
-int mtsp_trigger(json_object* trigger);
+int mtsp_trigger(json_object* trigger, bool dry);
 int mtsp_check_dependency(json_object* dep);
 
 int mtsp_send_notify();

@@ -27,7 +27,7 @@ void* core_loop();
 
 int core_init_dependency(json_object* dependency);
 int core_check_dependency(json_object* dependency);
-int core_trigger(json_object *trigger);
+int core_trigger(json_object *trigger, bool dry);
 
 int core_update_sequential();
 int core_update_lengths();

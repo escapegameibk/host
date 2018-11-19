@@ -119,9 +119,9 @@ int ecp_check_dependency(json_object* dependency);
 int ecp_check_port_dependency(json_object* dependency);
 int ecp_check_analog_dependency(json_object* dependency);
 
-int ecp_trigger(json_object* trigger);
-int ecp_trigger_secondary_trans(json_object* trigger);
-int ecp_trigger_port(json_object* trigger);
+int ecp_trigger(json_object* trigger, bool dry);
+int ecp_trigger_secondary_trans(json_object* trigger, bool dry);
+int ecp_trigger_port(json_object* trigger, bool dry);
 
 uint8_t* recv_ecp_frame(int fd, size_t* len);
 

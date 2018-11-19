@@ -591,7 +591,7 @@ int ecp_check_analog_dependency(json_object* dependency){
 	return 0;
 }
 
-int ecp_trigger(json_object* trigger){
+int ecp_trigger(json_object* trigger, bool dry){
 	json_object* type = json_object_object_get(trigger, "type");
 	const char* type_name;
 	/* By default a port trigger is assumed */
@@ -602,10 +602,10 @@ int ecp_trigger(json_object* trigger){
 	}
 
 	if(strcasecmp(type_name, "port") == 0){
-		return ecp_trigger_port(trigger);
+		return ecp_trigger_port(trigger, dry);
 	}else if(strcasecmp(type_name, "secondary_trans") == 0){
-		/* Send a specified string  */
-		return ecp_trigger_secondary_trans(trigger);
+		/* Send a specified string */
+		return ecp_trigger_secondary_trans(trigger, dry);
 		
 	}else{
 		println("Failed to execute ECP trigger with invalid type! Dump:"
@@ -619,7 +619,7 @@ int ecp_trigger(json_object* trigger){
 	return 0;
 }
 
-int ecp_trigger_secondary_trans(json_object* trigger){
+int ecp_trigger_secondary_trans(json_object* trigger, bool dry){
 	
 	json_object* str = json_object_object_get(trigger, "string");
 	if(str == NULL){
@@ -646,12 +646,15 @@ int ecp_trigger_secondary_trans(json_object* trigger){
 	}
 	
 	size_t device_id = json_object_get_int(dev);
+	if(dry){
+		return 0;
+	}
 
 	return send_ecp_secondary(device_id, (char*) strin);
 }
 
 /* Execute a port trigger. Set a GPIO pin to the desired value */
-int ecp_trigger_port(json_object* trigger){
+int ecp_trigger_port(json_object* trigger, bool dry){
 	
 	json_object* dev = json_object_object_get(trigger, "device");
 	if(dev == NULL){
@@ -694,6 +697,10 @@ int ecp_trigger_port(json_object* trigger){
 	json_object* trgt = json_object_object_get(trigger, "target");
 	if(trgt != NULL){
 		target = json_object_get_boolean(trgt);
+	}
+	if(dry){
+		/* Don't really do anything on a dry run */
+		return 0;
 	}
 
 	return send_ecp_port(device_id, reg_id, bit_id, target);
@@ -811,8 +818,8 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			return -4;
 			break;
 		case 0:
-			println("The ECP slave has requested an initialisation",
-				DEBUG);
+			println("ECP slave %i has requested an initialisation",
+				DEBUG, recv_frm[ECP_ADDR_IDX]);
 
 			ecp_initialized = false;
 			break;
@@ -1038,6 +1045,21 @@ int ecp_bus_init(){
 					
 					if(bit->ddir == ECP_OUTPUT){
 						bit->target = bit->current;
+					}
+					
+					if(bit->target != ECP_OUTPUT){
+					
+						n |= send_ecp_port(
+						device->id, regp->id, 
+						bit->bit, bit->target); 
+						
+						if(n){
+							println(
+							"Failed to set ECP PORT"
+								,WARNING);
+							goto error;
+						}
+
 					}
 				}
 			}

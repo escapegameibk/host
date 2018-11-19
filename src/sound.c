@@ -42,7 +42,7 @@ int init_sound(){
         return 0;
 }
 
-int sound_trigger(json_object* trigger){
+int sound_trigger(json_object* trigger, bool dry){
 
 	json_object* action_obj = json_object_object_get(trigger, "action");
 
@@ -60,7 +60,9 @@ int sound_trigger(json_object* trigger){
 		const char* resource = get_lang_resource(resource_obj);
 
 		println("Playing sound file from %s", DEBUG, resource);
-	
+		if(dry){
+			return 0;
+		}
 		return play_sound(resource);
 	
 	}else if(strcasecmp(action, "effect") == 0){
@@ -71,22 +73,35 @@ int sound_trigger(json_object* trigger){
 		const char* resource = json_object_get_string(resource_obj);
 
 		println("Playing sound effect from %s", DEBUG, resource);
+		
+		if(dry){
+			return 0;
+		}
 	
 		return play_effect(resource);
 
 	
 	} else if(strcasecmp(action, "reset_effect") == 0){
+		
+		if(dry){
+			return 0;
+		}
 
 		libvlc_media_player_stop(effect_player);
 		return 0;
 
 	} else if(strcasecmp(action, "reset") == 0){
 
+		if(dry){
+			return 0;
+		}
+		
 		return reset_sounds();
 
 	}else{
 		println("Unknown action to trigger for sound module!", ERROR);
 	}
+
         const char* resource_locator = json_object_get_string(
                 json_object_object_get(trigger,"resource"));
         if(resource_locator == NULL){

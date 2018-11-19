@@ -274,7 +274,7 @@ int execute_hint(size_t event_id, size_t hint_id){
 	json_object* trigger = json_object_object_get(hint, "triggers");
 
 	for(size_t i = 0; i < json_object_array_length(trigger); i++){
-		execute_trigger(json_object_array_get_idx(trigger, i));
+		execute_trigger(json_object_array_get_idx(trigger, i), false);
 	}
 
 	println("Done executing hint!", DEBUG);

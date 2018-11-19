@@ -574,7 +574,7 @@ int core_check_dependency(json_object* dependency){
 
 }
 
-int core_trigger(json_object* trigger){
+int core_trigger(json_object* trigger, bool dry){
         const char* action_name = json_object_get_string(json_object_object_get(
                 trigger, "action"));
 
@@ -583,21 +583,47 @@ int core_trigger(json_object* trigger){
                         WARNING);
                 return 0;
         }else if(strcasecmp(action_name,"timer_start") == 0){
-                game_timer_start = get_current_ec_time();
-                println("Starting game timer at %li", INFO, game_timer_start);
+		
+		if(!dry){
+			game_timer_start = get_current_ec_time();
+			println("Starting game timer at %li", INFO, 
+				game_timer_start);
+			
+		}else{
+			println("Pretending to start game timer", INFO);
+
+		}
 
         }else if(strcasecmp(action_name,"timer_stop") == 0){
-                game_timer_end = get_current_ec_time();
-                println("Stopping game timer at %li", INFO, game_timer_end);
+		
+		if(!dry){
+			game_timer_end = get_current_ec_time();
+			println("Stopping game timer at %li", INFO,
+				game_timer_end);
+			
+		}else{
+			println("Pretending to stop game timer", INFO);
+
+		}
         
 	}else if(strcasecmp(action_name,"timer_reset") == 0){
-                println("Clearing game timer", INFO);
-                game_timer_end = 0;
-		game_timer_start = 0;
+		if(!dry){
+			println("Clearing game timer", INFO);
+			game_timer_end = 0;
+			game_timer_start = 0;	
+		}else{
+			println("Pretending to clear game timer", INFO);
+
+		}
 
         }else if(strcasecmp(action_name,"reset") == 0){
                 println("Resetting states", INFO);
                 
+		if(dry){
+			println("Aborting because of dry run!", INFO);
+			return 0;
+		}
+
 		for(size_t i = 0; i < state_cnt; i++){
                         state_trigger_status[i] = 0;
                 }
@@ -626,13 +652,27 @@ int core_trigger(json_object* trigger){
         }else if(strcasecmp(action_name,"delay") == 0){
 		uint32_t delay = json_object_get_int64(
 			json_object_object_get(trigger, "delay"));
+		
+		if(dry){
+			println("would have slept %ims!", DEBUG, delay);
+			return 0;
+		}
+		
 		println("sleeping %ims!", DEBUG, delay);
 		return sleep_ms(delay);
 #ifndef NOALARM
 	}else if(strcasecmp(action_name,"alarm") == 0){
+		if(dry){
+			println("ignored alarm release", DEBUG);
+			return 0;
+		}
 		core_trigger_alarm();
 		return 0;
 	}else if(strcasecmp(action_name,"alarm_release") == 0){
+		if(dry){
+			println("ignored alarm release", DEBUG);
+			return 0;
+		}
 		core_release_alarm();
 		return 0;
 #endif

@@ -250,7 +250,7 @@ int trigger_event(size_t event_id){
 				triggers,triggercnt);
 		
 
-			if(execute_trigger(trigger) < 0){
+			if(execute_trigger(trigger, false) < 0){
 				println("FAILED TO EXECUTE TRIGGER! RESETTING!", 
 					ERROR);
 				state_trigger_status[event_id] = 0;
@@ -425,7 +425,7 @@ int trigger_array(json_object* triggers){
 			json_object* trigger = 
 				json_object_array_get_idx(triggers, i);
 
-			if(execute_trigger(trigger) < 0){
+			if(execute_trigger(trigger, false) < 0){
 				println("Failed to execute %i trigger in array",
 					ERROR, i);
 				return -2;

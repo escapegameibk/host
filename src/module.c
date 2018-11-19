@@ -48,7 +48,7 @@
  */
 int init_modules(){
 
-	println("STEP 1/2: Attempting module initialization", DEBUG);
+	println("STEP 1/3: Attempting module initialization", DEBUG);
 
 #ifndef NOHINTS
         if(init_hints() < 0){
@@ -114,7 +114,7 @@ int init_modules(){
 	}
 	
 
-	println("STEP 1/2: Modules successfully initialized", DEBUG);
+	println("STEP 1/3: Modules successfully initialized", DEBUG);
 
 	return 0;
 }
@@ -129,7 +129,7 @@ int init_modules(){
 
 int start_modules(){
 	
-	println("STEP 2/2: Attempting module start", DEBUG);
+	println("STEP 2/3: Attempting module start", DEBUG);
 
 #ifndef HEADLESS
         if(start_interface() < 0){
@@ -162,8 +162,38 @@ int start_modules(){
 		return -1;
 	}
 	
-	println("STEP 2/2: Module start successfull.", DEBUG);
+	println("STEP 2/3: Module start successfull.", DEBUG);
 
+	return 0;
+}
+
+/* When all is up and running, perform general module checks, test stuff, 
+ * perform dry runs.
+ */
+int test_modules(){
+	
+	println("STEP 3/3: Attempting module tests", DEBUG);
+
+	/* Check all dependencies once on startup and check, wether they return
+	 * successfully.
+	 */
+	println("Testing %i dependencies for errors", DEBUG, dependency_count);
+	for(size_t i = 0; i < dependency_count; i++){
+		if(check_dependency(dependency_list[i]) < 0){
+			println("Failed to test dependency no. %i!!",
+				ERROR, i);
+			println("Aborting Module tests and dumping dependency:",
+				 ERROR);
+		
+			json_object_to_fd(STDOUT_FILENO, dependency_list[i],
+				JSON_C_TO_STRING_PRETTY);
+			return -1;
+		}
+	}
+
+	println("STEP 3/3: Module tests successfull.", DEBUG);
+	println("Modules finished start up. Reporting ready.", DEBUG);
+	
 	return 0;
 }
 
@@ -241,7 +271,11 @@ int check_dependency(json_object* dependency){
 	return 0;
 }
 
-int execute_trigger(json_object* trigger){
+/* Execute a trigger specified in the trigger object. In case the dry flag is
+ * set, only pretend to execute it, don't actually execute itm but still perform
+ * sanity checks.
+ */
+int execute_trigger(json_object* trigger, bool dry){
 
 
 	const char* module = json_object_get_string(json_object_object_get(
@@ -261,7 +295,7 @@ int execute_trigger(json_object* trigger){
 
         if(strcasecmp(module,"core") == 0){
                 /* The core module is concerned. */
-                if(core_trigger(trigger) < 0){
+                if(core_trigger(trigger, dry) < 0){
                         println("Failed to execute trigger for core!",
                                 ERROR);
                         return -1;
@@ -272,10 +306,9 @@ int execute_trigger(json_object* trigger){
 #ifndef NOMTSP
 	else if(strcasecmp(module,"mtsp") == 0){
                 /* The mtsp module is concerned. */
-                if(mtsp_trigger(trigger) < 0){
+                if(mtsp_trigger(trigger, dry) < 0){
                         println("Failed to execute trigger for mtsp!",
                                 ERROR);
-
                         return -2;
 
                 }
@@ -285,7 +318,7 @@ int execute_trigger(json_object* trigger){
 #ifndef NOEC
 	else if(strcasecmp(module,"ecp") == 0){
                 /* The mtsp module is concerned. */
-                if(ecp_trigger(trigger) < 0){
+                if(ecp_trigger(trigger, dry) < 0){
                         println("Failed to execute trigger for ecp!",
                                 ERROR);
 
@@ -300,7 +333,7 @@ int execute_trigger(json_object* trigger){
 
 	else if(strcasecmp(module,"snd") == 0){
 		/* The sound module is concerned. */
-		if(sound_trigger(trigger) < 0){
+		if(sound_trigger(trigger, dry) < 0){
 			println("Failed to execute trigger for snd!",
 				ERROR);
 

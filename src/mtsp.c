@@ -578,7 +578,7 @@ int mtsp_send_request(uint8_t slave_id, uint8_t command_id, uint8_t* payload,
 }
 
 /* Execute a mtsp trigger */
-int mtsp_trigger(json_object* trigger){
+int mtsp_trigger(json_object* trigger, bool dry){
         
         uint8_t slave_id = json_object_get_int(json_object_object_get(trigger,
                 "device"));
@@ -591,6 +591,10 @@ int mtsp_trigger(json_object* trigger){
                 "target"));
         int i = 0;
         for(; i < 10; i ++){
+		if(dry){
+			break;
+		}
+
                 if(mtsp_send_request(slave_id,2,payload,2) >= 0){
                         i = 0;
                         break;
@@ -600,7 +604,8 @@ int mtsp_trigger(json_object* trigger){
 
         if(i != 0){
                 return -1;
-        }        
+        }       
+	
         const char* type = json_object_get_string(json_object_object_get(
                 trigger, "type"));
         if(type == NULL || (strcasecmp(type,"permanent") == 0)){
@@ -615,6 +620,9 @@ int mtsp_trigger(json_object* trigger){
                 payload[1] = !payload[1];
                 
                 for(; i < 10; i ++){
+			if(dry){
+				break;
+			}
                         if(mtsp_send_request(slave_id,2,payload,2) >= 0){
                                 i = 0;
                                 break;
