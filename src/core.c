@@ -465,12 +465,6 @@ int core_check_dependency(json_object* dependency){
 			return -2;
 		 }
 			
-		json_object* above_o = json_object_object_get(dependency, 
-			"above");
-			
-		json_object* below_o = json_object_object_get(dependency, 
-			"below");
-		
 		time_t target;
 		time_t real;
 		bool above, below;
@@ -504,10 +498,14 @@ int core_check_dependency(json_object* dependency){
 			return -1;
 		}
 		
+		json_object* above_o = json_object_object_get(dependency, 
+			"above");		
+		json_object* below_o = json_object_object_get(dependency, 
+			"below");
+		
 		if(above_o != NULL){
 			above = json_object_get_boolean(above_o);
 		}
-			
 		if(below_o != NULL){
 			below = json_object_get_boolean(below_o);
 		}
@@ -941,7 +939,7 @@ void core_release_alarm(){
 
 time_t get_expired_game_time(){
 
-	if(game_timer_end != 0){
+	if(game_timer_end == 0 && game_timer_start != 0 ){
 		return get_current_ec_time() - game_timer_start;
 	}else{
 		return game_timer_end - game_timer_start;
