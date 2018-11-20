@@ -395,6 +395,8 @@ int init_general_dependency(json_object* dependency){
 
 	if(module_name == NULL){
 		println("Specified no module in dependency!", ERROR);
+			json_object_to_fd(STDOUT_FILENO, dependency,
+				JSON_C_TO_STRING_PRETTY);
 		return -1;
 	}
 #ifndef NOMTSP
