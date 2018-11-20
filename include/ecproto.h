@@ -57,6 +57,7 @@
 
 #define ECP_INPUT false
 #define ECP_OUTPUT true
+#define ECP_DEFAULT_TARGET false
 #define ECP_DEF_DEV "/dev/ttyACM0"
 
 struct ecproto_port_t{

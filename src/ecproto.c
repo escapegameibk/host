@@ -1047,7 +1047,9 @@ int ecp_bus_init(){
 						bit->target = bit->current;
 					}
 					
-					if(bit->target != ECP_OUTPUT){
+					if(bit->ddir != ECP_OUTPUT || 
+						bit->target != 
+						ECP_DEFAULT_TARGET){
 					
 						n |= send_ecp_port(
 						device->id, regp->id, 
@@ -1099,7 +1101,17 @@ int get_ecp_port(size_t device_id, char reg_id, size_t pin_id){
  * is an input, this enables or disables the pullup resistor. */
 int send_ecp_port(size_t device_id, char reg_id, size_t pin_id, bool port){
 
+
+	struct ecproto_device_t* dev = escp_get_dev_from_id(device_id);
+
+	struct ecproto_port_register_t* reg = escp_get_reg_from_dev(reg_id, 
+		dev);
+	struct ecproto_port_t* prt = &reg->bits[pin_id];
+
+	prt->target = port;
+	
 	uint8_t msg[] = {reg_id, pin_id, port};
+
 	return ecp_send_message(device_id, WRITE_PORT_ACTION, msg, 
 		sizeof(msg));
 
@@ -1316,7 +1328,7 @@ int init_ecp_port_reg(struct ecproto_port_register_t* prt_reg){
 		/* This will be overwritten by a check at the beginning */
 		prt->current = false;
 		prt->enabled = false;
-		prt->target = true;
+		prt->target = ECP_DEFAULT_TARGET;
 	}
 
 	return 0;

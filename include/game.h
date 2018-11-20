@@ -44,6 +44,7 @@ json_object** get_root_dependencies(size_t* depcn, size_t** event_idsp);
 int get_dependency_id(json_object* dependency);
 size_t get_hint_event();
 int trigger_array(json_object* triggers);
+json_object** get_root_triggers(size_t* trigcnt, size_t** event_idsp);
 
 
 json_object** dependency_list;

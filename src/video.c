@@ -139,7 +139,7 @@ int video_finished(size_t device_no){
 	return 0;
 }
 
-int video_trigger(json_object* trigger){
+int video_trigger(json_object* trigger, bool dry){
 
 	json_object* action = json_object_object_get(trigger, "action");
 	if(action == NULL){
@@ -187,11 +187,14 @@ int video_trigger(json_object* trigger){
 		println("%s --> %s ", DEBUG, video_current_urls[dev], res);
 		
 		pthread_mutex_lock(&video_urls_lock);
-		
-		free(video_current_urls[dev]);
-		video_current_urls[dev] = malloc(strlen(res) + sizeof(char));
-		strcpy(video_current_urls[dev], res);
-		
+		if(!dry){
+			free(video_current_urls[dev]);
+			video_current_urls[dev] = malloc(strlen(res) + 
+				sizeof(char));
+			strcpy(video_current_urls[dev], res);
+		}else{
+			println("Not performing due to dry run", DEBUG);
+		}
 		pthread_mutex_unlock(&video_urls_lock);
 
 
@@ -215,10 +218,15 @@ int video_trigger(json_object* trigger){
 		
 		pthread_mutex_lock(&video_urls_lock);
 		
-		free(video_perma_urls[dev]);
-		video_perma_urls[dev] = malloc(strlen(res) + sizeof(char));
-		strcpy(video_perma_urls[dev], res);
+		if(!dry){
+			free(video_perma_urls[dev]);
+			video_perma_urls[dev] = malloc(strlen(res) + 
+				sizeof(char));
+			strcpy(video_perma_urls[dev], res);
+		}else{
 		
+			println("Not performing due to dry run", DEBUG);
+		}
 		pthread_mutex_unlock(&video_urls_lock);
 
 

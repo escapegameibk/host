@@ -23,6 +23,7 @@
 
 #include <json-c/json.h>
 #include <pthread.h>
+#include <stdbool.h>
 
 int init_video();
 
@@ -32,7 +33,7 @@ int init_video();
 
 int video_finished(size_t device_no);
 
-int video_trigger(json_object* trigger);
+int video_trigger(json_object* trigger, bool dry);
 
 extern char** video_current_urls;
 extern char** video_perma_urls;

@@ -341,8 +341,8 @@ json_object** get_root_dependencies(size_t* depcnt, size_t** event_idsp){
 
 	for(size_t event_i = 0; event_i < state_cnt; event_i++ ){
 		
-			json_object* event = json_object_array_get_idx(
-		json_object_object_get(config_glob, "events"),event_i);
+		json_object* event = json_object_array_get_idx(
+			json_object_object_get(config_glob, "events"),event_i);
 		
 		for(size_t dep_i = 0; dep_i < json_object_array_length(
 			json_object_object_get(event,"dependencies")); 
@@ -361,6 +361,10 @@ json_object** get_root_dependencies(size_t* depcnt, size_t** event_idsp){
 	}
 	
 	*event_idsp = event_ids;
+	
+	if(event_idsp != NULL){
+		*event_idsp = event_ids;
+	}
 
 
 	return deps;
@@ -442,4 +446,45 @@ int trigger_array(json_object* triggers){
 		return -1;
 
 	}
+}
+
+/* This returns an array with all triggers as elements. It can be 
+ * free'd afterwards */
+json_object** get_root_triggers(size_t* trigcnt, size_t** event_idsp){
+
+	json_object** trigs = NULL;
+	size_t* event_ids = NULL;
+	*trigcnt = 0;
+	
+	/* 
+	 * Iterate through events
+	 */
+
+	for(size_t event_i = 0; event_i < state_cnt; event_i++ ){
+		
+		json_object* event = json_object_array_get_idx(
+			json_object_object_get(config_glob, "events"),event_i);
+		
+		for(size_t trig_i = 0; trig_i < json_object_array_length(
+			json_object_object_get(event,"triggers")); 
+			trig_i++){
+			
+			trigs = realloc(trigs, ++*trigcnt * 
+				sizeof(json_object*));
+			event_ids = realloc(event_ids, *trigcnt * 
+				sizeof(size_t));
+			
+			trigs[*trigcnt - 1] = json_object_array_get_idx(
+				json_object_object_get(event,"triggers"), 
+				trig_i);
+			event_ids[*trigcnt - 1] = event_i;
+
+		}
+	}
+	
+	if(event_idsp != NULL){
+		*event_idsp = event_ids;
+	}
+
+	return trigs;
 }

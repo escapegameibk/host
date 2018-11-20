@@ -190,6 +190,23 @@ int test_modules(){
 			return -1;
 		}
 	}
+	size_t len = 0;
+	json_object** trigs = get_root_triggers(&len, NULL);
+	println("Attempting dry run for %i triggers", DEBUG, len);
+
+	for(size_t i = 0; i < len; i++){
+		
+		if(execute_trigger(trigs[i], true) < 0){
+			
+			println("Failed to test trigger no. %i!!",
+				ERROR, i);
+			println("Aborting Module tests and dumping trigger:",
+				 ERROR);
+			json_object_to_fd(STDOUT_FILENO, trigs[i],
+				JSON_C_TO_STRING_PRETTY);
+			return -1;
+		}
+	}
 
 	println("STEP 3/3: Module tests successfull.", DEBUG);
 	println("Modules finished start up. Reporting ready.", DEBUG);
@@ -244,6 +261,8 @@ int check_dependency(json_object* dependency){
 	if(module_name == NULL){
 		println("Specified no module in dependency! Misconfiguration!",
 			ERROR);
+			json_object_to_fd(STDOUT_FILENO, dependency,
+				JSON_C_TO_STRING_PRETTY);
 		return -1;
 	}
 #ifndef NOMTSP
@@ -347,7 +366,7 @@ int execute_trigger(json_object* trigger, bool dry){
 
 	else if(strcasecmp(module,"video") == 0){
 		/* The sound module is concerned. */
-		if(video_trigger(trigger) < 0){
+		if(video_trigger(trigger, dry) < 0){
 			println("Failed to execute trigger for video!",
 				ERROR);
 
