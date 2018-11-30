@@ -95,13 +95,26 @@ more information into the return value, by using multiple values below 0 to
 indicate where the program failes, or values >0 to indicae anything that could
 possibly be needed in the calling function.
 
-If the function which returns dat should return NULL on error. It is now the 
+If the function which returns data should return NULL on error. It is now the 
 calling functions job to handle this.
 
-## Who are you
+## And wher should I start to read the code?
+
+Well you can basically start wherever you want, as it may be a bit confusing in
+the beginning to read tis code. it may be a good idea to follow the code
+execution from the beginning and start at the main. The code should then
+continue to perform initialisation and startup tasks, send off a few threads to
+handle stuff and finally come to a rest in the main with an almost infinite
+loop, which may be interrupted from any place in the program by setting the
+global shutdown variable to be true. I'm missing my point, you may start at
+the main, or anywhere else. Whatever suits you best.
+
+## Who are you?
 
 I am a programmer i guess. However I don't really know how that question is
 supposed to help you with programming this thing, so I'll just put my email in
-here and go on:
+here and leave:
 
 tyrolyean@tyrolyean.net		SUBJECT: ESCPE
+
+

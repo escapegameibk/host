@@ -18,7 +18,3 @@ Viewing cameras via the website would be rather nice too eh?
 
 implementing an error queue into the host would be helpful. Especially to notify
 the user of WHAT kind of error happened.
-
-## Verify the configuration
-
-Build something to verify a configuration. it can't be that hard. 
