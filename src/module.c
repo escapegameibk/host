@@ -156,6 +156,15 @@ int start_modules(){
 		println("Failed to start interface!", ERROR);
 		return -1;
 	}
+
+#ifndef NOLOL
+	
+	if(start_lol() < 0){
+		println("failed to start lolproto module", ERROR);
+		return -7;
+	}
+#endif
+
 #endif
         if(start_core() < 0){
 		println("Failed to start interface!", ERROR);

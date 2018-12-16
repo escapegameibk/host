@@ -20,7 +20,10 @@
 #ifndef LOLPROTO_H
 #define LOLPROTO_H
 
-#define LOLPROTO_OVERHEAD 7
+#define LOLPROTO_OVERHEAD  7
+
+#define LOLPROTO_LONG_PAY  32
+#define LOLPROTO_SHORT_PAY 4
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -29,16 +32,29 @@
 #include <pthread.h>
 
 #define LOL_DEFAULT_PORT "/dev/ttyUSB0"
-#define LOL_DEFAULT_BAUD B38400
+#define LOL_DEFAULT_BAUD B115200
+
+struct lol_frame_t{
+	size_t   len;
+	uint8_t	 address;
+	uint8_t* payload;
+};
 
 int lol_init_dependency(json_object* dependency);
 
 int init_lol();
 int start_lol();
 
+void* lol_listen_fordata();
+
+int recieve_lol_frame(struct lol_frame_t* frame);
+
+extern uint8_t lol_start_sequence[3];
+
 int lolfd;
 
 pthread_mutex_t lol_lock;
+
 
 #endif /* LOLPROTO_H */
 #endif /* NOLOL */

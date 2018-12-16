@@ -30,20 +30,23 @@
 #define ECP_REG_WIDTH 8
 #define ECPROTO_OVERHEAD 6
 
-#define INIT_ACTION 0
-#define REQ_SEND 1
-#define SEND_NTOIFY 2
-#define ENUMERATEACTION 3
-#define REMOTE_COMMAND 4
-#define DEFINE_PORT_ACTION 5
-#define GET_PORT_ACTION 6
-#define WRITE_PORT_ACTION 7
-#define ERROR_ACTION 8
-#define REGISTER_COUNT 9
-#define REGISTER_LIST 10
-#define PIN_ENABLED 11
-#define SECONDARY_PRINT 12
-#define ADC_GET 13
+#define INIT_ACTION            0x00
+#define REQ_SEND               0x01
+#define SEND_NOTIFY            0x02
+#define ENUMERATEACTION        0x03
+#define REMOTE_COMMAND         0x04
+#define DEFINE_PORT_ACTION     0x05
+#define GET_PORT_ACTION        0x06
+#define WRITE_PORT_ACTION      0x07
+#define ERROR_ACTION           0x08
+#define REGISTER_COUNT         0x09
+#define REGISTER_LIST          0x0A
+#define	PIN_ENABLED            0x0B
+#define SECONDARY_PRINT        0x0C
+#define ADC_GET                0x0D
+#define ADC_GET2               0x0F
+#define EXT_DEV_REG            0x10
+#define EXT_DEV_INT            0x11
 
 #define ECP_LEN_IDX 0
 #define ECP_ADDR_IDX 1
@@ -54,6 +57,10 @@
 #define ECP_TIMEOUT 1000
 
 #define ECP_CMD_DEL 0xFF
+
+#define ECP_EXTDEV_MFRC522     0x01
+
+#define ECP_RFID_TAGLEN	       5
 
 #define ECP_INPUT false
 #define ECP_OUTPUT true
@@ -70,12 +77,23 @@ struct ecproto_port_t{
 	bool enabled; /* Wether the pin is disabled or not. Set by the device's
 		       * internal blacklist. Transmitted at startup.
 		       */
+
 };
 
 struct ecproto_port_register_t{
 	/* The identifier for that register */
 	char id;
 	struct ecproto_port_t bits[ECP_REG_WIDTH];
+};
+
+struct ecp_mfrc522_t{
+	/* Car and bit identify the chip select pin */
+	char car;
+	size_t bit;
+	uint8_t id;  /* The bit assigned by the device */
+	uint32_t lasttag;
+
+	json_object* dependency;
 };
 
 struct ecproto_analog_t{
@@ -89,6 +107,10 @@ struct ecproto_device_t
 	size_t regcnt;
 	struct ecproto_port_register_t* regs;
 	struct ecproto_analog_t* analog;
+
+	/* MFRC522 devices */
+	size_t mfrc522_cnt;
+	struct ecp_mfrc522_t* mfrc522s;
 };
 
 /* Storage for devices */
@@ -105,6 +127,7 @@ bool ecp_initialized;
 int ecp_init_dependency(json_object* dependency);
 int ecp_init_port_dependency(json_object* dependency);
 int ecp_init_analog_dependency(json_object* dependency);
+int ecp_init_extdev_dependency(json_object* dependency);
 
 int ecp_register_input_pin(size_t device_id, char reg_id, size_t bit, 
 	bool pulled, bool is_input);

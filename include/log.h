@@ -18,6 +18,13 @@
 #ifndef LOG_H
 #define LOG_H
 
+#ifndef DEBUG_LVL
+#define DEBUG_LVL 0
+#endif
+#define DEBUG_NORM 0 
+#define DEBUG_MORE 1
+#define DEBUG_ALL  2
+
 /* Specifies the logger output type
  * This enum IS REQUIRED to start at 0in order to make the array where the
  * actual string representation is stored work

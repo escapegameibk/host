@@ -60,6 +60,9 @@ int ecp_init_dependency(json_object* dependency){
 		
 		return ecp_init_analog_dependency(dependency);
 
+	}else if(strcasecmp(type_name, "ext_dev") == 0){
+		
+		return ecp_init_extdev_dependency(dependency);
 	}else{
 		println("Invalid type in ECP dependecy! Duming root:"
 			, ERROR);
@@ -164,12 +167,107 @@ int ecp_init_analog_dependency(json_object* dependency){
 			JSON_C_TO_STRING_PRETTY);
 		return -2;
 	}
-
+	
 	escp_get_dev_from_id(device_id)->analog->used = true;
 	println("Enabling ananlog pin on ECP dev id %i", DEBUG, device_id);
 
 	return 0;
 }
+
+int ecp_init_extdev_dependency(json_object* dependency){
+	
+	json_object* dev = json_object_object_get(dependency, "device");
+	if(dev == NULL){
+		println("Device not defined in ECP dependency! Dumping root: ", 
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency, 
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+	}
+
+	size_t device_id = json_object_get_int(dev);
+
+	if(ecp_register_device(device_id) < 0){
+		println("Failed to initialize ECP device! Dumping root:",
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency, 
+			JSON_C_TO_STRING_PRETTY);
+		return -2;
+	}
+
+	
+	json_object* extdev_type = json_object_object_get(dependency, 
+		"extdev_type");
+
+	if(extdev_type == NULL){
+		println("Type not defined in ECP dependency! Dumping root: ", 
+			ERROR);
+
+		json_object_to_fd(STDOUT_FILENO, dependency, 
+			JSON_C_TO_STRING_PRETTY);
+		return -3;
+	}
+
+	const char* devtype_name = json_object_get_string(extdev_type);
+	
+	if(strcasecmp(devtype_name, "mfrc522") == 0){
+		/* Attempting to initialize an MFRC522 conected via SPI */
+		
+		
+		json_object* reg = json_object_object_get(dependency, "register");
+		if(reg == NULL){
+			println("Register not defined in ECP dependency!\
+Dumping root: "
+				, ERROR);
+			json_object_to_fd(STDOUT_FILENO, dependency, 
+				JSON_C_TO_STRING_PRETTY);
+			return -2;
+		}
+
+		char reg_id = json_object_get_string(reg)[0];
+	
+		json_object* bit = json_object_object_get(dependency, "bit");
+		if(bit == NULL){
+			println("Bit not defined in ECP dependency!\
+Dumping root: ", 
+				ERROR);
+			json_object_to_fd(STDOUT_FILENO, dependency, 
+				JSON_C_TO_STRING_PRETTY);
+			return -3;
+		}
+
+		size_t bit_id = json_object_get_int(bit);
+		
+		if(bit_id >= 8){
+			println("ECP BIT_ID >= 8 DUMPING ROOT", ERROR);
+			
+			json_object_to_fd(STDOUT_FILENO, dependency, 
+				JSON_C_TO_STRING_PRETTY);
+			return -4;
+			
+		}
+
+		struct ecp_mfrc522_t de;
+
+		de.bit = bit_id;
+		de.car = reg_id;
+		de.id = 0; /* Set on device init */
+		de.lasttag = 0;
+
+
+		struct ecproto_device_t* devi = escp_get_dev_from_id(device_id);
+		devi->mfrc522s = realloc(devi->mfrc522s, ++devi->mfrc522_cnt *
+			sizeof(struct ecp_mfrc522_t));
+		memcpy(&devi->mfrc522s[
+			devi->mfrc522_cnt - 1], &de, sizeof(de));
+		
+		
+	}
+	
+
+	return 0;
+}
+
 /* Registers an input pin, there are input pins which are not really inputs,
  * the is_input flag sets the ddir register accordingly */
 int ecp_register_input_pin(size_t device_id, char reg_id, size_t bit, bool 
@@ -231,6 +329,7 @@ int ecp_register_device(size_t id){
 	struct ecproto_device_t*  device = escp_get_dev_from_id(id);
 	
 	if(device == NULL){
+
 		/* Add the device to the array */
 		ecp_devs = realloc(ecp_devs, ++ecp_devcnt * 
 			sizeof(struct ecproto_device_t));
@@ -241,6 +340,9 @@ int ecp_register_device(size_t id){
 		device->analog = malloc(sizeof(struct ecproto_analog_t));
 		device->analog->used = false;
 		device->analog->value = 0;
+		device->mfrc522s = NULL;
+		device->mfrc522_cnt = 0;
+
 	}
 	
 	return 0;
