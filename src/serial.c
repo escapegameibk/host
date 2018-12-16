@@ -77,4 +77,23 @@ int wait_for_data(int timeout, int fd){
 	return poll(fds, sizeof(fds) / sizeof(struct pollfd), timeout);
 }
 
+uint16_t ibm_crc(uint8_t* data, size_t len){
+
+	uint16_t crc = 0xFFFF;
+
+	for(size_t pos = 0; pos < len; pos++){
+		crc ^= (uint16_t)data[pos];
+
+		for(size_t i = 8; i != 0; i--){
+			if((crc & 0x0001) != 0){
+				crc >>= 1;
+				crc ^= 0xA001;
+			}else{
+				crc >>= 1;
+			}
+		}
+	}
+
+	return crc;
+}
 

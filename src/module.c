@@ -28,6 +28,8 @@
 #include "video.h"
 #include "lolproto.h"
 
+#include "modbus.h"
+
 #include <string.h>
 #include <unistd.h>
 
@@ -106,11 +108,20 @@ int init_modules(){
 	}
 #endif
 
+
+#ifndef NOMODBUS
+	if(init_modbus() < 0){
+		println("failed to initialize modbus module", ERROR);
+		return -8;
+	}
+
+
+#endif
 	
 	/* The core module may NOT be disabled */
 	if(init_core() < 0){
 		println("Failed to initilize core!", ERROR);
-		return -8;
+		return -9;
 	}
 	
 
@@ -345,7 +356,7 @@ int execute_trigger(json_object* trigger, bool dry){
 #endif
 #ifndef NOEC
 	else if(strcasecmp(module,"ecp") == 0){
-                /* The mtsp module is concerned. */
+                /* The ecproto module is concerned. */
                 if(ecp_trigger(trigger, dry) < 0){
                         println("Failed to execute trigger for ecp!",
                                 ERROR);
@@ -374,7 +385,7 @@ int execute_trigger(json_object* trigger, bool dry){
 #ifndef NOVIDEO
 
 	else if(strcasecmp(module,"video") == 0){
-		/* The sound module is concerned. */
+		/* The video module is concerned. */
 		if(video_trigger(trigger, dry) < 0){
 			println("Failed to execute trigger for video!",
 				ERROR);
@@ -385,8 +396,22 @@ int execute_trigger(json_object* trigger, bool dry){
 	}
 #endif
 
+#ifndef NOMODBUS
+
+	else if(strcasecmp(module,"modbus") == 0){
+		/* The modbus module is concerned. */
+		if(modbus_trigger(trigger, dry) < 0){
+			println("Failed to execute trigger for modbus!",
+				ERROR);
+
+			return -6;
+		}
+		return 0;
+	}
+#endif
+
         println("UNKNOWN MODULE %s!!",ERROR, module);
-	return -6;
+	return -7;
 
 }
 

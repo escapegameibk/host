@@ -27,4 +27,6 @@ int set_interface_attribs(int fd, int speed);
 /* Returns -1 on error, 0 on timeout and >0 on success */
 int wait_for_data(int, int fd);
 
+uint16_t ibm_crc(uint8_t* data, size_t len);
+
 #endif

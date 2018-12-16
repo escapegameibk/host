@@ -178,7 +178,5 @@ struct ecproto_port_register_t* escp_get_reg_from_dev(char id, struct
 int init_ecp_port_reg(struct ecproto_port_register_t* prt_reg);
 int set_ecp_current_state(size_t dev_id, char reg_id, size_t bit, bool state);
 
-uint16_t ibm_crc(uint8_t* data, size_t len);
-
 #endif /* ECPROTO_H */
 #endif /* NOEC */
