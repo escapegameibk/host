@@ -190,7 +190,28 @@ time_t get_current_ec_time(){
 
 time_t get_ec_time_unix_offset(){
 
-	return time(NULL) - get_current_ec_time();
+	struct timespec tp,tp_rtc;
+	
+	if(clock_gettime(CLOCK_MONOTONIC_RAW, &tp) < 0){
+		println("Failed to get monotonic time!! assuming 0", ERROR);
+		memset(&tp,0,sizeof(tp));
+	}
+	
+	if(clock_gettime(CLOCK_REALTIME, &tp_rtc) < 0){
+		println("Failed to get rtc time!! assuming 0", ERROR);
+		memset(&tp_rtc,0,sizeof(tp_rtc));
+	}
+
+	time_t tdiff = tp_rtc.tv_sec - tp.tv_sec;
+
+	if((tp_rtc.tv_nsec - tp.tv_nsec) < 0){
+		tdiff--;
+	
+	}else if((tp_rtc.tv_nsec - tp.tv_nsec)  > 500000000){
+		tdiff++;
+	}
+
+	return tdiff;
 
 }
 

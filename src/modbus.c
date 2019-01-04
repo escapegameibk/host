@@ -198,6 +198,10 @@ int modbus_write_register(uint8_t addr, uint16_t reg, uint16_t target){
 
 int modbus_write_frame(uint8_t* frame, size_t length, size_t response_len){
 
+	char* printable = printable_bytes(frame, length);
+	println(printable, ERROR);
+	free(printable);
+	
 	int rd = write(modbus_fd, frame, length);
 
 	if(rd <= 0){

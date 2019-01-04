@@ -45,8 +45,6 @@
 #define SECONDARY_PRINT        0x0C
 #define ADC_GET                0x0D
 #define ADC_GET2               0x0F
-#define EXT_DEV_REG            0x10
-#define EXT_DEV_INT            0x11
 
 #define ECP_LEN_IDX 0
 #define ECP_ADDR_IDX 1
@@ -86,16 +84,6 @@ struct ecproto_port_register_t{
 	struct ecproto_port_t bits[ECP_REG_WIDTH];
 };
 
-struct ecp_mfrc522_t{
-	/* Car and bit identify the chip select pin */
-	char car;
-	size_t bit;
-	uint8_t id;  /* The bit assigned by the device */
-	uint32_t lasttag;
-
-	json_object* dependency;
-};
-
 struct ecproto_analog_t{
 	bool used;
 	uint8_t value;
@@ -107,10 +95,6 @@ struct ecproto_device_t
 	size_t regcnt;
 	struct ecproto_port_register_t* regs;
 	struct ecproto_analog_t* analog;
-
-	/* MFRC522 devices */
-	size_t mfrc522_cnt;
-	struct ecp_mfrc522_t* mfrc522s;
 };
 
 /* Storage for devices */
@@ -127,7 +111,6 @@ bool ecp_initialized;
 int ecp_init_dependency(json_object* dependency);
 int ecp_init_port_dependency(json_object* dependency);
 int ecp_init_analog_dependency(json_object* dependency);
-int ecp_init_extdev_dependency(json_object* dependency);
 
 int ecp_register_input_pin(size_t device_id, char reg_id, size_t bit, 
 	bool pulled, bool is_input);
