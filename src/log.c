@@ -22,6 +22,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+/* This lock is used to keep the lock from beeing flooded by multiple threads.
+ */
+
 int println(const char* output, int type, ...){
         
         va_list arg;
@@ -29,15 +32,14 @@ int println(const char* output, int type, ...){
         char* pre = log_generate_prestring(type);
         
         size_t len = strlen(output) + strlen(pre) + 2;
-        
-        char* fino = malloc(len+1); /* Me wants a newline! */
-        strcpy(fino,pre);
-        strcat(fino,output);
-        strcat(fino,"\n");
+        len ++; // Me wants a newline!
+
+        char* fino = realloc(pre, len);
+        strncat(fino,output,len);
+        strncat(fino,"\n", len);
         
         vprintf(fino,arg);
 
-        free(pre);
         free(fino);
         va_end (arg);
         return 0;
@@ -46,17 +48,17 @@ int println(const char* output, int type, ...){
 
 #ifndef COLOR
 char* log_typestr[] = {
-        "DEBUG\t",
-        "INFO\t\t",
-        "WARNING\t",
-        "ERROR\t"
+        "DEBUG    ",
+        "INFO     ",
+        "WARNING  ",
+        "ERROR    "
 };
 #else
 char* log_typestr[] = {
-        "DEBUG\e[0m\t",
-        "\e[0;32mINFO\e[0m\t\t",
-        "\e[0;33mWARNING\e[0m\t",
-        "\e[0;31mERROR\e[0m\t"
+        "DEBUG\e[0m           ",
+        "\e[0;32mINFO\e[0m            ",
+        "\e[0;33mWARNING\e[0m         ",
+        "\e[0;31mERROR\e[0m           "
 };
 #endif
 

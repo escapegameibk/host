@@ -73,8 +73,15 @@ int wait_for_data(int timeout, int fd){
 	struct pollfd fds[1];
 	fds[0].fd=fd;
 	fds[0].events = POLLIN;
+	
+	int n =  poll(fds, sizeof(fds) / sizeof(struct pollfd), timeout);
 
-	return poll(fds, sizeof(fds) / sizeof(struct pollfd), timeout);
+	if(n < 0){
+		println("Poll returned with error: %s", ERROR, strerror(errno));
+	}
+
+	return n;
+
 }
 
 uint16_t ibm_crc(uint8_t* data, size_t len){

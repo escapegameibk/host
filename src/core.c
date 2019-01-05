@@ -384,12 +384,26 @@ int core_check_dependency(json_object* dependency){
 			int last = dep->last;
 			int now = check_dependency(json_object_object_get(
 				dependency,"dependency"));
+
+			if(now < 0){
+				println("Failed to get sub-dependency status"
+					"of a flank dependency! Dumping root:",
+					ERROR);
+				
+				
+				json_object_to_fd(STDOUT_FILENO, dependency,
+					JSON_C_TO_STRING_PRETTY);
+
+				return -1;
+
+			}
+
 			if(now == last){
 				/* Boring. Nothing has happenend */
 				return false;
 			}
 			
-			if(last == -1){
+			if(last < 0){
 				/* Error correction and init state */
 				dep->last = now;
 				return 0;
@@ -893,12 +907,30 @@ int core_update_lengths(){
 			
 			return -1;
 		}
+		
+		json_object* lockdep = json_object_object_get(
+			dep->root_dependency,"lock");
 
-		if(check_dependency(json_object_object_get(dep->root_dependency,
-			"lock")) > 0){
-			/* This is now locked. DON'T DO ANYTHING ANYMORE */
-			continue;
+		if(lockdep != NULL){
+			int lockstat = check_dependency(lockdep);
+		
+			if(lockstat > 0){
+				/* This is now locked. DON'T DO ANYTHING*/
+				continue;
+			}else if(lockstat < 0){
+				println("Failed to get status of lock \
+dependency! Dumping root:", 
+					ERROR);
+			
+				json_object_to_fd(STDOUT_FILENO, 
+					dep->root_dependency,
+					JSON_C_TO_STRING_PRETTY);
+
+				return -1;
+			}
+
 		}
+
 
 		if((state == 1) && (dep->activation == 0)){
 			/* This is my time to shine! */

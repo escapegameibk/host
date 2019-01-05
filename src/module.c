@@ -279,10 +279,16 @@ int check_dependency(json_object* dependency){
 	const char* module_name = json_object_get_string(
 				json_object_object_get(dependency,"module"));
 	if(module_name == NULL){
-		println("Specified no module in dependency! Misconfiguration!",
+		println("Specified no module in dependency! Misconfiguration!\
+Attempting dump:",
 			ERROR);
+		if(dependency != NULL){
 			json_object_to_fd(STDOUT_FILENO, dependency,
 				JSON_C_TO_STRING_PRETTY);
+
+		}else{
+			println("Failed to dump root object! Is NULL!!", ERROR);
+		}
 		return -1;
 	}
 #ifndef NOMTSP
