@@ -204,10 +204,10 @@ time_t get_ec_time_unix_offset(){
 
 	time_t tdiff = tp_rtc.tv_sec - tp.tv_sec;
 
-	if((tp_rtc.tv_nsec - tp.tv_nsec) < 0){
+	if((tp_rtc.tv_nsec + 500000000) < tp.tv_nsec){
 		tdiff--;
 	
-	}else if((tp_rtc.tv_nsec - tp.tv_nsec)  > 500000000){
+	}else if(tp_rtc.tv_nsec > (tp.tv_nsec + 500000000)){
 		tdiff++;
 	}
 
