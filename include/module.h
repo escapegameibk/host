@@ -26,7 +26,7 @@ int start_modules();
 int reset_modules();
 int test_modules();
 
-int check_dependency(json_object* dependency);
+int check_dependency(json_object* dependency, float* percentage);
 int execute_trigger(json_object* trigger, bool dry);
 int init_general_dependency(json_object* dependency);
 

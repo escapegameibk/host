@@ -26,7 +26,7 @@ int start_core();
 void* core_loop();
 
 int core_init_dependency(json_object* dependency);
-int core_check_dependency(json_object* dependency);
+int core_check_dependency(json_object* dependency, float* percentage);
 int core_trigger(json_object *trigger, bool dry);
 
 int core_update_sequential();
@@ -38,14 +38,6 @@ void core_release_alarm();
 #endif /* NOALARM */
 
 time_t game_timer_start, game_timer_end, game_duration;
-
-struct{
-
-	json_object* trigger;
-	unsigned long long int interval_ms;
-	unsigned short int id;
-
-} core_permanent_trigger_t;
 
 struct sequence_dependency_t{
 	/* The root dependency containing the dependencys used for the sequence
@@ -84,13 +76,13 @@ struct length_dependency_t{
 	bool above;
 	
 	int id;
-	size_t threshold; /* The threshold in seconds */
+	time_t threshold; /* The threshold in seconds */
 	json_object* root_dependency;
 	json_object* sub_dependency;
-	unsigned long long int activation; /* When the dependency was fullfilled
-					    * for the first time. UNIX 
-					    * Timestamp. 0 is never.
-					    */
+	time_t activation; /* When the dependency was fullfilled
+			    * for the first time. UNIX 
+			    * Timestamp. 0 is never.
+			    */
 };
 
 extern struct flank_dependency_t** flank_dependencies;

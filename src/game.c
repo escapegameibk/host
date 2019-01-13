@@ -161,7 +161,7 @@ int patrol(){
 		for(size_t dep = 0; dep < json_object_array_length(
 			event_depends); dep++){
 			int check = check_dependency(json_object_array_get_idx(
-				event_depends, dep));
+				event_depends, dep), NULL);
 
 			if(check < 1){
 				met = false;

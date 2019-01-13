@@ -175,7 +175,7 @@ int check_autohints(){
 			json_object* dependency = json_object_array_get_idx(
 				hints_lvl, i);
 
-			int eval = check_dependency(dependency);
+			int eval = check_dependency(dependency, NULL);
 			if(eval >= 0){
 				if(eval > 0){
 					/* Continue to check until everything 

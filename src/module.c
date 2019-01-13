@@ -199,7 +199,7 @@ int test_modules(){
 	 */
 	println("Testing %i dependencies for errors", DEBUG, dependency_count);
 	for(size_t i = 0; i < dependency_count; i++){
-		if(check_dependency(dependency_list[i]) < 0){
+		if(check_dependency(dependency_list[i], NULL) < 0){
 			println("Failed to test dependency no. %i!!",
 				ERROR, i);
 			println("Aborting Module tests and dumping dependency:",
@@ -274,10 +274,15 @@ int reset_modules(){
  * returns return value of the specific module
  */
 
-int check_dependency(json_object* dependency){
+int check_dependency(json_object* dependency, float* percentage){
 
 	const char* module_name = json_object_get_string(
 				json_object_object_get(dependency,"module"));
+
+	float percent_ret;
+
+	int ret = 0;
+
 	if(module_name == NULL){
 		println("Specified no module in dependency! Misconfiguration!\
 Attempting dump:",
@@ -289,31 +294,46 @@ Attempting dump:",
 		}else{
 			println("Failed to dump root object! Is NULL!!", ERROR);
 		}
-		return -1;
+		percent_ret = -1;
+		ret = -1;
 	}
 #ifndef NOMTSP
 	else if(strcasecmp(module_name,"mtsp") == 0){
 		/* Question the MTSP module. yes QUESTION IT! */
-		return mtsp_check_dependency(dependency);
+		ret =  mtsp_check_dependency(dependency);
+		
+		percent_ret = ret;
 	}
 #endif
 #ifndef NOEC
 	else if(strcasecmp(module_name,"ecp") == 0){
 		/* Question the ECP module. yes QUESTION IT! */
-		return ecp_check_dependency(dependency);
+		
+		ret = ecp_check_dependency(dependency, &percent_ret);
+		
 	}
 #endif
 	else if(strcasecmp(module_name,"core") == 0){
 		/* Pass on to the core module */
-		return core_check_dependency(dependency);
+		ret = core_check_dependency(dependency, &percent_ret);
 	}
 	else{
 		println("Unknown module specified [%s]!", ERROR, module_name);
-		return -2;
+		ret = -2;
+		percent_ret = ret;
+	}
+		
+	if(dependency != NULL && ret < 0){
+		println("Unable to check dependency! Dumping root:", ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency,
+			JSON_C_TO_STRING_PRETTY);
 	}
 
-
-	return 0;
+	if(percentage != NULL){
+		*percentage =  percent_ret;
+	}
+	
+	return ret;
 }
 
 /* Execute a trigger specified in the trigger object. In case the dry flag is

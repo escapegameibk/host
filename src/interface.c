@@ -526,9 +526,21 @@ int print_dependency_states_interface(int sockfd){
 	size_t depcnt = 0;
 	json_object** dependencies = get_printables_dependencies(&depcnt);
 	for(size_t i = 0; i < depcnt ; i++){
+			
+
+		float percentage;
+		int ret = check_dependency(dependencies[i], &percentage);
 		
-		json_object* stat = json_object_new_int(check_dependency(
-			dependencies[i]));
+		if(ret < 0){
+			println("Interface failed to check dependency!", ERROR);
+			println("Dumping root:", ERROR);
+			json_object_to_fd(STDOUT_FILENO, dependencies[i],
+				JSON_C_TO_STRING_PRETTY);
+
+		}
+
+		json_object* stat = json_object_new_double(percentage);
+
 		json_object_array_add(stats, stat);
 
 	}
@@ -675,8 +687,45 @@ json_object** get_printables_dependencies(size_t *depcntp){
 #ifndef ALLDEPENDS
 		if(strcasecmp(json_object_get_string(json_object_object_get(dep,
 			"module")), "core") == 0){
+		
+			if(strcasecmp(json_object_get_string(
+				json_object_object_get(dep,"type")), 
+				"event") == 0){
+				continue;
+			}
+			if(strcasecmp(json_object_get_string(
+				json_object_object_get(dep,"type")), 
+				"never") == 0){
+				continue;
+			}
+			if(strcasecmp(json_object_get_string(
+				json_object_object_get(dep,"type")), 
+				"flank") == 0){
+				continue;
+			}
+			if(strcasecmp(json_object_get_string(
+				json_object_object_get(dep,"type")), 
+				"or") == 0){
+				continue;
+			}
+			if(strcasecmp(json_object_get_string(
+				json_object_object_get(dep,"type")), 
+				"and") == 0){
+				continue;
+			}
+		}
+
+		json_object* hidden = json_object_object_get(dep, "hidden");
+		bool hid = false;
+
+		if(hidden != NULL){
+			hid = json_object_get_boolean(hidden);
+		}
+
+		if(hid){
 			continue;
 		}
+		
 #endif
 		
 		/* Check if the parent event of the dependency is visible */

@@ -29,6 +29,7 @@
 #include <strings.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <math.h>
 
 size_t core_sequence_count = 0;
 struct sequence_dependency_t **core_sequential_dependencies = NULL;
@@ -270,7 +271,7 @@ int core_init_dependency(json_object* dependency){
 
 		if(above_val && below_val){
 			println("You specified a sependency which needs to be \
-either below or above a certain threshold. Do you know what a threshold is?",
+both below and above a certain threshold. Do you know what a threshold is?",
 				WARNING);
 		}
 		
@@ -307,14 +308,17 @@ either below or above a certain threshold. Do you know what a threshold is?",
  * Returns < 0 on error, 0 if not, and > 0 if forfilled.
  */
 
-int core_check_dependency(json_object* dependency){
+int core_check_dependency(json_object* dependency,float* percentage){
 
 	const char* type = json_object_get_string(json_object_object_get(
 		dependency,"type"));
 
+	float percent_ret = 0;
+
 	if(type == NULL){
 		println("Unspecified type in core dependency!", ERROR);
-		return -1;
+		percent_ret = -1;
+		goto ret_vals;
 	}else if(strcasecmp(type,"event") == 0){
 		/* Check wether a trigger has already been executed */
 		int32_t event = json_object_get_int(
@@ -335,7 +339,8 @@ int core_check_dependency(json_object* dependency){
 		if(event >= (int32_t) state_cnt || event < 0){
 			println("Invalid event specified in dependency.",
 				ERROR);
-			return -2;
+			percent_ret = -2;
+			goto ret_vals;
 		}else{
 			return (state_trigger_status[event] == target);
 		}
@@ -355,21 +360,29 @@ int core_check_dependency(json_object* dependency){
 			}
 
 			/* Return ">=0 == true" compliant */
-			for(size_t i = 0; i < seq->sequence_length; i++){
+			for(ssize_t i = seq->sequence_length; i >= 0; i--){
 				if(seq->target_sequence[i] !=
 					seq->sequence_so_far[i]){
-					return 0;
+					/* This may never evaluate to true */
+					percent_ret = ((float)seq->pointer /
+						(seq->sequence_length));
+					if(percent_ret >= true){
+						percent_ret = 0.99;
+					}
+					goto ret_vals;
 
 				}
 			}
-			return 1;
+			percent_ret = true;
+			goto ret_vals;
 
 		 }
 		
 		/* WTF?! */
 		println("FOUND UNINITIALIZED SEQUENTIAL DEPENDENCY!!!", ERROR);
 		println("THIS SHOULD BE IMPOSSIBLE!!!!", ERROR);
-		return -3;
+		percent_ret = -3;
+		goto ret_vals;
 	
 	}else if(strcasecmp(type,"flank") == 0){
 		/* Look for the right flank dependency and check wether a
@@ -383,7 +396,7 @@ int core_check_dependency(json_object* dependency){
 			/* We have a winner here */
 			int last = dep->last;
 			int now = check_dependency(json_object_object_get(
-				dependency,"dependency"));
+				dependency,"dependency"), NULL);
 
 			if(now < 0){
 				println("Failed to get sub-dependency status"
@@ -394,27 +407,32 @@ int core_check_dependency(json_object* dependency){
 				json_object_to_fd(STDOUT_FILENO, dependency,
 					JSON_C_TO_STRING_PRETTY);
 
-				return -1;
+				percent_ret = -1;
+				goto ret_vals;
 
 			}
 
 			if(now == last){
 				/* Boring. Nothing has happenend */
-				return false;
+				percent_ret = false;
+				goto ret_vals;
 			}
 			
 			if(last < 0){
 				/* Error correction and init state */
 				dep->last = now;
-				return 0;
+				percent_ret = false;
+				goto ret_vals;
 			}
 
 			if(last < now){
 				dep->last = now;
-				return dep->high;
+				percent_ret = dep->high;
+				goto ret_vals;
 			}else{
 				dep->last = now;
-				return dep->low;
+				percent_ret = dep->low;
+				goto ret_vals;
 
 			}
 
@@ -423,7 +441,8 @@ int core_check_dependency(json_object* dependency){
 		/* WTF?! */
 		println("FOUND UNINITIALIZED FLANK DEPENDENCY!!!", ERROR);
 		println("THIS SHOULD BE IMPOSSIBLE!!!!", ERROR);
-		return -3;
+		percent_ret = -3;
+		goto ret_vals;
 		
 	}else if(strcasecmp(type,"or") == 0){
 		/* This is an OR of all dependencies given in the dependencies
@@ -433,10 +452,11 @@ int core_check_dependency(json_object* dependency){
 		for(size_t i = 0; i < json_object_array_length(deps); i++){
 
 			int val = check_dependency(json_object_array_get_idx(
-				deps,i));
+				deps,i), NULL);
 
 			if(val != 0){
-				return val;
+				percent_ret = val;
+				goto ret_vals;
 			}
 
 		}
@@ -450,18 +470,21 @@ int core_check_dependency(json_object* dependency){
 		for(size_t i = 0; i < json_object_array_length(deps); i++){
 
 			int val = check_dependency(json_object_array_get_idx(
-				deps,i));
+				deps,i), NULL);
 
 			if(val <= 0){
-				return val;
+				percent_ret = val;
+				goto ret_vals;
 			}
 
 		}
-		return false;
+		percent_ret = false;
+		goto ret_vals;
 		
 	}else if(strcasecmp(type,"never") == 0){
 		/* This is unable to return true at any time */
-		return false;
+		percent_ret = false;
+		goto ret_vals;
 	}else if(strcasecmp(type,"timer") == 0){
 		/* This is to return based on the game expiration timer. 
 		 * Operations are required to be relative to the game time since
@@ -476,7 +499,8 @@ int core_check_dependency(json_object* dependency){
 		 if((after != NULL) && (left != NULL)){
 			println("Timer dependency with multiple values!!",
 				ERROR);
-			return -2;
+			percent_ret = -2;
+			goto ret_vals;
 		 }
 			
 		time_t target;
@@ -509,7 +533,8 @@ int core_check_dependency(json_object* dependency){
 		}else{
 			println("Timer dependency with no value specified!!",
 				ERROR);
-			return -1;
+			percent_ret = -1;
+			goto ret_vals;
 		}
 		
 		json_object* above_o = json_object_object_get(dependency, 
@@ -526,15 +551,30 @@ int core_check_dependency(json_object* dependency){
 			
 			
 		if(below && (real < target)){
-			return true;
+			percent_ret = true;
 		}
 		else if(above && (real > target)){
-			return true;
+			percent_ret = true;
 		}
 		else if(real == target){
-			return true;
+			percent_ret = true;
 		}else{
-			return false;
+			if(above && after != NULL){
+
+				percent_ret = fabsf(
+					(real) /
+					(float) (target));
+				
+			
+			}else if(below && left != NULL){
+				percent_ret = fabsf(
+					(game_duration - real) /
+					(float) (target - game_duration));
+
+			}else{
+				percent_ret = false;
+
+			}
 		}
 
 			
@@ -554,38 +594,69 @@ int core_check_dependency(json_object* dependency){
 				return 0;
 			}
 
-			unsigned long long int current_time = 
-				(unsigned long long int) time(NULL);
+			time_t current_time = 
+				get_current_ec_time();
 
 			if(dep->below && current_time < (dep->activation + 
 				dep->threshold)){
-				return 1;
+				percent_ret = 1;
+				goto ret_vals;
 			}
 			
 			if(dep->above && current_time > (dep->activation + 
 				dep->threshold)){
-				return 2;
+				percent_ret = 1;
+				goto ret_vals;
 			}
 			
 			if(current_time == (dep->activation + dep->threshold)){
-				return 3;
+				percent_ret = 3;
+				goto ret_vals;
 			}
 
-			return 0;
+			if(dep->above){
+
+				percent_ret = fabsf(
+				(dep->activation - current_time) /
+				(float) (dep->threshold));
+			}else{
+				percent_ret = 0;
+
+			}
+
+			goto ret_vals;
 		}
 		
 		/* WTF?! */
 		println("FOUND UNINITIALIZED LENGTH DEPENDENCY!!!", ERROR);
 		println("THIS SHOULD BE IMPOSSIBLE!!!!", ERROR);
-		return -3;
+		percent_ret = -3;
+		goto ret_vals;
 
 
 	}else{
 		println("invalid type specified in core dependency : %s",
 			ERROR, type);
-		return -4;
+		percent_ret = -4;
+		goto ret_vals;
+	}
+ret_vals:
+
+	if(percent_ret == NAN || percent_ret == INFINITY || 
+		percent_ret == -INFINITY){
+		println("Core dependency return value would be not \
+representable as integer: %f",
+			percent_ret);
+		if(percentage != NULL){
+			*percentage = percent_ret;
+		}
+		return -1;
+	}
+	if(percentage != NULL){
+		*percentage = percent_ret;
 	}
 
+	return floor(percent_ret);
 }
 
 int core_trigger(json_object* trigger, bool dry){
@@ -730,7 +801,7 @@ DUMPING:",
 			json_object* dependency = json_object_array_get_idx(
 				dependencies,dep);
 
-			int state = check_dependency(dependency);
+			int state = check_dependency(dependency, NULL);
 			if(state < 0){
 				println("Failed to check dependency! dumping:",
 					ERROR);
@@ -896,7 +967,7 @@ int core_update_lengths(){
 	for(size_t i = 0; i < length_dependency_count; i++){
 		struct length_dependency_t* dep = length_dependencies[i];
 
-		int state = check_dependency(dep->sub_dependency);
+		int state = check_dependency(dep->sub_dependency, NULL);
 
 		if(state < 0){
 			println("Failed to check a sub-dep. of a length dep.!",
@@ -912,7 +983,7 @@ int core_update_lengths(){
 			dep->root_dependency,"lock");
 
 		if(lockdep != NULL){
-			int lockstat = check_dependency(lockdep);
+			int lockstat = check_dependency(lockdep, NULL);
 		
 			if(lockstat > 0){
 				/* This is now locked. DON'T DO ANYTHING*/
@@ -934,7 +1005,7 @@ dependency! Dumping root:",
 
 		if((state == 1) && (dep->activation == 0)){
 			/* This is my time to shine! */
-			dep->activation = (unsigned long long int) time(NULL);
+			dep->activation = get_current_ec_time();
 
 			json_object* start_trigger = json_object_object_get(
 				dep->root_dependency, "start_triggers");
@@ -951,8 +1022,8 @@ dependency! Dumping root:",
 			json_object* success_trigger = json_object_object_get(
 				dep->root_dependency, "success_end_triggers");
 			
-			unsigned long long int current_time = 
-				(unsigned long long int) time(NULL);
+			time_t current_time = get_current_ec_time();
+			
 
 			if((dep->below && current_time < (dep->activation + 
 				dep->threshold)) || 

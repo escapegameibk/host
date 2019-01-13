@@ -122,9 +122,9 @@ int start_ecp();
 void* loop_ecp();
 int ecp_get_updates();
 
-int ecp_check_dependency(json_object* dependency);
+int ecp_check_dependency(json_object* dependency, float* percentage);
 int ecp_check_port_dependency(json_object* dependency);
-int ecp_check_analog_dependency(json_object* dependency);
+float ecp_check_analog_dependency(json_object* dependency);
 
 int ecp_trigger(json_object* trigger, bool dry);
 int ecp_trigger_secondary_trans(json_object* trigger, bool dry);

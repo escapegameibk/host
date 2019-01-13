@@ -35,6 +35,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <poll.h>
+#include <math.h>
 
 size_t ecp_devcnt = 0;
 struct ecproto_device_t *ecp_devs = NULL;
@@ -431,10 +432,15 @@ int ecp_get_updates(){
 	return -1;
 }
 
-int ecp_check_dependency(json_object* dependency){
+int ecp_check_dependency(json_object* dependency, float* percentage){
 	
 	if(!ecp_initialized){
+
 		/* Standby */
+		if(percentage != NULL){
+			*percentage = false;
+
+		}
 		return false;
 	}
 	
@@ -445,23 +451,33 @@ int ecp_check_dependency(json_object* dependency){
 	}else{
 		type_name = json_object_get_string(type);
 	}	
+	float ret = 0;
 
 	if(strcasecmp(type_name, "port") == 0){
 		
-		return ecp_check_port_dependency(dependency);
+		ret = ecp_check_port_dependency(dependency);
 	}else if(strcasecmp(type_name, "analog") == 0){
 		
-		return ecp_check_analog_dependency(dependency);
+		ret = ecp_check_analog_dependency(dependency);
 
 	}else{
 		println("Invalid type in ECP dependecy! Duming root:"
 			, ERROR);
 		json_object_to_fd(STDOUT_FILENO, dependency, 
 			JSON_C_TO_STRING_PRETTY);
-		return -1;
+		ret = -1;
 	}
-
-	return 0;
+	if(ret == NAN || ret == INFINITY || ret == -INFINITY){
+	
+		println("Core dependency return value would be not \
+representable as integer: %f",
+		ret);
+		ret = -1;
+	}
+	if(percentage != NULL){
+		*percentage = ret;
+	}
+	return floor(ret);
 
 }
 
@@ -542,7 +558,7 @@ int ecp_check_port_dependency(json_object* dependency){
 	return regp->bits[bit_id].current == target;
 }
 
-int ecp_check_analog_dependency(json_object* dependency){
+float ecp_check_analog_dependency(json_object* dependency){
 	
 	json_object* dev = json_object_object_get(dependency, "device");
 	if(dev == NULL){
@@ -576,12 +592,21 @@ int ecp_check_analog_dependency(json_object* dependency){
 	}
 
 	if(strcasecmp(th, "above") == 0){
-		return value < escp_get_dev_from_id(device_id)->analog->value;
-	}
-	else if(strcasecmp(th, "below") == 0){
-		return value > escp_get_dev_from_id(device_id)->analog->value;
-	}
-	else if(strcasecmp(th, "is") == 0){
+		if(value < escp_get_dev_from_id(device_id)->analog->value){
+			return true;
+		}else{
+			return escp_get_dev_from_id(device_id)->analog->value /
+			(float)value;
+		}
+	}else if(strcasecmp(th, "below") == 0){
+		if(value > escp_get_dev_from_id(device_id)->analog->value){
+			return true;
+		}else{
+			return (255 - 
+			escp_get_dev_from_id(device_id)->analog->value) /
+			(255 - (float)value);
+		}
+	}else if(strcasecmp(th, "is") == 0){
 		return value == escp_get_dev_from_id(device_id)->analog->value;
 	}
 	else{
@@ -867,6 +892,14 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 				return -7;
 			}
 			
+#if DEBUG_LVL > DEBUG_NORM
+			println("ECP Port update: %i dev %c reg %i bit --> %i",
+				DEBUG,
+				recv_frm[ECP_ADDR_IDX], 
+				recv_frm[ECP_PAYLOAD_IDX], 
+				recv_frm[ECP_PAYLOAD_IDX + 1], 
+				recv_frm[ECP_PAYLOAD_IDX + 2]);
+#endif
 			return set_ecp_current_state(recv_frm[ECP_ADDR_IDX], 
 				recv_frm[ECP_PAYLOAD_IDX], 
 				recv_frm[ECP_PAYLOAD_IDX + 1], 
