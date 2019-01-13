@@ -1,6 +1,6 @@
 {
 
-	"duration" : 3600,
+	"duration" : 3,
 	"boot_video" : "http://127.0.0.1/data/video/test.mp4",
 	"name" :
 	[
@@ -10,7 +10,7 @@
 	"mtsp_device" : "/dev/ttyUSB0",
 	"mtsp_baud" : 460800,
 	"ecp_device" : "/dev/ttyUSB0",
-	"ecp_device_count" : 2,
+	"ecp_device_count" : 1,
 	"langs" :[
 		"english",
 		"deutsch"
@@ -25,22 +25,14 @@
 			[
 				{
 					"module" : "core",
-					"type" : "flank",
-					"name" : "Flank",
-					"dependency" :
-					{
-						"name" : "Prevented by stop",
-						"module" : "core",
-						"type" : "event",
-						"event" : 1,
-						"target" : 0
-					}
+					"type" : "never",
+					"name" : "ney"
 				},
 				{
-					"module" : "ecp",
-					"device" : 0,
-					"register" : "A",
-					"bit" : 1
+					"module" : "core",
+					"type" : "timer",
+					"name" : "timing",
+					"left" : 3590
 				}
 			],
 			"triggers" :
@@ -68,6 +60,11 @@
 					"type" : "event",
 					"event" : 0,
 					"target" : 0
+				},
+				{
+					"module" : "core",
+					"type" : "never",
+					"name" : "yes"
 				}
 			],
 			"triggers" :
@@ -76,6 +73,30 @@
 					"name" : "stop timer",
 					"module" : "core",
 					"action" : "timer_stop"
+				}
+			]
+		},
+		{
+			"name" : "Reset",
+			"dependencies" :
+			[
+				{
+					"name" : "Prevented by start",
+					"module" : "core",
+					"type" : "never"
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" : "stop timer",
+					"module" : "core",
+					"action" : "timer_reset"
+				},
+				{
+					"name" : "stop timer",
+					"module" : "core",
+					"action" : "reset"
 				}
 			]
 		}
