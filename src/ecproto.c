@@ -432,6 +432,14 @@ int ecp_get_updates(){
 	return -1;
 }
 
+int reset_ecp(){
+	
+	/* Asynchroneusly gets all device states. Avoids running asynchroneus */
+	ecp_initialized = false;
+	
+	return 0;
+}
+
 int ecp_check_dependency(json_object* dependency, float* percentage){
 	
 	if(!ecp_initialized){
@@ -998,6 +1006,10 @@ int ecp_bus_init(){
 	int n = 0;
 #define MAX_ERRCNT 100
 	
+	println("Attempting ecproto bus initialisation...", DEBUG);
+	println("During this time no updates will be received from the bus!",
+		DEBUG);
+	println("Please, for the time beeing, stand by!", DEBUG);
 	for(size_t errcnt = 0; errcnt < MAX_ERRCNT; errcnt++){
 		n = 0;
 		/* Initialize devices */

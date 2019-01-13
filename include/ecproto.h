@@ -121,6 +121,7 @@ int init_ecp();
 int start_ecp();
 void* loop_ecp();
 int ecp_get_updates();
+int reset_ecp();
 
 int ecp_check_dependency(json_object* dependency, float* percentage);
 int ecp_check_port_dependency(json_object* dependency);

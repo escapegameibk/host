@@ -263,6 +263,14 @@ int reset_modules(){
 	}
 
 #endif
+
+#ifndef NOEC
+	if(reset_ecp() < 0){
+		println("Failed to reset ecproto module!", ERROR);
+		return -4;
+	}
+	
+#endif
 	return 0;
 }
 
