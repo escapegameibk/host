@@ -254,6 +254,7 @@ int ecp_register_device(size_t id){
 int init_ecp(){	
 	pthread_mutex_init(&ecp_lock, NULL);
 	pthread_mutex_init(&ecp_readlock, NULL);
+	pthread_mutex_init(&ecp_state_lock, NULL);
 	
 
 	const char* device = ECP_DEF_DEV;
@@ -442,15 +443,7 @@ int reset_ecp(){
 
 int ecp_check_dependency(json_object* dependency, float* percentage){
 	
-	if(!ecp_initialized){
-
-		/* Standby */
-		if(percentage != NULL){
-			*percentage = false;
-
-		}
-		return false;
-	}
+	pthread_mutex_lock(&ecp_state_lock);
 	
 	json_object* type = json_object_object_get(dependency, "type");
 	const char* type_name ;
@@ -485,6 +478,7 @@ representable as integer: %f",
 	if(percentage != NULL){
 		*percentage = ret;
 	}
+	pthread_mutex_unlock(&ecp_state_lock);
 	return floor(ret);
 
 }
@@ -1010,6 +1004,8 @@ int ecp_bus_init(){
 	println("During this time no updates will be received from the bus!",
 		DEBUG);
 	println("Please, for the time beeing, stand by!", DEBUG);
+	println("Any ECPROTO activity is now LOCKED", DEBUG);
+	pthread_mutex_lock(&ecp_state_lock);
 	for(size_t errcnt = 0; errcnt < MAX_ERRCNT; errcnt++){
 		n = 0;
 		/* Initialize devices */
@@ -1127,6 +1123,10 @@ error:
 		println("ECP INITIALIZED", DEBUG);
 		ecp_initialized = true;
 	}
+	
+	n |= ecp_get_updates();
+
+	pthread_mutex_unlock(&ecp_state_lock);
 
 	return n;
 }

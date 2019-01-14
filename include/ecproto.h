@@ -104,7 +104,7 @@ struct ecproto_device_t *ecp_devs;
 /* THE FILE DESCRIPTOOOOR!! */
 int ecp_fd;
 /* AAAAND THE IIIINNNNCCREEDDDIIBBBBLE LOOOOOOOOOOOOCK */
-pthread_mutex_t ecp_lock, ecp_readlock;
+pthread_mutex_t ecp_lock, ecp_readlock, ecp_state_lock;
 
 bool ecp_initialized;
 
