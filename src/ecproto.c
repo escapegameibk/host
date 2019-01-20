@@ -241,6 +241,7 @@ int ecp_register_device(size_t id){
 		device = &ecp_devs[ecp_devcnt - 1];
 		device->id = id;
 		device->regcnt = 0;
+		device->received_regcnt = 0;
 		device->regs = NULL;
 		device->analog = malloc(sizeof(struct ecproto_analog_t));
 		device->analog->used = false;
@@ -914,14 +915,67 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 				recv_frm[ECP_PAYLOAD_IDX + 2]);
 
 			break;
-
-
-		case 10:
-			/* All registers of a device are in the payload
+		
+		case REGISTER_COUNT:
+			/* The target amount of registers should be contained
+			 * within the payload.
 			 */
-			for(size_t i = 0; i < recv_payload_len; i++){
-				ecp_register_register(recv_frm[ECP_ADDR_IDX], 
-					recv_frm[ECP_PAYLOAD_IDX + i]);
+
+			if(recv_payload_len > 0){
+				
+				struct ecproto_device_t* dev = 
+					escp_get_dev_from_id(
+					recv_frm[ECP_ADDR_IDX]);
+
+				if(dev == NULL){
+					println(
+						"Register count reply from" 
+						"unknown device!",
+						ERROR);
+					return -1;
+				}
+
+
+				dev->received_regcnt = 
+					recv_frm[ECP_PAYLOAD_IDX];
+#if DEBUG_LVL > DEBUG_NORM
+				println("ECP dev %i notified us of %i regs!", 
+					DEBUG, recv_frm[ECP_ADDR_IDX],
+					recv_frm[ECP_PAYLOAD_IDX]
+					);
+#endif
+			}else{
+				println("ECP register count without payload!",
+					ERROR);
+				return -1;
+			}
+			break;
+
+		case REGISTER_LIST:
+			/* 
+			 * All registers of a device are in the payload
+			 */
+			 {
+
+				struct ecproto_device_t* dev = 
+					escp_get_dev_from_id(
+					recv_frm[ECP_ADDR_IDX]);
+
+				if(dev == NULL){
+					println(
+						"Register list reply from" 
+						"unknown device!",
+						ERROR);
+					return -1;
+				}
+				
+				for(size_t i = 0; i < dev->received_regcnt; 
+					i++){
+					
+					ecp_register_register(
+						recv_frm[ECP_ADDR_IDX], 
+						recv_frm[ECP_PAYLOAD_IDX + i]);
+				}
 			}
 			break;
 
@@ -1027,11 +1081,22 @@ int ecp_bus_init(){
 			}
 			/* Get all registers */
 			n |= ecp_send_message(device->id, 
+				REGISTER_COUNT, NULL, 0);
+			if(n){
+
+				println("Failed to count ecp regs for dev %i",
+					ERROR, dev);
+
+				goto error;
+			}
+			
+			n |= ecp_send_message(device->id, 
 				REGISTER_LIST, NULL, 0);
 			if(n){
 
 				println("Failed to list ecp regs for dev %i",
 					ERROR, dev);
+
 				goto error;
 			}
 			

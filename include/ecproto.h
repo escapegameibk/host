@@ -56,10 +56,6 @@
 
 #define ECP_CMD_DEL 0xFF
 
-#define ECP_EXTDEV_MFRC522     0x01
-
-#define ECP_RFID_TAGLEN	       5
-
 #define ECP_INPUT false
 #define ECP_OUTPUT true
 #define ECP_DEFAULT_TARGET false
@@ -92,6 +88,9 @@ struct ecproto_analog_t{
 struct ecproto_device_t
 {
 	size_t id;
+	/* v This contains the register count that the device told us v */
+	size_t received_regcnt;
+	/* This is the thus far added amount of registers*/
 	size_t regcnt;
 	struct ecproto_port_register_t* regs;
 	struct ecproto_analog_t* analog;
