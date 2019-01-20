@@ -9,7 +9,7 @@
 	],
 	"mtsp_device" : "/dev/ttyUSB0",
 	"mtsp_baud" : 460800,
-	"ecp_device" : "/dev/ttyUSB0",
+	"ecp_device" : "/dev/ttyACM0",
 	"ecp_device_count" : 1,
 	"langs" :[
 		"english",
@@ -154,6 +154,7 @@
 		"footer" : "#B71C1C",
 		"body" : "#FFEBEE",
 		"alarm" : "#000000",
+		"fluid" : true,
 		"logo" : "https://www.escpe.net/data/image/logos/painter_mask_white.svg"
 	}
 }
