@@ -1080,6 +1080,8 @@ void core_release_alarm(){
 	return;
 }
 
+#endif
+
 time_t get_expired_game_time(){
 
 	if(game_timer_end == 0 && game_timer_start != 0 ){
@@ -1088,5 +1090,3 @@ time_t get_expired_game_time(){
 		return game_timer_end - game_timer_start;
 	}
 }
-
-#endif

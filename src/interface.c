@@ -552,7 +552,7 @@ int print_dependency_states_interface(int sockfd){
 	return 0;
 	
 }
-
+#ifndef NOHINTS
 int print_hints_interface(int sockfd){
 	
 	json_object* hnt_print = json_object_new_array();
@@ -633,6 +633,7 @@ int print_hint_states_interface(int sockfd){
 	json_object_put(hint_states);
 	return 0;
 }
+#endif /* NOHINTS */
 
 #ifndef NOVIDEO
 int print_video_url(int sockfd, json_object* device_no){

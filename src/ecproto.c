@@ -812,6 +812,8 @@ bool validate_ecp_frame(uint8_t* frame, size_t len){
 	if(crc_is != crc_should){
 		println("ECP crc missmatch!", WARNING);
 		println("SHOULD BE: %i is %i", WARNING, crc_should, crc_is);
+		println("Awaiting bus init due to CRC mismatch!!!!", WARNING);
+		ecp_initialized = false;
 		return false;
 	}
 	/* The frame should be valid */
