@@ -43,9 +43,13 @@ int print_changeables_interface(int sockfd);
 int print_events_interface(int sockfd);
 int print_dependencies_interface(int sockfd);
 int print_dependency_states_interface(int sockfd);
+#ifndef NOHINTS
 int print_hints_interface(int sockfd);
 int print_hint_states_interface(int sockfd);
+#endif /* NOHINTS */
+#ifndef NOVIDEO
 int print_video_url(int sockfd, json_object* device_no);
+#endif /* NOVIDEO */
 
 /* Helper functions */
 json_object** get_printables_dependencies(size_t* depcnt);

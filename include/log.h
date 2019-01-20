@@ -19,7 +19,7 @@
 #define LOG_H
 
 #ifndef DEBUG_LVL
-#define DEBUG_LVL 0
+#define DEBUG_LVL 1
 #endif
 #define DEBUG_NORM 0 
 #define DEBUG_MORE 1
