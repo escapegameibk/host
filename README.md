@@ -450,6 +450,7 @@ following is a list of these definitions:
 - NOVIDEO : Completely disables and removes the Escape game video system.
 - NOSOUND : Completely disables and removes sound capabilities.
 - NORECOVER : Don't attempt message recovery. Flag for the ECPROTO
+- AGGRESSIVE_RECOVER: Aggressively attempts to recover any device errors.
 
 # Maintainers
 
