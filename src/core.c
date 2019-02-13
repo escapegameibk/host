@@ -342,7 +342,10 @@ int core_check_dependency(json_object* dependency,float* percentage){
 			percent_ret = -2;
 			goto ret_vals;
 		}else{
-			return (state_trigger_status[event] == target);
+
+
+			percent_ret =  (state_trigger_status[event] == target);
+			goto ret_vals;
 		}
 
 	}else if(strcasecmp(type,"sequence") == 0){

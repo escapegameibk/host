@@ -552,11 +552,25 @@ int print_dependency_states_interface(int sockfd){
 	return 0;
 	
 }
+
 #ifndef NOHINTS
 int print_hints_interface(int sockfd){
 	
 	json_object* hnt_print = json_object_new_array();
+
+	if(!hints_enabled){
+		
+		json_object* hnts = json_object_new_array();
+		
+		json_object_to_fd(sockfd, hnts, 
+			JSON_C_TO_STRING_PLAIN);
+		
 	
+		json_object_put(hnts);
+
+		return 0;
+	}
+
 	for(size_t i = 0; (i < printable_event_cnt) && (printable_events[i] < 
 		json_object_array_length(get_hints_root())); i++){
 		
@@ -604,6 +618,18 @@ int print_hints_interface(int sockfd){
 int print_hint_states_interface(int sockfd){
 	
 	json_object* hnt_print = json_object_new_array();
+	
+	if(!hints_enabled){
+		
+		
+		json_object_to_fd(sockfd, hnt_print, 
+			JSON_C_TO_STRING_PLAIN);
+		
+	
+		json_object_put(hnt_print);
+
+		return 0;
+	}
 	
 	for(size_t i = 0; (i < printable_event_cnt) && (printable_events[i] < 
 		json_object_array_length(get_hints_root())); i++){

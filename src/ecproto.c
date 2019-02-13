@@ -246,6 +246,14 @@ int ecp_register_device(size_t id){
 		device->analog = malloc(sizeof(struct ecproto_analog_t));
 		device->analog->used = false;
 		device->analog->value = 0;
+		/* A device is assumed GPIO-capable, in case it has responded
+		 * to be in it's device purpose, or it has errored, while
+		 * attempting to receive this.
+		 */
+		device->gpio_capable = false;
+		device->mfrc522_capable = false;
+		device->mfrc522_devcnt = 0;
+		device->mfrc522_devs = NULL;
 
 	}
 	
@@ -824,25 +832,29 @@ bool validate_ecp_frame(uint8_t* frame, size_t len){
 int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t 
 	snd_len){
 
+	/* Validate sent and received frames */
 	if(!validate_ecp_frame(recv_frm, recv_len)){
 		println("Received invalid ecp frame!", WARNING);
 		return -1;
 	}
 	
 	if(snd_frm != NULL && !validate_ecp_frame(snd_frm, snd_len)){
+		
 		println("Sent invalid ecp frame! WTF?", ERROR);
 		println("Critical bug! This shouldn't occure.", ERROR);
+		
 		return -2;
 	}
-
+	
 	size_t recv_payload_len = recv_len - ECPROTO_OVERHEAD;
 	/* Switch by the receiving frame's id */
 	switch(recv_frm[ECP_ID_IDX]){
-		case 8:
+		case ERROR_ACTION:
 			if(recv_frm[recv_len - 4] != 0){
-				println(
-"ECP received error frame, which isn't null-terminated!"
-					,ERROR);
+				
+				println("ECP received error frame, which isn't"
+					" null-terminated!",ERROR);
+
 				return -3;
 			}
 			/* Print error string */
@@ -851,45 +863,29 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			println("%s\n", ERROR, &recv_frm[ECP_PAYLOAD_IDX]);
 			return -4;
 			break;
-		case 0:
+		case INIT_ACTION:
 			println("ECP slave %i has requested an initialisation",
 				DEBUG, recv_frm[ECP_ADDR_IDX]);
 
 			ecp_initialized = false;
 			break;
-		case 2:
+		case SEND_NOTIFY:
 			/* I will now get some more frames. Tell the overlying
 			 * function that it should read some more frames */
 			if(recv_payload_len >= 1){
 				return recv_frm[ECP_PAYLOAD_IDX];
 			}
 			break;
-		case 3:
-			
-			ecp_register_device(recv_frm[ECP_ADDR_IDX]);
-			if(recv_payload_len >= 1 && recv_frm[ECP_PAYLOAD_IDX] == 
-				recv_frm[ECP_ADDR_IDX]){
-				/* Bus is enumerated */
-				return 0;
-			}else{
-				return 1;
-			}
 
-			break;
-
-		case 4:
-			/* TODO */
-			return 0;
-			break;
-		case 7:
-		case 5:
+		case WRITE_PORT_ACTION:
+		case DEFINE_PORT_ACTION:
 			/* The reply to a port definition or port write */
 			if(recv_payload_len < 1 || !recv_frm[ECP_PAYLOAD_IDX]){
 				return -6;
 			}
 
 			break;
-		case 6:
+		case GET_PORT_ACTION:
 			/* The reply to a port state get. */
 			if(recv_payload_len < 3){
 				println("Too few ecp params for action %i!",
@@ -975,7 +971,7 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			}
 			break;
 
-		case 11:
+		case PIN_ENABLED:
 
 			if(recv_payload_len < 3){
 				println("Received too short ecp message 11",
@@ -1021,7 +1017,7 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 				prt->enabled = recv_frm[ECP_PAYLOAD_IDX + 2];
 			}
 			break;
-		case 12:
+		case SECONDARY_PRINT:
 			if(recv_payload_len < 1){
 				println("Received ecp frame 12 with <1 params",
 					ERROR);
@@ -1032,7 +1028,7 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			}
 			break;
 
-		case 13:
+		case ADC_GET:
 			
 			if(recv_payload_len < 1){
 				println("Received ecp frame 13 with <1 params",
@@ -1042,6 +1038,59 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			escp_get_dev_from_id(recv_frm[ECP_ADDR_IDX])
 				->analog->value = recv_frm[ECP_PAYLOAD_IDX];
 			break;
+
+		case GET_PURPOSE:
+		{
+#if DEBUG_LVL > DEBUG_NORM
+			println("Device %i notified us of it's %i special "
+				"capablilties", DEBUG, recv_frm[ECP_ADDR_IDX],
+				recv_frm[ECP_PAYLOAD_IDX]);
+#endif			
+			struct ecproto_device_t* dev = escp_get_dev_from_id(
+				recv_frm[ECP_ADDR_IDX]);
+
+			if(dev == NULL){
+				println("Received purpose from unknown dev %i!",
+					ERROR, recv_frm[ECP_ADDR_IDX]);
+				return -1;
+			}
+
+			for(size_t i = 0; i < recv_frm[ECP_PAYLOAD_IDX]; i++){
+				
+				switch(recv_frm[ECP_PAYLOAD_IDX + i + 1]){
+					
+					case SPECIALDEV_GPIO:
+						dev->gpio_capable = true;
+						break;
+					case SPECIALDEV_MFRC522:
+						dev->mfrc522_capable = true;
+						break;
+
+					default:
+						println("Fancy! A new purpose!"
+							"Now would you mind"
+							"Implementing it please"
+							"? %i ecp purpose recvd"
+							,WARNING, 
+							recv_frm[ECP_PAYLOAD_IDX 
+							+ i + 1]);
+
+
+				}
+
+			}
+
+		}
+			break;
+
+		case SPECIAL_INTERACT:
+		/* This is for special devices which have a non-regular use. */
+			
+			return ecp_handle_special_interact(recv_frm);
+			
+			break;
+
+
 		default:
 			/* You lazy bastard! */
 			println("Unimplemented ECP response: %i!", WARNING,
@@ -1051,9 +1100,110 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 	return 0;
 }
 
+int ecp_handle_special_interact(uint8_t* recv_frm){
+
+	
+
+	switch(recv_frm[ECP_PAYLOAD_IDX]){
+		
+		case SPECIALDEV_MFRC522:
+			return ecp_handle_mfrc522(recv_frm);
+			break;
+
+		case SPECIALDEV_GPIO:
+		case SPECIALDEV_OLD_ANALOG:
+		default:
+			println("Unknown or invalid special interact attempt "
+				"for ecp special id %i. Ignoreing", WARNING,
+				recv_frm[ECP_PAYLOAD_IDX]);
+			break;
+
+	}
+	
+	return 0;
+}
+
+int ecp_handle_mfrc522(uint8_t* recv_frm){
+	
+	struct ecproto_device_t* dev = escp_get_dev_from_id(
+		recv_frm[ECP_ADDR_IDX]);
+
+	if(dev == NULL){
+		println("Received mfrc522 purpose from unknown dev %i!",
+			ERROR, recv_frm[ECP_ADDR_IDX]);
+		return -1;
+	}
+	
+	/* The mfrc522 now has anothr sub-id... So many...*/
+	switch(recv_frm[ECP_PAYLOAD_IDX + 1]){
+		
+		case MFRC522_GET_ALL_DEVS:
+			/* This gives me only the total amount 
+			 * of devices locally attached.
+			 */
+			
+			if(dev->mfrc522_devcnt == 
+				recv_frm[ECP_PAYLOAD_IDX + 2]){
+				/* Nothing to do here! */
+				return 0;
+			}
+			/* Update and init! */
+			dev->mfrc522_devcnt = 
+				recv_frm[ECP_PAYLOAD_IDX + 2];
+			
+			dev->mfrc522_devs = realloc(dev->mfrc522_devs, 
+				(dev->mfrc522_devcnt * 
+				sizeof(struct ecproto_mfrc522_dev_t)));
+			
+			memset(dev->mfrc522_devs, 0, (dev->mfrc522_devcnt * 
+				sizeof(struct ecproto_mfrc522_dev_t)));
+
+			break;
+
+		case MFRC522_GET_TAG:
+
+			if(dev->mfrc522_devcnt <= 
+				recv_frm[ECP_PAYLOAD_IDX + 2]){
+				
+				println("ECP MFRC522 id too large: %i/%i!",
+					ERROR, recv_frm[ECP_PAYLOAD_IDX + 2],
+					dev->mfrc522_devcnt);
+				return -1;
+			}
+
+			 struct ecproto_mfrc522_dev_t* tag =
+				&dev->mfrc522_devs[
+				recv_frm[ECP_PAYLOAD_IDX + 2]];
+			
+			memcpy(tag->tag, &recv_frm[ECP_PAYLOAD_IDX + 4],
+				sizeof(tag->tag));
+			
+			tag->tag_present = !!recv_frm[ECP_PAYLOAD_IDX + 3];
+
+			if(*((uint32_t*)tag->tag) == 0x45524F52){
+				tag->working = false;
+			}
+			println("ECP MFRC522 Update: dev %i tag %i -is %i-->%i",
+				DEBUG, recv_frm[ECP_ADDR_IDX],
+				recv_frm[ECP_PAYLOAD_IDX + 2],
+				recv_frm[ECP_PAYLOAD_IDX + 3],
+				 *((uint32_t*)&recv_frm[ECP_PAYLOAD_IDX + 3]));
+
+			break;
+
+
+		default:
+			println("ECP mfrc522 unknown su-id %i",
+				WARNING, 
+				recv_frm[ECP_PAYLOAD_IDX + 1]);
+			break;
+	}
+
+	return 0;
+}
+
 int ecp_bus_init(){
 	/* Enumerate bus and initialize device structures */	
-	int n = 0;
 #define MAX_ERRCNT 100
 	
 	println("Attempting ecproto bus initialisation...", DEBUG);
@@ -1062,141 +1212,203 @@ int ecp_bus_init(){
 	println("Please, for the time beeing, stand by!", DEBUG);
 	println("Any ECPROTO activity is now LOCKED", DEBUG);
 	pthread_mutex_lock(&ecp_state_lock);
+	
+	int err = 0;
+	
 	for(size_t errcnt = 0; errcnt < MAX_ERRCNT; errcnt++){
-		n = 0;
 		/* Initialize devices */
+		err = 0;
 
 		for(size_t dev = 0; dev < ecp_devcnt; dev++){
 			
 			struct ecproto_device_t* device = &ecp_devs[dev];
-			if(device->analog->used){
-
-				if(send_ecp_analog_req(device->id) < 0){
-					println("Failed to init ecp analog!",
-						ERROR);
-					goto error;
-				}
-			}
-			/* Get all registers */
-			n |= ecp_send_message(device->id, 
-				REGISTER_COUNT, NULL, 0);
-			if(n){
-
-				println("Failed to count ecp regs for dev %i",
-					ERROR, dev);
-
-				goto error;
+			
+			if((err = init_ecp_device(device)) < 0){
+				println("ECPROTO Device init failed for device"
+					" %li", ERROR, device->id);
+				break;
 			}
 			
-			n |= ecp_send_message(device->id, 
-				REGISTER_LIST, NULL, 0);
-			if(n){
 
-				println("Failed to list ecp regs for dev %i",
-					ERROR, dev);
-
-				goto error;
-			}
-			
-			for(size_t reg = 0; reg < device->regcnt; reg++){
-				struct ecproto_port_register_t* regp = 
-					&device->regs[reg];
-					/* INIT All registers */
-
-				for(size_t bt = 0; bt < ECP_REG_WIDTH; bt++){
-					struct ecproto_port_t* bit = 
-						&regp->bits[bt];
-					
-					uint8_t enable_dat [] = {regp->id, 
-						bit->bit};
-					n |= ecp_send_message(device->id, 
-						PIN_ENABLED, enable_dat, 
-						sizeof(enable_dat));
-					
-					if(n){
-						println("Failed to get ECP en",
-							WARNING);
-						goto error;
-					}
-					if(!bit->enabled){
-						continue;
-					}
-					
-					n |= send_ecp_ddir(device->id, regp->id, 
-						bit->bit, bit->ddir); 
-
-					if(n){
-						println("Failed to set ECP DDIR",
-							WARNING);
-						goto error;
-					}
-					
-					if(bit->ddir != ECP_OUTPUT){
-					
-						n |= send_ecp_port(
-						device->id, regp->id, 
-						bit->bit, bit->target); 
-						
-						if(n){
-							println(
-							"Failed to set ECP PORT"
-								,WARNING);
-							goto error;
-						}
-
-					}
-					
-					n |= get_ecp_port(device->id, regp->id, 
-						bit->bit); 
-					if(n){
-						println("Failed to get ECP PRT",
-							WARNING);
-						goto error;
-					}
-					
-					
-					if(bit->ddir == ECP_OUTPUT){
-						bit->target = bit->current;
-					}
-					
-					if(bit->ddir != ECP_OUTPUT || 
-						bit->target != 
-						ECP_DEFAULT_TARGET){
-					
-						n |= send_ecp_port(
-						device->id, regp->id, 
-						bit->bit, bit->target); 
-						
-						if(n){
-							println(
-							"Failed to set ECP PORT"
-								,WARNING);
-							goto error;
-						}
-
-					}
-				}
-			}
 		}
-	break;
+		
+		if(err >= 0){
+			
+			println("ECP INITIALIZED", DEBUG);
+			ecp_initialized = true;
+			err |= ecp_get_updates();
 
-error:
-		println("Failed to init ECP, retry %i/%i", WARNING, errcnt , 
-			MAX_ERRCNT);
-		continue;
+			break;
+		}
+		println("ECPROTO Bus init failed at attempt %i/%i", ERROR,
+			errcnt, MAX_ERRCNT);
 
 	}
-	if(n == 0){
-		println("ECP INITIALIZED", DEBUG);
-		ecp_initialized = true;
-	}
-	
-	n |= ecp_get_updates();
-
+	/* Releasing the bus anyways */
 	pthread_mutex_unlock(&ecp_state_lock);
 
-	return n;
+	return err;
 }
+
+int init_ecp_device(struct ecproto_device_t* device){
+	int n = 0;
+	bool old_fw = true;
+	
+	for(size_t i = 0; i < 10; i++){
+		if(ecp_send_message(device->id, GET_PURPOSE, NULL, 0) >= 0){
+			old_fw = false;
+			break;
+		}
+		
+	}
+
+	if(old_fw){
+		println("OUTDATED ECP MICROCONTROLLER VERSION DETECTED!"
+			"PLEASE UPDATE YOUR FIRMWARE TO THE LATEST VERSION!",
+			WARNING);
+		
+		println("The Above errors may be ignored. GPIO capability is"
+			"assumed by device %li from this point on.", WARNING,
+			device->id);
+		device->gpio_capable = true;
+		
+	}
+
+	if(device->analog->used){
+
+		if(send_ecp_analog_req(device->id) < 0){
+			println("Failed to init ecp analog!",
+				ERROR);
+			return -1;
+		}
+	}
+	if(device->mfrc522_capable){
+		uint8_t pay[] = {SPECIALDEV_MFRC522, MFRC522_GET_ALL_DEVS};
+		n |= ecp_send_message(device->id, SPECIAL_INTERACT, pay, 
+			sizeof(pay));
+	}
+
+	if(device->gpio_capable){
+		n |= init_ecp_gpio(device);
+	}
+
+	return n;
+
+}
+
+/* Initialize a devices's GPIO subpart. */
+
+int init_ecp_gpio(struct ecproto_device_t* device){
+	
+	int n = 0;
+	
+	/* Get a register count */
+	n |= ecp_send_message(device->id, REGISTER_COUNT, NULL, 0);
+	
+	if(n){
+
+		println("Failed to count ecp regs for dev %i", ERROR, 
+			device->id);
+		return -1;
+	}
+	
+	/* Get a list containing the above received amount of registers */
+	n |= ecp_send_message(device->id, REGISTER_LIST, NULL, 0);
+	if(n){
+		println("Failed to list ecp regs for dev %i",
+			ERROR, device->id);
+		return -1;
+	}
+	
+	for(size_t reg = 0; reg < device->regcnt; reg++){
+		
+		struct ecproto_port_register_t* regp = &device->regs[reg];
+		
+		/* INIT All registers */
+
+		for(size_t bt = 0; bt < ECP_REG_WIDTH; bt++){
+			
+			struct ecproto_port_t* bit = &regp->bits[bt];
+			
+			uint8_t enable_dat [] = {regp->id, bit->bit};
+			
+			n |= ecp_send_message(device->id, PIN_ENABLED,
+				enable_dat, sizeof(enable_dat));
+			
+			if(n){
+				println("Failed to get ECP port enable state",
+					WARNING);
+				return -1;
+			}
+			if(!bit->enabled){
+				/* Skip further initialisation of this port.
+				 * It is disabled man, I can't do anything */
+				continue;
+			}
+			
+			n |= send_ecp_ddir(device->id, regp->id, 
+				bit->bit, bit->ddir); 
+
+			if(n){
+				println("Failed to set ECP DDIR",
+					WARNING);
+				return -1;
+			}
+			
+			if(bit->ddir != ECP_OUTPUT){
+			
+				n |= send_ecp_port(device->id, regp->id, 
+					bit->bit, bit->target); 
+				
+				if(n){
+					println("Failed to set ECP port"
+						,WARNING);
+					return -1;
+				}
+
+			}
+			
+			n |= get_ecp_port(device->id, regp->id, 
+				bit->bit); 
+			if(n){
+				println("Failed to get ECP Port",
+					WARNING);
+				return -1;
+			}
+			
+			
+			if(bit->ddir == ECP_OUTPUT){
+				bit->target = bit->current;
+			}
+			
+			/* In case the targeted pin is not an input pin (in
+			 * which case this addresses the pullup-resistors), nor
+			 * is the targeted pin other than the default value
+			 * for all outputs, it can be assumed, that he pin is
+			 * doesn't need a refresh. 
+			 */
+
+			if(bit->ddir != ECP_OUTPUT || bit->target != 
+				ECP_DEFAULT_TARGET){
+			
+				n |= send_ecp_port(device->id, regp->id, 
+					bit->bit, bit->target); 
+				
+				if(n){
+					println("Failed to set ECP PORT"
+						,WARNING);
+					return -1;
+				}
+
+			}
+		}
+	
+	}
+	
+	return n;
+
+}
+
 
 /*
  * ECP SEND FUNCTIONS

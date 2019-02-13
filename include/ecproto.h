@@ -45,11 +45,22 @@
 #define SECONDARY_PRINT        0x0C
 #define ADC_GET                0x0D
 #define ADC_GET2               0x0F
+#define GET_PURPOSE            0x10
+#define SPECIAL_INTERACT       0x11
 
 #define ECP_LEN_IDX 0
 #define ECP_ADDR_IDX 1
 #define ECP_ID_IDX 2
 #define ECP_PAYLOAD_IDX 3
+
+
+#define SPECIALDEV_GPIO        0x00
+#define SPECIALDEV_OLD_ANALOG  0x01
+#define SPECIALDEV_NEW_ANALOG  0x02
+#define SPECIALDEV_MFRC522     0x03
+
+#define MFRC522_GET_ALL_DEVS   0x00
+#define MFRC522_GET_TAG	       0x01
 
 // Timout in ms for fd poll
 #define ECP_TIMEOUT 1000
@@ -71,6 +82,8 @@ struct ecproto_port_t{
 	bool enabled; /* Wether the pin is disabled or not. Set by the device's
 		       * internal blacklist. Transmitted at startup.
 		       */
+	
+	
 
 };
 
@@ -85,15 +98,32 @@ struct ecproto_analog_t{
 	uint8_t value;
 };
 
+struct ecproto_mfrc522_dev_t{
+	uint8_t tag[4];
+	uint8_t tag_present;
+	uint8_t working;
+};
+
 struct ecproto_device_t
 {
 	size_t id;
+	bool gpio_capable;
 	/* v This contains the register count that the device told us v */
 	size_t received_regcnt;
 	/* This is the thus far added amount of registers*/
 	size_t regcnt;
 	struct ecproto_port_register_t* regs;
+	
+	/* v This contains structures used by the old analog system v */
 	struct ecproto_analog_t* analog;
+	
+	bool mfrc522_capable; /* Either set automatically via the
+			       * special device types, or via a dependency.
+			       */
+	size_t mfrc522_devcnt;
+	
+	struct ecproto_mfrc522_dev_t* mfrc522_devs;
+
 };
 
 /* Storage for devices */
@@ -137,8 +167,13 @@ bool validate_ecp_frame(uint8_t* frame, size_t len);
 int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 	snd_len);
 
+int ecp_handle_special_interact(uint8_t* recv_frm);
+int ecp_handle_mfrc522(uint8_t* recv_frm);
+
 /* May be done at any time to notify devices and detect changes. */
 int ecp_bus_init();
+int init_ecp_device(struct ecproto_device_t* device);
+int init_ecp_gpio(struct ecproto_device_t* device);
 
 int get_ecp_port(size_t device_id, char reg_id, size_t pin_id);
 int send_ecp_port(size_t device_id, char reg_id, size_t pin_id, bool port);
