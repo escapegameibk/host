@@ -60,7 +60,9 @@ int ecp_init_dependency(json_object* dependency){
 	}else if(strcasecmp(type_name, "analog") == 0){
 		
 		return ecp_init_analog_dependency(dependency);
-
+	
+	}else if(strcasecmp(type_name, "mfrc522") == 0){
+		/* Nothing to do here. */
 	}else{
 		println("Invalid type in ECP dependecy! Duming root:"
 			, ERROR);
@@ -469,6 +471,10 @@ int ecp_check_dependency(json_object* dependency, float* percentage){
 	}else if(strcasecmp(type_name, "analog") == 0){
 		
 		ret = ecp_check_analog_dependency(dependency);
+	
+	}else if(strcasecmp(type_name, "mfrc522") == 0){
+		
+		ret = ecp_check_mfrc522_dependency(dependency);
 
 	}else{
 		println("Invalid type in ECP dependecy! Duming root:"
@@ -484,6 +490,7 @@ representable as integer: %f",
 		ret);
 		ret = -1;
 	}
+
 	if(percentage != NULL){
 		*percentage = ret;
 	}
@@ -583,7 +590,7 @@ float ecp_check_analog_dependency(json_object* dependency){
 	size_t device_id = json_object_get_int(dev);
 	
 	json_object* val = json_object_object_get(dependency, "value");
-	if(dev == NULL){
+	if(val == NULL){
 		println("Value not defined in ECP dependency! Dumping root: ", 
 			ERROR);
 		json_object_to_fd(STDOUT_FILENO, dependency, 
@@ -627,6 +634,78 @@ float ecp_check_analog_dependency(json_object* dependency){
 			JSON_C_TO_STRING_PRETTY);
 		return -3;
 	}
+
+	return 0;
+}
+
+float ecp_check_mfrc522_dependency(json_object* dependency){
+	
+	json_object* dev_o = json_object_object_get(dependency, "device");
+	if(dev_o == NULL){
+		println("Device not defined in ECP dependency! Dumping root: ", 
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency, 
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+	}
+
+	size_t device_id = json_object_get_int(dev_o);
+	
+	struct ecproto_device_t* dev = escp_get_dev_from_id(device_id);
+
+	if(dev == NULL){
+		println("ECP MFRC522 dependency with unknown dev %i! Dumping:",
+			ERROR, device_id);
+		json_object_to_fd(STDOUT_FILENO, dependency, 
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+	}
+	
+	json_object* tag_o = json_object_object_get(dependency, "tag");
+	if(tag_o == NULL){
+		println("tag not defined in ECP mfrc522dependency! "
+			"Dumping root: ", ERROR);
+
+		json_object_to_fd(STDOUT_FILENO, dependency, 
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+	}
+
+	uint8_t tag = (uint32_t)json_object_get_int64(tag_o);
+
+	if(tag >= dev->mfrc522_devcnt){
+		println("mfrc522 tag no. bigger than device advertised!"
+			"Dumping root: ", 
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency, 
+			JSON_C_TO_STRING_PRETTY);
+
+	}
+
+	struct ecproto_mfrc522_dev_t* mfrc522 = &dev->mfrc522_devs[tag];
+
+	json_object* val = json_object_object_get(dependency, "tag_id");
+	if(val == NULL){
+		println("tag_id not defined in ECP dependency! Dumping root: ", 
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency, 
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+	}
+
+	uint32_t id = (uint32_t)json_object_get_int64(val);
+
+	if(!mfrc522->tag_present || !mfrc522->working){
+		return 0;
+	}
+
+	println("%lu/%lu", DEBUG, mfrc522->tag, id);
+	if(mfrc522->tag == id){
+		return 1;
+	}else{
+		return 0.5;
+	}
+	
 
 	return 0;
 }
@@ -1175,25 +1254,29 @@ int ecp_handle_mfrc522(uint8_t* recv_frm){
 				&dev->mfrc522_devs[
 				recv_frm[ECP_PAYLOAD_IDX + 2]];
 			
-			memcpy(tag->tag, &recv_frm[ECP_PAYLOAD_IDX + 4],
-				sizeof(tag->tag));
+			tag->tag = be32toh(*((uint32_t*)
+				&recv_frm[ECP_PAYLOAD_IDX + 4]));
 			
 			tag->tag_present = !!recv_frm[ECP_PAYLOAD_IDX + 3];
 
-			if(*((uint32_t*)tag->tag) == 0x45524F52){
+			if(tag->tag == 0x45524F52){
 				tag->working = false;
+			}else{
+				tag->working = true;
 			}
-			println("ECP MFRC522 Update: dev %i tag %i -is %i-->%i",
+			println("ECP MFRC522 Update: dev %i tag %i is here "
+				"%i working %i -->%lx/%lu",
 				DEBUG, recv_frm[ECP_ADDR_IDX],
 				recv_frm[ECP_PAYLOAD_IDX + 2],
 				recv_frm[ECP_PAYLOAD_IDX + 3],
-				 *((uint32_t*)&recv_frm[ECP_PAYLOAD_IDX + 3]));
+				tag->working,
+				tag->tag, tag->tag);
 
 			break;
 
 
 		default:
-			println("ECP mfrc522 unknown su-id %i",
+			println("ECP mfrc522 unknown sub-id %i",
 				WARNING, 
 				recv_frm[ECP_PAYLOAD_IDX + 1]);
 			break;
@@ -1286,6 +1369,14 @@ int init_ecp_device(struct ecproto_device_t* device){
 		uint8_t pay[] = {SPECIALDEV_MFRC522, MFRC522_GET_ALL_DEVS};
 		n |= ecp_send_message(device->id, SPECIAL_INTERACT, pay, 
 			sizeof(pay));
+		
+		for(uint8_t i = 0; i < device->mfrc522_devcnt; i++){
+			uint8_t pay[] = {SPECIALDEV_MFRC522, 
+				MFRC522_GET_TAG, i};
+			n |= ecp_send_message(device->id, SPECIAL_INTERACT, pay, 
+				sizeof(pay));
+
+		}
 	}
 
 	if(device->gpio_capable){
@@ -1409,7 +1500,7 @@ int init_ecp_gpio(struct ecproto_device_t* device){
 
 }
 
-
+    
 /*
  * ECP SEND FUNCTIONS
  *

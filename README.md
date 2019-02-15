@@ -370,13 +370,13 @@ to be specified. The target is written to the device at the specified register.
 
 ### ECPROTO
 
-The ecproto or shortened ecp module is rosponsible for connection handling with
-ecproto capable devices. The ecproto protocol definition may be looked at at
-../microcontroller/ECPROTO.md. The ECPROTO module is caching all requests to the
-hardware and never aloows direct hardware access for reading, therefore all
+The ecproto or shortened "ecp" module is rosponsible for connection handling
+with ecproto capable devices. The ecproto protocol definition may be looked at 
+at ../microcontroller/ECPROTO.md. The ECPROTO module is caching all requests to 
+the hardware and never aloows direct hardware access for reading, therefore all
 read requests are only accessing a cache and are never triggering a real
 hardware request. The ecproto allows for almost passive updates, and allows a
-client to only send what is needed to the master, though the protocoll also
+client to only send what is needed to the master.  The protocol also
 supports acively polling the desired values, though this module does not support
 this feature.
 
@@ -388,22 +388,45 @@ Global configuration values are:
 
 - ecp_baud: Specifies the ecp device baud rate, for example 115200. By default
   the value 38400 is assumed. Configuration of this value is recommended.
-	
-
 
 #### Dependencies
 
-The ecproto module currently has two types of dependencies, each one declared
+The ecproto module currently has these types of dependencies, each one declared
 with the type field within the dependency:
 
 - port: A port dependency is a requesting the state of a gpio pin. It requires
   the device, register and bit fields to be populated with a integer, a 
   character and an integer respectively. It has the following optional values:
-
+  pulled (boolean value which specifies wether pullup-resistors are to be 
+  activated if possible, assumed to be true by default), isinput (boolean value 
+  which specifies wether the pin is used as an input pin or not, assumed by 
+  default to be true);
+- analog: DEPRECATED. Kept for compliance with old ecp systems
+- mfrc522: Specifies an MFRC522 dependency. MFRC522 are SPI, I²C and UART
+  capable ICs from Mifare Semiconductor used for RFID communication. You know
+  those little blue access keys right? These cna be controlled via a MFRC522
+  IC. An MFRC522 dependency requires the device, tag and tag_id fields to be
+  populated with integers respectively, where the tag specifies which MFRC522
+  connection on the device is to be used, and the tag_id specifies the desired
+  values.
 
 if not specified, the port dependency is automatically selected.
 
 #### Triggers
+
+The ecproto module currently supports the following types of triggers, each one
+specified with the type field within the trigger:
+
+- port: A port trigger specifies, that a GPIO pin's value should be changed 
+	to the desired value. The port dependency needs the device, register and
+	bit fields to be populated with an integer, a character and an integer
+	respectively. A target should also be specified, what the desired value
+	of the GPIO pin is. In case this is not specified, HIGH is assumed.
+-secondary_trans: Secondary transmission triggers are built into a device
+	for the sole purpose of relaying information. It specifies, that the 
+	string specified within the string field to whatever the device has
+	built-in as secondary means of communication. The null-termination is 
+	not transmitted. The device field also needs to be poulated.
 
 ## Hints
 

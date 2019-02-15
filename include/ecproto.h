@@ -99,9 +99,9 @@ struct ecproto_analog_t{
 };
 
 struct ecproto_mfrc522_dev_t{
-	uint8_t tag[4];
-	uint8_t tag_present;
-	uint8_t working;
+	uint32_t tag;
+	bool tag_present;
+	bool working;
 };
 
 struct ecproto_device_t
@@ -155,6 +155,7 @@ int reset_ecp();
 int ecp_check_dependency(json_object* dependency, float* percentage);
 int ecp_check_port_dependency(json_object* dependency);
 float ecp_check_analog_dependency(json_object* dependency);
+float ecp_check_mfrc522_dependency(json_object* dependency);
 
 int ecp_trigger(json_object* trigger, bool dry);
 int ecp_trigger_secondary_trans(json_object* trigger, bool dry);
