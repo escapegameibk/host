@@ -699,7 +699,6 @@ float ecp_check_mfrc522_dependency(json_object* dependency){
 		return 0;
 	}
 
-	println("%lu/%lu", DEBUG, mfrc522->tag, id);
 	if(mfrc522->tag == id){
 		return 1;
 	}else{
