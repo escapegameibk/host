@@ -361,14 +361,28 @@ int execute_command(int sock_fd, char* command){
 
 		break;
 
-#endif /* NOVIDEO */ 
+#endif /* NOVIDEO */
+
+#ifndef NOMEMLOG
+
+	case 15:
+		/* Print the log file line count to the client */
+		
+		print_log_line_count_interface(sock_fd);
+
+		break;
+	
+	case 16:
+		/* Print the log file entirely to te client */
+		
+		print_log_interface(sock_fd);
+
+		break;
+#endif /* NOMEMLOG */
+ 
         default:
                 /* OOPS */
-                debug = malloc(INT_LEN);
-                memset(debug,0,INT_LEN);
-                sprintf(debug,"invalid action %i by fd %i",action,sock_fd);
-                println(debug,WARNING);
-                free(debug);
+                println("Invalid action %i by fd %i",WARNING, action, sock_fd);
                 break;
 
         }
@@ -696,6 +710,46 @@ int print_video_url(int sockfd, json_object* device_no){
 }
 #endif /* NOVIDEO */
 
+
+#ifndef NOMEMLOG
+
+
+int print_log_line_count_interface(int sock_fd){
+
+	char* log = get_log();
+
+	json_object* len = json_object_new_int64(get_lines_in_string(log));
+	free(log);
+	
+	json_object_to_fd(sock_fd, len, 
+		JSON_C_TO_STRING_PLAIN);
+
+	json_object_put(len);
+
+
+	return 0;
+
+}
+
+int print_log_interface(int sock_fd){
+
+
+	char* log = get_log();
+
+	json_object* len = json_object_new_string(log);
+	free(log);
+	
+	json_object_to_fd(sock_fd, len, 
+		JSON_C_TO_STRING_PLAIN);
+
+	json_object_put(len);
+
+
+	return 0;
+
+}
+
+#endif /* NOMEMLOG */
 
 /* ############################################################################
  * # Helper functions.							      #

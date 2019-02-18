@@ -25,6 +25,9 @@
 #define DEBUG_MORE 1
 #define DEBUG_ALL  2
 
+#define _GNU_SOURCE
+#include <pthread.h>
+
 /* Specifies the logger output type
  * This enum IS REQUIRED to start at 0in order to make the array where the
  * actual string representation is stored work
@@ -34,4 +37,28 @@ enum log_type { DEBUG=0, INFO, WARNING, ERROR };
 int println(const char* output, int type,...);
 char* log_generate_prestring(int type);
 
-#endif
+int init_log();
+
+#ifndef NOMEMLOG
+
+char* get_log();
+
+/* This is the new FD of stdout, after it has been replaced by the pipe. */
+extern int stdout_new;
+
+int stdout_replace_pipe[2], pipe_to_console[2];
+
+int init_log_pipes();
+pthread_mutex_t tee_ready;
+void* loop_log_tee();
+
+#define DEFAULT_LOGFILE "/tmp/log.log"
+
+extern char* log_file;
+
+#ifndef LOG_APPEND
+#define LOG_APPEND 0
+#endif /* LOG_APPEND */
+
+#endif /* NOMEMLOG */
+#endif /* LOG_H */

@@ -222,3 +222,19 @@ time_t ec_time_to_unix(time_t ec_tim){
 		return 0;
 	}
 }
+
+ssize_t get_lines_in_string(const char* str){
+
+	if(str == NULL){
+		return -1;
+	}
+
+	ssize_t lncnt = 0;
+
+	for(size_t i = 0; str[i] != '\0'; i++){
+		lncnt += (str[i] == '\n');
+	}
+
+	return lncnt;
+
+}

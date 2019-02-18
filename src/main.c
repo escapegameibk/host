@@ -35,6 +35,11 @@
 void catch_signal(int sig);
 
 int main(int argc, char * const argv[]){
+
+	if(init_log()){
+		printf("Log init failed!!");
+		return EXIT_FAILURE;
+	}
         
         println("INIT",DEBUG);
 
@@ -111,10 +116,14 @@ int main(int argc, char * const argv[]){
         while(!shutting_down){sleep(1);}
 
 shutdown:
-shutting_down = true;
+	shutting_down = true;
         println("SHUTTING DOWN",WARNING);
         
-        sleep(SHUTDOWN_DELAY);
+	for(size_t i = SHUTDOWN_DELAY; i > 0; i--){
+		println("Time left for shutdown: %is", INFO, i);
+		sleep(1);
+	}
+
         println("terminating with code %i", INFO, exit_code);
 
         return exit_code;
@@ -128,13 +137,13 @@ void catch_signal(int sig){
                 /* Aeehhrrmmm wut? how could i catch that?*/
                 println("WHAT THE HELL? SIGKILL JUST ARRIVED!",ERROR);
                 exit_code = SIGKILL;
-                shutting_down = 1;
+                shutting_down = true;
                 break;
 
         case SIGINT:
                 println("SIGINT. shutting down",WARNING);
                 exit_code = SIGINT;
-                shutting_down = 1;
+                shutting_down = true;
                 break;
         case SIGPIPE:
                 

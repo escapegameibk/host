@@ -21,6 +21,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/time.h>
+#include <sys/types.h>
 
 int *remove_array_element(size_t array_length, int* array,int element);
 int *add_array_element(size_t array_length, int* array, int element);
@@ -36,6 +37,8 @@ int is_in_array(size_t element, size_t* arr, size_t arrlen);
 size_t get_arr_match_inverted(size_t* arr1, size_t* arr2, size_t len);
 
 char* printable_bytes(uint8_t* data, size_t len);
+
+ssize_t get_lines_in_string(const char* str);
 
 /* Time related functions */
 time_t get_current_ec_time();

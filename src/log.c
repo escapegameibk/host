@@ -21,9 +21,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <limits.h>
+#include <errno.h>
+#include <pthread.h>
+#include <signal.h>
 
-/* This lock is used to keep the lock from beeing flooded by multiple threads.
- */
+char* log_file = DEFAULT_LOGFILE;
 
 int println(const char* output, int type, ...){
         
@@ -55,10 +60,10 @@ char* log_typestr[] = {
 };
 #else
 char* log_typestr[] = {
-        "DEBUG\e[0m           ",
-        "\e[0;32mINFO\e[0m            ",
-        "\e[0;33mWARNING\e[0m         ",
-        "\e[0;31mERROR\e[0m           "
+                "DEBUG       ",
+        "\e[0;32mINFO\e[0m        ",
+        "\e[0;33mWARNING\e[0m     ",
+        "\e[0;31mERROR\e[0m       "
 };
 #endif
 
@@ -81,10 +86,202 @@ char * log_generate_prestring(int type){
 #define TIME_LEN 30
         char* datestr = malloc(TIME_LEN); 
         strftime(datestr, TIME_LEN, "%FT%T%z", info);
-        sprintf(pre, "[ %s %s] ", datestr, log_typestr[type]);
+        snprintf(pre, BUFFERLENGTH, "[ %s %s] ", datestr, log_typestr[type]);
         pre = realloc(pre,strlen(pre) + 1);
         free(datestr);
 
 #endif
         return pre;
 }
+
+int init_log(){
+
+#ifndef NOMEMLOG
+	if(init_log_pipes() < 0){
+		fprintf(stderr, "FAILED TO INIT LOG!");
+		return -1;
+	}
+	pthread_mutex_init(&tee_ready, NULL);
+	pthread_mutex_lock(&tee_ready);
+
+	pthread_t log_redir_thread;
+	if(pthread_create(&log_redir_thread,NULL,loop_log_tee,NULL)){
+		perror("Failed to start tee loop in log");
+	}
+	
+	char* notify = "Wating for main log thread to be ready...\n";
+	if(write(stdout_new, notify, strlen(notify)) < 0){
+		perror("Write int message failed. ignoreing");
+	}
+
+	/* Wait for log to become ready */
+	pthread_mutex_lock(&tee_ready);
+	
+	char* denotify = "Main log thread has become ready!\n";
+	if(write(STDOUT_FILENO, denotify, strlen(denotify)) < 0){
+		perror("Write int message failed. ignoreing");
+	}
+	
+	stdout = fdopen(STDOUT_FILENO, "w");
+	if(stdout == NULL){
+		perror("Failed to create new log file pointer");
+		return -1;
+	}else{
+		setlinebuf(stdout);
+		fprintf(stdout, "LOG INIT\n");
+	}
+
+#endif /* NOMEMLOG */
+
+	return 0;
+}
+
+#ifndef NOMEMLOG
+
+char* get_log(){
+
+	FILE* fp = fopen(log_file, "r");
+	fseek(fp, 0L, SEEK_END);
+	long sz = ftell(fp);
+	rewind(fp);
+	
+	char * file = malloc(sz * sizeof(char));
+	memset(file, 0, sz);
+	
+	fread(file, sz, 1, fp);
+	
+	return file;
+
+}
+
+int stdout_new = STDOUT_FILENO;
+
+int init_log_pipes(){
+	
+
+	if(pipe(stdout_replace_pipe) < 0){
+		perror("Pipe failed for stdout replacement pipe");
+		return -1;
+	}
+	
+	if(pipe(pipe_to_console) < 0){
+		perror("Pipe failed for console output");
+		return -1;
+	}
+	
+	/* Replace pipe ends with targets */
+	stdout_new = dup(STDOUT_FILENO);
+
+	if(stdout_new < 0){
+		perror("Failed to dup stdout");
+		return -1;
+	}else if (stdout_new == STDOUT_FILENO){
+		fprintf(stderr, "Failed to set different STDOUT filepointer");
+		return -1;
+	}else{
+
+	}
+	
+	if(dup2(stdout_replace_pipe[1], STDOUT_FILENO) < 0){
+		perror("Failed to set pipe as new stdout");
+		return -1;
+	}
+	if(close(stdout_replace_pipe[1]) < 0){
+		perror("Failed to close old pipe end");
+	}
+	/* Pipes ready */
+	return 0;
+
+
+}
+
+void* loop_log_tee(){
+
+#if LOG_APPEND
+	int fd = open(log_file, O_WRONLY | O_CREAT | O_TRUNC | O_APPEND, 0644);
+#else
+	int fd = open(log_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+#endif
+
+	if(fd < 0){
+		perror("Failed to open log file!!");
+		goto error_out;
+	}
+
+	/* Log should now be ready. Release main thread */
+	pthread_mutex_unlock(&tee_ready);
+	ssize_t len = 0, len2 = 0, slen = 0;
+	for(;;){
+		
+		len2 = len = tee(stdout_replace_pipe[0], pipe_to_console[1], 
+			INT_MAX, SPLICE_F_NONBLOCK);
+
+		if(len < 0){
+			if(errno == EAGAIN){
+				continue;
+			}else{
+				perror("Tee in log failed!");
+				break;
+			}
+			
+
+		}else if( len == 0){
+			/* Write end done */
+			break;
+		}else{
+			/* Write the same data to the file! */
+			while(len > 0){
+				
+				slen = splice(stdout_replace_pipe[0], NULL, fd,
+					NULL, len, SPLICE_F_MOVE);
+				if(slen < 0){
+					perror("Log splice failed!");
+					break;
+				}else{
+					len -= slen;
+				}
+			}
+			
+			while(len2 > 0){
+				
+				/* I'm really really sorry. I didn't mean to be
+				 * evil, but sendfile doesn't work in regular
+				 * terminals. Tee requires pipes and slice wants
+				 * me to have the target also in non-append mode
+				 * and requires it to be seekable, WHICH A 
+				 * TERMINAL ISN'T! If you know a fancier
+				 * solution, please tell me!
+				 */
+
+				char buffer[2048];
+
+				slen = read(pipe_to_console[0],
+					buffer, sizeof(buffer));
+					
+				if(slen < 0){
+					perror("Log splice failed!");
+					break;
+				}else{
+					len2 -= slen;
+				}
+				write(stdout_new, buffer, slen);
+			}
+		}
+
+	}
+
+error_out:
+	/* Restore old fds */
+	if(dup2(stdout_new, STDOUT_FILENO) < 0){
+		perror("Dup Error handling in log failed!!");
+	}
+	else{
+		println("Remapped stdout to direct output!", ERROR);
+
+	}
+	pthread_mutex_unlock(&tee_ready);
+
+	return NULL;
+}
+
+#endif /* NOMEMLOG */
