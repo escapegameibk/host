@@ -28,7 +28,6 @@
 #include <pthread.h>
 #include <signal.h>
 
-char* log_file = DEFAULT_LOGFILE;
 
 int println(const char* output, int type, ...){
         
@@ -138,6 +137,8 @@ int init_log(){
 
 #ifndef NOMEMLOG
 
+char* log_file = DEFAULT_LOGFILE;
+
 char* get_log(){
 
 	FILE* fp = fopen(log_file, "r");
@@ -214,7 +215,7 @@ void* loop_log_tee(){
 	for(;;){
 		
 		len2 = len = tee(stdout_replace_pipe[0], pipe_to_console[1], 
-			INT_MAX, SPLICE_F_NONBLOCK);
+			INT_MAX, 0);
 
 		if(len < 0){
 			if(errno == EAGAIN){
@@ -246,11 +247,12 @@ void* loop_log_tee(){
 				
 				/* I'm really really sorry. I didn't mean to be
 				 * evil, but sendfile doesn't work in regular
-				 * terminals. Tee requires pipes and slice wants
+				 * terminals, tee requires pipes and slice wants
 				 * me to have the target also in non-append mode
 				 * and requires it to be seekable, WHICH A 
 				 * TERMINAL ISN'T! If you know a fancier
-				 * solution, please tell me!
+				 * solution, please tell me! I won't make an
+				 * exec on tee though...
 				 */
 
 				char buffer[2048];
@@ -277,6 +279,7 @@ error_out:
 	}
 	else{
 		println("Remapped stdout to direct output!", ERROR);
+		println("No longer able to print to log file!", ERROR);
 
 	}
 	pthread_mutex_unlock(&tee_ready);
