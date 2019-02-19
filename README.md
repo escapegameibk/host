@@ -474,6 +474,7 @@ following is a list of these definitions:
 - NOSOUND : Completely disables and removes sound capabilities.
 - NORECOVER : Don't attempt message recovery. Flag for the ECPROTO
 - AGGRESSIVE_RECOVER: Aggressively attempts to recover any device errors.
+- NOMEMLOG :  Disable logging to log file.
 
 # Maintainers
 

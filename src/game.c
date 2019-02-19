@@ -484,6 +484,8 @@ json_object** get_root_triggers(size_t* trigcnt, size_t** event_idsp){
 	
 	if(event_idsp != NULL){
 		*event_idsp = event_ids;
+	}else{
+		free(event_ids);
 	}
 
 	return trigs;

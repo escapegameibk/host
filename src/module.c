@@ -227,6 +227,8 @@ int test_modules(){
 			return -1;
 		}
 	}
+	
+	free(trigs);
 
 	println("STEP 3/3: Module tests successfull.", DEBUG);
 	println("Modules finished start up. Reporting ready.", DEBUG);

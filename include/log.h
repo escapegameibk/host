@@ -27,6 +27,7 @@
 
 #define _GNU_SOURCE
 #include <pthread.h>
+#include <unistd.h>
 
 /* Specifies the logger output type
  * This enum IS REQUIRED to start at 0in order to make the array where the
@@ -42,7 +43,7 @@ int init_log();
 #ifndef NOMEMLOG
 
 char* get_log();
-
+ssize_t get_log_len();
 /* This is the new FD of stdout, after it has been replaced by the pipe. */
 extern int stdout_new;
 

@@ -142,16 +142,39 @@ char* log_file = DEFAULT_LOGFILE;
 char* get_log(){
 
 	FILE* fp = fopen(log_file, "r");
+	if(fp == NULL){
+		return NULL;
+	}
 	fseek(fp, 0L, SEEK_END);
 	long sz = ftell(fp);
 	rewind(fp);
 	
-	char * file = malloc(sz * sizeof(char));
+	char* file = malloc(++sz * sizeof(char));
+	if(file == NULL){
+		return NULL;
+	}
 	memset(file, 0, sz);
 	
 	fread(file, sz, 1, fp);
 	
+	fclose(fp);
+
 	return file;
+
+}
+
+ssize_t get_log_len(){
+	
+	FILE* fp = fopen(log_file, "r");
+	if(fp == NULL){
+		return -1;
+	}
+	fseek(fp, 0L, SEEK_END);
+	long sz = ftell(fp);
+
+	fclose(fp);
+
+	return sz;
 
 }
 

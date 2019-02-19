@@ -366,9 +366,9 @@ int execute_command(int sock_fd, char* command){
 #ifndef NOMEMLOG
 
 	case 15:
-		/* Print the log file line count to the client */
+		/* Print the log file size to the client */
 		
-		print_log_line_count_interface(sock_fd);
+		print_log_size_interface(sock_fd);
 
 		break;
 	
@@ -528,6 +528,8 @@ int print_dependencies_interface(int sockfd){
 
 	json_object_to_fd(sockfd, dep_array, JSON_C_TO_STRING_PLAIN);
 	json_object_put(dep_array);
+
+	free(dependencies);
 
 	return 0;
 	
@@ -714,19 +716,16 @@ int print_video_url(int sockfd, json_object* device_no){
 #ifndef NOMEMLOG
 
 
-int print_log_line_count_interface(int sock_fd){
+int print_log_size_interface(int sock_fd){
 
-	char* log = get_log();
 
-	json_object* len = json_object_new_int64(get_lines_in_string(log));
-	free(log);
+	json_object* len = json_object_new_int64(get_log_len());
 	
 	json_object_to_fd(sock_fd, len, 
 		JSON_C_TO_STRING_PLAIN);
-
+	
 	json_object_put(len);
-
-
+	
 	return 0;
 
 }
@@ -743,7 +742,6 @@ int print_log_interface(int sock_fd){
 		JSON_C_TO_STRING_PLAIN);
 
 	json_object_put(len);
-
 
 	return 0;
 

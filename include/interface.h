@@ -52,7 +52,7 @@ int print_video_url(int sockfd, json_object* device_no);
 #endif /* NOVIDEO */
 
 #ifndef NOMEMLOG
-int print_log_line_count_interface(int sock_fd);
+int print_log_size_interface(int sock_fd);
 int print_log_interface(int sock_fd);
 #endif /* NOMEMLOG */
 
