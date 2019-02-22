@@ -380,6 +380,17 @@ int execute_command(int sock_fd, char* command){
 		break;
 #endif /* NOMEMLOG */
  
+	case 17:
+		/* Prints a list of available modules to the client */
+		print_modules_interface(sock_fd);
+
+		break;
+	case 18:
+		/* Executes a trigger sent by the client */
+		execute_client_trigger_interface(sock_fd, parsed);
+
+		break;
+
         default:
                 /* OOPS */
                 println("Invalid action %i by fd %i",WARNING, action, sock_fd);
@@ -748,6 +759,38 @@ int print_log_interface(int sock_fd){
 }
 
 #endif /* NOMEMLOG */
+
+int print_modules_interface(int sock_fd){
+	
+	json_object* mod_array = json_object_new_array();
+
+	for(size_t i = 0; i < module_count; i++){
+		struct module_t* mod = &modules[i];
+		if(mod->enabled){
+			json_object_array_add(mod_array, 
+				json_object_new_string(mod->name));
+		}
+	}
+	
+	json_object_to_fd(sock_fd, mod_array, 
+		JSON_C_TO_STRING_PLAIN);
+
+	json_object_put(mod_array);
+	
+
+	return 0;
+
+}
+
+int execute_client_trigger_interface(int sock_fd, json_object* req){
+
+	json_object* trigger = json_object_object_get(req, "trigger");
+
+	
+
+	return 0;
+}
+
 
 /* ############################################################################
  * # Helper functions.							      #

@@ -33,6 +33,50 @@
 #include <string.h>
 #include <unistd.h>
 
+
+struct module_t modules[] = {
+#ifndef NOHINTS
+	{NULL, init_hints, start_hints, NULL, NULL, reset_hints, true, false, 
+		"hint"},
+#endif /* NOHINTS */
+
+#ifndef NOEC
+	{ecp_init_dependency, init_ecp, start_ecp, ecp_check_dependency, 
+		ecp_trigger, reset_ecp, true, false, "ecp"},
+#endif /* NOEC */
+
+#ifndef NOMTSP
+	{mtsp_init_dependency, init_mtsp, start_mtsp, mtsp_check_dependency, 
+		mtsp_trigger, reset_mtsp, true, false, "mtsp"},
+#endif /* NOMTSP */
+
+#ifndef NOSOUND
+	{NULL, init_sound, NULL, NULL, sound_trigger, NULL, true, false, 
+		"snd"},
+#endif /* NOSOUND */
+
+#ifndef NOMODBUS
+	{NULL, init_modbus, NULL, NULL, modbus_trigger, NULL, true, false, 
+		"modbus"},
+#endif /* NOMODBUS */
+
+#ifndef NOVIDEO
+	{NULL, init_video, NULL, NULL, video_trigger, NULL, true, false, 
+		"video"},
+#endif /* NOVIDEO */
+
+#ifndef HEADLESS
+	{NULL, init_interface, start_interface, NULL, NULL, NULL, true, false, 
+		"interface"},
+#endif /* HEADLESS */
+
+	{core_init_dependency, init_core, start_core, core_check_dependency, 
+		core_trigger, NULL /* Does it itself! */, true, false, "core"}
+
+};
+
+size_t module_count = (sizeof(modules) /  sizeof(struct module_t));
+
 /*
  * FUNCTIONS TO LOAD AND INITIALIZE MODULES
  *
@@ -45,85 +89,30 @@
  * Called on program load. Gives the modules a chance to initialize internal
  * data strutures before needing to access them on startup. If one module failes
  * to init, < 0 is returned and a error message is printed out. On success >= 0
- * is returned. If the order of modules is changed, errors may occure. Please
- * don't attempt to do this. Implementation of module-dependencies is a TODO
+ * is returned. Implementation of module-dependencies is a TODO
  */
 int init_modules(){
 
 	println("STEP 1/3: Attempting module initialization", DEBUG);
 
-#ifndef NOHINTS
-        if(init_hints() < 0){
-                println("failed to init hints!!",ERROR);
-		return -1;
-        }
-	
-#endif
+	for(size_t i = 0; i < module_count; i++){
+		struct module_t* mod = &modules[i];
+		
+		if(!mod->enabled){
+			continue;
+		}
 
-#ifndef HEADLESS
-        if(init_interface() < 0){
-                println("failed to init interface!!",ERROR);
-		return -2;
-        }
-#endif
+		if(mod->init_module != NULL){
+			println("Initializing module %i/%i: %s", DEBUG,
+				i+1, module_count, mod->name);
+			if(((*mod->init_module)()) < 0){
+				println("Failed to init module %s!! Aborting!",
+					ERROR, mod->name);
+				return -1;
+			}
+		}
 
-#ifndef NOSOUND
-        if(init_sound() < 0){
-                println("failed to init sound module!!",ERROR);
-		return -3;
-        }
-#endif        
-
-#ifndef NOMTSP
-        if(init_mtsp() < 0){
-
-                println("failed to init mtsp connection!!",ERROR);
-		return -4;
-
-        }
-#endif
-
-#ifndef  NOEC
-        if(init_ecp() < 0){
-
-                println("failed to init ecp connection!!",ERROR);
-		return -5;
-
-        }
-#endif
-
-#ifndef NOVIDEO
-	
-	if(init_video() < 0){
-		println("failed to initialize video module", ERROR);
-		return -6;
 	}
-#endif
-
-#ifndef NOLOL
-	
-	if(init_lol() < 0){
-		println("failed to initialize lolproto module", ERROR);
-		return -7;
-	}
-#endif
-
-
-#ifndef NOMODBUS
-	if(init_modbus() < 0){
-		println("failed to initialize modbus module", ERROR);
-		return -8;
-	}
-
-
-#endif
-	
-	/* The core module may NOT be disabled */
-	if(init_core() < 0){
-		println("Failed to initilize core!", ERROR);
-		return -9;
-	}
-	
 
 	println("STEP 1/3: Modules successfully initialized", DEBUG);
 
@@ -141,45 +130,28 @@ int init_modules(){
 int start_modules(){
 	
 	println("STEP 2/3: Attempting module start", DEBUG);
-
-#ifndef HEADLESS
-        if(start_interface() < 0){
-		println("Failed to start interface!", ERROR);
-		return -1;
-	}
-#endif
-
-#ifndef NOHINTS
-	if(start_hints() < 0){
-		println("Failed to start interface!", ERROR);
-		return -1;
-	}
-#endif
-
-#ifndef NOMTSP
-        if(start_mtsp() < 0){
-		println("Failed to start interface!", ERROR);
-		return -1;
-	}
-#endif
-#ifndef NOEC
-	if(start_ecp() < 0){
-		println("Failed to start interface!", ERROR);
-		return -1;
-	}
-
-#ifndef NOLOL
 	
-	if(start_lol() < 0){
-		println("failed to start lolproto module", ERROR);
-		return -7;
-	}
-#endif
+	for(size_t i = 0; i < module_count; i++){
+		struct module_t* mod = &modules[i];
+		
+		if(!mod->enabled){
+			continue;
+		}
 
-#endif
-        if(start_core() < 0){
-		println("Failed to start interface!", ERROR);
-		return -1;
+		if(mod->start_module != NULL){
+			println("Starting module %i/%i: %s", DEBUG,
+				i+1, module_count, mod->name);
+			if(((*mod->start_module)()) < 0){
+				println("Failed to start module %s!! Aborting!",
+					ERROR, mod->name);
+				mod->running = false;
+				return -1;
+			}else{
+				mod->running = true;
+
+			}
+		}
+
 	}
 	
 	println("STEP 2/3: Module start successfull.", DEBUG);
@@ -242,37 +214,25 @@ int test_modules(){
  * else which shouldn't be run whilest a game is in progress
  */
 int reset_modules(){
-
-#ifndef NOSOUND	
-	if(reset_sounds() < 0){
-		println("Failed to reset sound module!", ERROR);
-		return -1;
-	}
-#endif
-
-#ifndef NOMTSP
-	if(reset_mtsp() < 0){
-		println("Failed to reset mtsp module!", ERROR);
-		return -2;
-	}
-
-#endif
-
-#ifndef NOHINTS
-	if(reset_hints() < 0){
-		println("Failed to reset hinting module!", ERROR);
-		return -3;
-	}
-
-#endif
-
-#ifndef NOEC
-	if(reset_ecp() < 0){
-		println("Failed to reset ecproto module!", ERROR);
-		return -4;
-	}
 	
-#endif
+	for(size_t i = 0; i < module_count; i++){
+		struct module_t* mod = &modules[i];
+		
+		if(!mod->enabled){
+			continue;
+		}
+
+		if(mod->reset_module != NULL){
+			println("Resetting module %i/%i: %s", DEBUG,
+				i+1, module_count, mod->name);
+			if(((*mod->reset_module)()) < 0){
+				println("Failed to reset module %s!!",
+					ERROR, mod->name);
+				return -1;
+			}
+		}
+
+	}
 	return 0;
 }
 
@@ -307,27 +267,28 @@ Attempting dump:",
 		percent_ret = -1;
 		ret = -1;
 	}
-#ifndef NOMTSP
-	else if(strcasecmp(module_name,"mtsp") == 0){
-		/* Question the MTSP module. yes QUESTION IT! */
-		ret =  mtsp_check_dependency(dependency);
+	
+	bool found = false;
+	for(size_t i = 0; i < module_count; i++){
+		struct module_t* mod = &modules[i];
 		
-		percent_ret = ret;
+		if(!mod->enabled){
+			continue;
+		}
+
+		if(mod->check_dependency != NULL){
+			if(strcasecmp(module_name,mod->name) == 0){
+				found = true;
+				ret = ((*mod->check_dependency)(dependency, 
+					&percent_ret));
+
+				break;
+			}
+		}
+
 	}
-#endif
-#ifndef NOEC
-	else if(strcasecmp(module_name,"ecp") == 0){
-		/* Question the ECP module. yes QUESTION IT! */
-		
-		ret = ecp_check_dependency(dependency, &percent_ret);
-		
-	}
-#endif
-	else if(strcasecmp(module_name,"core") == 0){
-		/* Pass on to the core module */
-		ret = core_check_dependency(dependency, &percent_ret);
-	}
-	else{
+
+	if(!found){
 		println("Unknown module specified [%s]!", ERROR, module_name);
 		ret = -2;
 		percent_ret = ret;
@@ -367,84 +328,30 @@ int execute_trigger(json_object* trigger, bool dry){
         /* Find out which module is concerned and execute the trigger
          * in the specified function of the module.
          */
-
-        if(strcasecmp(module,"core") == 0){
-                /* The core module is concerned. */
-                if(core_trigger(trigger, dry) < 0){
-                        println("Failed to execute trigger for core!",
-                                ERROR);
-                        return -1;
-                }
-		return 0;
-        }
-
-#ifndef NOMTSP
-	else if(strcasecmp(module,"mtsp") == 0){
-                /* The mtsp module is concerned. */
-                if(mtsp_trigger(trigger, dry) < 0){
-                        println("Failed to execute trigger for mtsp!",
-                                ERROR);
-                        return -2;
-
-                }
-		return 0;
-	}
-#endif
-#ifndef NOEC
-	else if(strcasecmp(module,"ecp") == 0){
-                /* The ecproto module is concerned. */
-                if(ecp_trigger(trigger, dry) < 0){
-                        println("Failed to execute trigger for ecp!",
-                                ERROR);
-
-                        return -3;
-
-                }
-		return 0;
-	}
-#endif
-
-#ifndef NOSOUND
-
-	else if(strcasecmp(module,"snd") == 0){
-		/* The sound module is concerned. */
-		if(sound_trigger(trigger, dry) < 0){
-			println("Failed to execute trigger for snd!",
-				ERROR);
-
-			return -4;
+	
+	for(size_t i = 0; i < module_count; i++){
+		struct module_t* mod = &modules[i];
+		
+		if(!mod->enabled){
+			continue;
 		}
-		return 0;
-	}
-#endif
 
-#ifndef NOVIDEO
-
-	else if(strcasecmp(module,"video") == 0){
-		/* The video module is concerned. */
-		if(video_trigger(trigger, dry) < 0){
-			println("Failed to execute trigger for video!",
-				ERROR);
-
-			return -5;
+		if(mod->execute_trigger != NULL){
+			if(strcasecmp(module,mod->name) == 0){
+				if(((*mod->execute_trigger)(trigger, dry)) < 0){
+					
+					println("Failed to execute trigger for "
+						"module %s!", ERROR, mod->name);
+					return -1;
+				}else{
+					return 0;
+				}
+					
+			}
 		}
-		return 0;
+
 	}
-#endif
 
-#ifndef NOMODBUS
-
-	else if(strcasecmp(module,"modbus") == 0){
-		/* The modbus module is concerned. */
-		if(modbus_trigger(trigger, dry) < 0){
-			println("Failed to execute trigger for modbus!",
-				ERROR);
-
-			return -6;
-		}
-		return 0;
-	}
-#endif
 
         println("UNKNOWN MODULE %s!!",ERROR, module);
 	return -7;
@@ -469,29 +376,50 @@ int init_general_dependency(json_object* dependency){
 				JSON_C_TO_STRING_PRETTY);
 		return -1;
 	}
-#ifndef NOMTSP
-	else if(strcasecmp(module_name,"mtsp") == 0){
-		/* Question the MTSP module */
-		return mtsp_init_dependency(dependency);
-	}
-#endif
-	else if(strcasecmp(module_name,"core") == 0){
-		/* Question the core module */
-		return core_init_dependency(dependency);
-	}
 	
-#ifndef NOEC
-	else if(strcasecmp(module_name,"ecp") == 0){
-		/* Question the ecp module */
-		return ecp_init_dependency(dependency);
-	
-	}
-#endif
-	else{
-		println("Unknown module specified [%s]!", ERROR, module_name);
-		return -2;
-	}
+	for(size_t i = 0; i < module_count; i++){
+		struct module_t* mod = &modules[i];
+		
+		if(!mod->enabled){
+			continue;
+		}
 
-	return 0;
+		if(mod->init_dependency != NULL){
+			if(strcasecmp(module_name,mod->name) == 0){
+				return (*mod->init_dependency)(dependency);
+					
+			}
+		}
+
+	}
+		
+	println("Unknown module specified in dependency [%s]!", ERROR, 
+		module_name);
+
+	return -1;
 	
+}
+
+/* ############################################################################
+ * # HELPER FUNCTIONS
+ * ############################################################################
+ */
+
+struct module_t* get_module_by_name(const char* name){
+	
+	for(size_t i = 0; i < module_count; i++){
+		struct module_t* mod = &modules[i];
+		
+		if(!mod->enabled){
+			continue;
+		}
+
+		if(mod->name != NULL && strcasecmp(name,mod->name) == 0){
+			return mod;
+		}
+
+	}
+	
+	return NULL;
+
 }

@@ -639,10 +639,13 @@ int mtsp_trigger(json_object* trigger, bool dry){
 /* Checks wether a dependency is fullfilled.
  * Returns <0 on error, 0 if not and > 0 if is fullfilled
  */
-int mtsp_check_dependency(json_object* dep){
+int mtsp_check_dependency(json_object* dep, float* percentage){
 
 	/* If the devices have not been populated yet don't trigger! */
 	if(!mtsp_devices_populated){
+		if(percentage != NULL){
+			*percentage = 0;
+		}
 		return 0;
 	}
 
@@ -661,6 +664,9 @@ int mtsp_check_dependency(json_object* dep){
 		"register")) & 0xFF);
 
 	if(device_id == 0 ){
+		if(percentage != NULL){
+			*percentage = -1;
+		}
 		return -1;
 	}
 
@@ -674,6 +680,9 @@ int mtsp_check_dependency(json_object* dep){
 
 	if(device == NULL){
 		/* The device has not replied yet */
+		if(percentage != NULL){
+			*percentage = 0;
+		}
 		return 0;
 	}
 
@@ -687,8 +696,13 @@ int mtsp_check_dependency(json_object* dep){
 
 	if(port == NULL){
 		/* We never got a reply from that port */
+		if(percentage != NULL){
+			*percentage = 0;
+		}
 		return 0;
 	}
+		
+	*percentage = (port->state == target);
 
 	return port->state == target;
 

@@ -21,6 +21,21 @@
 #include <json-c/json.h>
 #include <stdbool.h>
 
+struct module_t{
+	int (*init_dependency)(json_object*);
+	int (*init_module)();
+	int (*start_module)();
+	int (*check_dependency)(json_object*, float*);
+	int (*execute_trigger)(json_object*, bool);
+	int (*reset_module)();
+
+	bool enabled, running;
+	char *name;
+};
+
+extern struct module_t modules[];
+extern size_t module_count;
+
 int init_modules();
 int start_modules();
 int reset_modules();

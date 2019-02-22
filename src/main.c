@@ -90,8 +90,8 @@ int main(int argc, char * const argv[]){
         }
 	 
         println("INIT DONE",INFO);
+        println("Entering startup..",INFO);
 
-        println("strating modules...",DEBUG);
 	if(start_modules() < 0){
 		println("failed to start modules", ERROR);
 		exit_code = EXIT_FAILURE;
@@ -111,8 +111,8 @@ int main(int argc, char * const argv[]){
 	}
 	
         
-	println("Startup done",DEBUG);
-        println("ENTERING REGULAR OPERATION",INFO);
+	println("Startup done!",DEBUG);
+        println("Entering regular operation",INFO);
         while(!shutting_down){sleep(1);}
 
 shutdown:
