@@ -724,6 +724,10 @@ int ecp_trigger(json_object* trigger, bool dry){
 	}else if(strcasecmp(type_name, "secondary_trans") == 0){
 		/* Send a specified string */
 		return ecp_trigger_secondary_trans(trigger, dry);
+	
+	}else if(strcasecmp(type_name, "pwm") == 0){
+		/* Set a PWM value */
+		return ecp_trigger_pwm(trigger, dry);
 		
 	}else{
 		println("Failed to execute ECP trigger with invalid type! Dump:"
@@ -776,7 +780,7 @@ int ecp_trigger_port(json_object* trigger, bool dry){
 	
 	json_object* dev = json_object_object_get(trigger, "device");
 	if(dev == NULL){
-		println("Device not defined in ECP dependency! Dumping root: ", 
+		println("Device not defined in ECP trigger! Dumping root: ", 
 			ERROR);
 		json_object_to_fd(STDOUT_FILENO, trigger, 
 			JSON_C_TO_STRING_PRETTY);
@@ -787,7 +791,7 @@ int ecp_trigger_port(json_object* trigger, bool dry){
 
 	json_object* reg = json_object_object_get(trigger, "register");
 	if(reg == NULL){
-		println("Register not defined in ECP dependency! Dumping root: "
+		println("Register not defined in ECP trigger! Dumping root: "
 			, ERROR);
 		json_object_to_fd(STDOUT_FILENO, trigger, 
 			JSON_C_TO_STRING_PRETTY);
@@ -802,7 +806,7 @@ int ecp_trigger_port(json_object* trigger, bool dry){
 	
 	json_object* bit = json_object_object_get(trigger, "bit");
 	if(bit == NULL){
-		println("Bit not defined in ECP dependency! Dumping root: ", 
+		println("Bit not defined in ECP trigger! Dumping root: ", 
 			ERROR);
 		json_object_to_fd(STDOUT_FILENO, trigger, 
 			JSON_C_TO_STRING_PRETTY);
@@ -823,6 +827,62 @@ int ecp_trigger_port(json_object* trigger, bool dry){
 
 	return send_ecp_port(device_id, reg_id, bit_id, target);
 
+}
+
+int ecp_trigger_pwm(json_object* trigger, bool dry){
+	
+	json_object* dev = json_object_object_get(trigger, "device");
+	if(dev == NULL){
+		println("Device not defined in ECP trigger! Dumping root: ", 
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, trigger, 
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+	}
+
+	size_t device_id = json_object_get_int(dev);
+	
+	json_object* counter = json_object_object_get(trigger, "counter");
+	if(counter == NULL){
+		println("Counter not defined in ECP trigger! Dumping root: ", 
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, trigger, 
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+	}
+
+	size_t counter_id = json_object_get_int(counter);
+	
+	json_object* output = json_object_object_get(trigger, "output");
+	if(output == NULL){
+		println("Output not defined in ECP trigger! Dumping root: ", 
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, trigger, 
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+	}
+
+	size_t output_id = json_object_get_int(output);
+	
+	json_object* value = json_object_object_get(trigger, "value");
+	if(counter == NULL){
+		println("Value not defined in ECP trigger! Dumping root: ", 
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, trigger, 
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+	}
+
+	size_t val = json_object_get_int(value);
+
+	uint8_t payload[] = {counter_id, output_id, val};
+
+	if(!dry){
+		return ecp_send_message(device_id, SET_PWM, payload, 
+			sizeof(payload));
+	}else{
+		return 0;
+	}
 }
 
 uint8_t* recv_ecp_frame(int fd, size_t* len){
@@ -955,9 +1015,10 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			}
 			break;
 
+		case SET_PWM:
 		case WRITE_PORT_ACTION:
 		case DEFINE_PORT_ACTION:
-			/* The reply to a port definition or port write */
+			/* Just a generic success reply */
 			if(recv_payload_len < 1 || !recv_frm[ECP_PAYLOAD_IDX]){
 				return -6;
 			}
@@ -1143,6 +1204,8 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 					case SPECIALDEV_MFRC522:
 						dev->mfrc522_capable = true;
 						break;
+					case SPECIALDEV_PWM:
+						break;
 
 					default:
 						println("Fancy! A new purpose!"
@@ -1186,7 +1249,7 @@ int ecp_handle_special_interact(uint8_t* recv_frm){
 		case SPECIALDEV_MFRC522:
 			return ecp_handle_mfrc522(recv_frm);
 			break;
-
+		case SPECIALDEV_PWM:
 		case SPECIALDEV_GPIO:
 		case SPECIALDEV_OLD_ANALOG:
 			println("Special device interact for non-specified id!",

@@ -47,6 +47,7 @@
 #define ADC_GET2               0x0F
 #define GET_PURPOSE            0x10
 #define SPECIAL_INTERACT       0x11
+#define SET_PWM                0x12
 
 #define ECP_LEN_IDX 0
 #define ECP_ADDR_IDX 1
@@ -58,6 +59,7 @@
 #define SPECIALDEV_OLD_ANALOG  0x01
 #define SPECIALDEV_NEW_ANALOG  0x02
 #define SPECIALDEV_MFRC522     0x03
+#define SPECIALDEV_PWM         0x04
 
 #define MFRC522_GET_ALL_DEVS   0x00
 #define MFRC522_GET_TAG	       0x01
@@ -160,6 +162,8 @@ float ecp_check_mfrc522_dependency(json_object* dependency);
 int ecp_trigger(json_object* trigger, bool dry);
 int ecp_trigger_secondary_trans(json_object* trigger, bool dry);
 int ecp_trigger_port(json_object* trigger, bool dry);
+int ecp_trigger_pwm(json_object* trigger, bool dry);
+
 
 uint8_t* recv_ecp_frame(int fd, size_t* len);
 
