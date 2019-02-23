@@ -921,7 +921,7 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 		println("Sent invalid ecp frame! WTF?", ERROR);
 		println("Critical bug! This shouldn't occure.", ERROR);
 		
-		return -2;
+		return -1;
 	}
 	
 	size_t recv_payload_len = recv_len - ECPROTO_OVERHEAD;
@@ -933,7 +933,7 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 				println("ECP received error frame, which isn't"
 					" null-terminated!",ERROR);
 
-				return -3;
+				return -1;
 			}
 			/* Print error string */
 			println("ECP action aborted due to error response:",
@@ -968,7 +968,7 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			if(recv_payload_len < 3){
 				println("Too few ecp params for action %i!",
 					ERROR, recv_frm[ECP_ID_IDX]);
-				return -7;
+				return -1;
 			}
 			
 #if DEBUG_LVL > DEBUG_NORM
@@ -1054,7 +1054,7 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			if(recv_payload_len < 3){
 				println("Received too short ecp message 11",
 					ERROR);
-				return -8;
+				return -1;
 			}
 			{
 				struct ecproto_device_t* dev = 
@@ -1064,7 +1064,7 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 				if(dev == NULL){
 					println("Recv 11 from unknown dev! wut?"
 						, ERROR);
-					return -9;
+					return -1;
 				}
 				
 				struct ecproto_port_register_t* reg = 
@@ -1074,14 +1074,14 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 				if(reg == NULL){
 					println("Recv 11 with unknown reg! wut?"
 						, ERROR);
-					return -10;
+					return -1;
 				}
 				
 				if(recv_frm[ECP_PAYLOAD_IDX + 1]  >= 
 					ECP_REG_WIDTH){
 					println("Recv 11 with too > bit! wut?"
 						, ERROR);
-					return -11;
+					return -1;
 				}
 
 				struct ecproto_port_t* prt = &reg->bits[
@@ -1090,7 +1090,7 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 				if(recv_frm[ECP_PAYLOAD_IDX + 2] > 1){
 					println("Recv 11 with invld value! wut?"
 						, ERROR);
-					return -12;
+					return -1;
 				}
 				prt->enabled = recv_frm[ECP_PAYLOAD_IDX + 2];
 			}
@@ -1099,7 +1099,7 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			if(recv_payload_len < 1){
 				println("Received ecp frame 12 with <1 params",
 					ERROR);
-				return -13;
+				return -1;
 			}
 			if(!recv_frm[ECP_PAYLOAD_IDX]){
 				println("Failed to transmit serial", ERROR);
@@ -1111,7 +1111,7 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			if(recv_payload_len < 1){
 				println("Received ecp frame 13 with <1 params",
 					ERROR);
-				return -14;
+				return -1;
 			}
 			escp_get_dev_from_id(recv_frm[ECP_ADDR_IDX])
 				->analog->value = recv_frm[ECP_PAYLOAD_IDX];
@@ -1168,7 +1168,6 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			
 			break;
 
-
 		default:
 			/* You lazy bastard! */
 			println("Unimplemented ECP response: %i!", WARNING,
@@ -1190,6 +1189,9 @@ int ecp_handle_special_interact(uint8_t* recv_frm){
 
 		case SPECIALDEV_GPIO:
 		case SPECIALDEV_OLD_ANALOG:
+			println("Special device interact for non-specified id!",
+				WARNING);
+			return 0;
 		default:
 			println("Unknown or invalid special interact attempt "
 				"for ecp special id %i. Ignoreing", WARNING,
@@ -1326,7 +1328,7 @@ int ecp_bus_init(){
 			errcnt, MAX_ERRCNT);
 
 	}
-	/* Releasing the bus anyways */
+	/* Releasing the bus at ANY outcome */
 	pthread_mutex_unlock(&ecp_state_lock);
 
 	return err;
@@ -1336,7 +1338,8 @@ int init_ecp_device(struct ecproto_device_t* device){
 	int n = 0;
 	bool old_fw = true;
 	
-	for(size_t i = 0; i < 10; i++){
+	/* I'm sending it twice just to be sure it really did come through */
+	for(size_t i = 0; i < 2; i++){
 		if(ecp_send_message(device->id, GET_PURPOSE, NULL, 0) >= 0){
 			old_fw = false;
 			break;
@@ -1344,8 +1347,11 @@ int init_ecp_device(struct ecproto_device_t* device){
 		
 	}
 
+	/* TODO update old firmware in currently used Escape Game System
+	 * installations so this is no longer neded! 
+	 */
 	if(old_fw){
-		println("OUTDATED ECP MICROCONTROLLER VERSION DETECTED!"
+		println("OUTDATED ECP MICROCONTROLLER VERSION ASSUMED!"
 			"PLEASE UPDATE YOUR FIRMWARE TO THE LATEST VERSION!",
 			WARNING);
 		

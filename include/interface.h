@@ -57,7 +57,7 @@ int print_log_interface(int sock_fd);
 #endif /* NOMEMLOG */
 
 int print_modules_interface(int sock_fd);
-int execute_client_trigger_interface(int sock_fd, json_object* req);
+int execute_client_trigger_interface(json_object* req);
 /* Helper functions */
 json_object** get_printables_dependencies(size_t* depcnt);
 

@@ -7,36 +7,20 @@ This is the host for games at the escape game innsbruck. It's main purpose is,
 to control an escape room. Afterwars, it became apparent to me, that it would
 also be kinda suitable as a home-automation system.
 
-## Interface
 
-The interface to anything wanting to communicate with the host is provided
-at /var/run/escape/socket. It takes queries in form of a json object and
-answers in form of a json object.
-
-- An element called ´action´ which states what type of action the
-command is
-
-- Any other value as defined by the parser.
-
-Documentation on how the commands are parsed and executed may be found in 
-src/interface.c. Further documentation is a TODO.
-
-## Serial interface 
-
-A serial connection to a µc is established at application start. Documentation
-on how the protocol works can be found in ../arduino/README.md.
-
-Audio is played via the libvlc.
 
 ## License
 This program is licensed under the GPLv3 or any later version of the license,
 which permits you to use it commercially, but requires you to give users the
-source code. in any case, we don't sell the software itself any way,
-so it doesn't really matter.
+source code and the right to re-sell the program. in any case, we don't sell the
+software itself any way, so it doesn't really matter, or at least that's the 
+idea.
 
 ## Building
 
-The program only requires the linux operating system. 
+The program only requires the linux operating system... Well kinda. It also
+needs it's dependencies. I won't tell you how to install linux, but I will
+describe the program's dependencies:
 
 ### Dependencies
 
@@ -47,12 +31,22 @@ As of now, the program has the following dependencies:
 - gcc >= 5.0
 - make
 
+#### LIBVLC
+
 The vlc includes are required to be in <vlc/> and the json-c includes are 
 required to be in <json-c/> of the global include path, as these are hard-coded
-into the program. This is meant ot change in the near future, or as soon as i
-find time to correctly configure the autotools.
+into the program. This is meant ot change in the future, or as soon as i find 
+time to correctly configure the autotools.
 
-The json-c version of the \*bian operating system is heavily outdated, as it
+The simplest way is to install the 'vlc', 'libvlc-core' and 'libvlc-dev'
+packages on a debian based system, or if you are running an ArchLinux
+based system, the package vlc does the same thing. The dependencies should
+allow the rest to work fine. Instalation of the ogg packages is also recommended
+as is usage of the ogg file format for audio playback.
+
+#### JSON-C
+
+The json-c version of the \*bian operating system is *heavily* outdated, as it
 is version 0.12. Therefore the regular package doesn't work. You have to build
 it from scratch. The latest version can be downloaded at:
 
@@ -64,17 +58,18 @@ Extract the downloaded tarball, go into the directory, execute the command
 librarys and headers in the rght directories, and should allow the linker to
 find them.
 
+Building json-c requires autotools, the gcc and libtool to be installed.
+
 ### Building an executable
 
-Building an executable is as easy as typing 'make' into the commandline of any
-linux terminal.
+The program's build system is at this point very basic. It's simply a Makefile
+which is written in GNU Make. The Makefile compiles all files in the src/
+directory and links them together to form an executable.
 
 The executable may be found at 'bin/host' afterwards, and should have been
-compiled for the target architecture. In case this will ever be needed (i
-do hopefor gods sake that it will not) support for non 8 bit per byte platorms
-has been implemented. 
+compiled for the hosts's architecture.. 
 
-The executable itself is by default dynamicallylinked, so taking it from one
+The executable itself is by default dynamically linked, so taking it from one
 computer to another should be possible, if the nescessary packages are installed
 and the libldlinux can find the libraries.
 
@@ -93,7 +88,7 @@ following order:
  - the working directory contains a file called "config.json"
 
 if none of the above exists or is a valid json, the host will return with exit
-code 1. 
+code EXIT_FAILURE. 
 
 ## General configuration
 
@@ -103,11 +98,11 @@ json file:
  - "name": The name of the game. It can be ommited and will be replaced with
    "UNSPECIFIED" or NULL.
  - "duration": the normal duration of a game in seconds. it can be ommited and
-   will default to 3600s or 1h.
- - "boot_sound": A URL pointing to a audio file which is beeing played on
-   startup. 
- - "events": an array containing all events to be executed. more inforamtion
-   follows.
+   will default to 3600s or 1h. **omitting this field is discouraged**
+ - "boot_sound": A URL pointing to an audio file which is beeing played on
+   startup. Requires snd module
+ - "events": an array containing all events to be executed. more information
+   should follow this list.
  - "hints": an array containing hints in a special order. please consult the
    chapter on hint configuration for further information.
  - "hint_dependencies" : Dependencies used for auto hinting. Please consult the
@@ -127,6 +122,7 @@ json file:
    details please see the ecp section further down.
  - "ecp_baud" : Defines the baud rate of the ecp connection. For further 
    details please see the ecp section further down.
+ - 
 
 This is where it get's a bit more complicated. I will try to explain the
 construction of the "events" array now to you. The events array contains an
@@ -135,9 +131,12 @@ dependencies of an action are fullfilled, the action will be triggered and all
 of it's triggers will be executed. So each element of the events array has to
 contain at least the following fields:
 
- - "name": The event name
+ - "name": The event's name. Follows the regular handling for multilanguage
+   name objects.
+
  - "dependencies": an array containing all of the dependencies which have to be
    fullfilled in order to trigger the event
+
  - "triggers": an array containing all triggers to be executed in case the
    event is triggered.
 
@@ -145,21 +144,32 @@ Optionally, the following fields may be specified:
 
  - "autoreset" : Defines wether an event is able to reset itself. The reset of
     the event is performed, as soon as one of it's dependencies is changeing 
-    state to false. This is done in order to avoid iknstantly triggering the
-    reset event again. The default value for this field is false.
+    state to false. This is done in order to avoid instantly triggering the
+    event again. The default value for this field is false.
+
  - "hidden" : Defines wether an event is shown in the interface. In case this is
    set to true, the interface will not show any traces of the event, and it will
-   not be controllable. The default value for this field is false.
+   not be controllable. The default value for this field is false. In case the
+   interface module is not loaded, this field has no effect.
 
  - "hintable" : Defines wether an event is taken into account for the 
    auto-hinting system. If this is set to false, the auto-hinting calculation
    should not use this event, and not attempt to exectute any of it's 
-   dependencies.
+   dependencies. The default value for this field is true. In case the hint 
+   module is not loaded, this field has no effect.
+
+An event is a thing that should occure over the curse of a game. The idea
+behind it is, that an event has triggers and dependencies. In case all
+dependencies are met, the event's triggers should be executed and the event
+should be marked that way. An event (at this point) cannot reset itself,
+therefore any reset activity should only unset the previously set marker.
+Implementation of reset triggers has been considered, but is thus far a TODO.
 
 ### Dependencies
 
-Dependencies are checked at a regular interval and passwd over to the modules.
-If a dependency is met, the next dependcy is checked. If all dependencies are
+Dependencies are checked at a regular interval and passwed over to the modules
+regarding it's correct handling.
+If a dependency is met, the next dependency is checked. If all dependencies are
 met, the triggeres are executed, and the event is beeing marked as triggered.
 A dependency only needs to specify it's module name with the "module" string.
 Optionally a name may be given via the "name" field. This is useful for debug
@@ -184,7 +194,21 @@ them for further actions. Nested dependencies are possible, but the module has
 to initialize it's dependencies in order for them to work. Afterwards the
 modules get initialized. 
 
-### CORE
+### Interface
+
+The interface to anything wanting to communicate with the host is provided
+at /var/run/escape/socket. It takes queries in form of a json object and
+answers in form of a json object.
+
+- An element called ´action´ which states what type of action the
+  command is
+
+- Any other value(s) as defined by the parser for that specific action
+
+Documentation on how the commands are parsed and executed may be found in 
+src/interface.c. Further documentation is a TODO.
+
+### Core
 
 The core module contains all game relevant triggers and dependencys. It
 communicate directly with the host's internal states and attempts to give a
@@ -279,12 +303,15 @@ following actions:
 	This action starts the timer and sets it's start time to the current
 	unix time. No additional fields are required.
 
+
 2. timer_stop:
 	This action causes the startend to be set to the actual unix time,
 	therefore causing the timer to stop. No additional fields required.
+
 3. timer_reset:
 	This action causes the timer values timer_start and timer_stop to be
 	cleared.
+
 4. reset:
 	Reset all game critical things and modules to their initial state. This
 	DOESN't cause the game to automatically reset all values, but rather the
@@ -296,13 +323,16 @@ following actions:
 	can be used to wait a bit before triggereing the next thing. It
 	requires a delay field to be specified containing the time to be slept
 	in milliseconds aka 1s/1000.
+
 6. alarm: 
 	This triggers the alarm. It is part of the alarm system and, in any
 	case, activates the alarm. if it is already running, it will keep
 	running. No additional fields are required.
-7.alarm_release:
-	Releases the alarm. If the alarm isn't running, it will stay in that 
-	state. No additional fields are required.
+
+7. alarm_release:
+	Releases the alarm. If the alarm isn't running, it will stay off.
+	No additional fields are required.
+
 ### SND
 
 The sound module aka snd is specified inside the module section of a trigger
@@ -341,42 +371,46 @@ any language.
 
 ### MTSP
 
-The module called MTSP which is an acronym for *Minimum Transport Security
-Protocol* provides an interface for hardware from the esd team, a russian group
+The module called MTSP which is an acronym for **M**inimum **T**ransport 
+**S**ecurity
+**P**rotocol provides an interface for hardware from the esd team, a russian group
 of people which thought using a 480600 baud connection for more than 2m would
 be a good idea. It heavily uses caching and error checking as it is highly
-propable, that messages get lost from this protocol. It can be trigger, as well
+probable, that messages get lost from this protocol. It can be trigger, as well
 as dependency, and is specified as mtsp in the module field. The MTSP takes 
 two global fields: mtsp_baud and mtsp_device, which specify the baud rate and
-the device to connect to respectively. On a linuy system, the baud rate may be
+the device to connect to respectively. On a linux system, the baud rate may be
 for example 57600, and the device may be for example "/dev/ttyUSB0". By default,
 the baud rate is 460800 and the device is "/dev/ttyUSB0". These values may 
-change over time, and should be specified inside the configuration.
+change over time, and should be specified inside the configuration. Not 
+specifying them is discouraged. For further documentation on 
+the MTSP please see the documentation repository.
 
 #### Dependencies
 
 Dependencies are cached, and therefore have very low latencies to access. A
 dependency is required to contain at least a device field, a register field,
-and a target field. If one of the above is not present, the program will either
-crash or error-out! The target specifies a 32 bit unsigned integer which is
-compared to the return value of the mtsp device and port.
+and a target field. The target specifies a 32 bit unsigned integer which is
+compared to the return value of the mtsp device and port. Any value in any
+length is set to be 32 bit wide in order to simplify the protocol.
 
 #### Triggers
 
-Triggeres are real time, and if something fails to trigger, the ENTIRE event
-is reset and may only be re-triggered from the very beginning. Triggeres are not
+Triggeres are real-time, and if something fails to trigger, the ENTIRE event
+is reset and may only be re-triggered from the very beginning. Triggers are
 checked during initialisation. A trigger requires a device, register and target
-to be specified. The target is written to the device at the specified register.
+to be specified with positive integer values. The target is written to the 
+device at the specified register.
 
 ### ECPROTO
 
-The ecproto or shortened "ecp" module is rosponsible for connection handling
+The ecproto or shortened "ecp" module is responsible for connection handling
 with ecproto capable devices. The ecproto protocol definition may be looked at 
 at ../microcontroller/ECPROTO.md. The ECPROTO module is caching all requests to 
-the hardware and never aloows direct hardware access for reading, therefore all
+the hardware and never allows direct hardware access for reading, therefore all
 read requests are only accessing a cache and are never triggering a real
 hardware request. The ecproto allows for almost passive updates, and allows a
-client to only send what is needed to the master.  The protocol also
+client to only send what is needed to the master. The protocol also
 supports acively polling the desired values, though this module does not support
 this feature.
 
@@ -401,7 +435,9 @@ with the type field within the dependency:
   activated if possible, assumed to be true by default), isinput (boolean value 
   which specifies wether the pin is used as an input pin or not, assumed by 
   default to be true);
+
 - analog: DEPRECATED. Kept for compliance with old ecp systems
+
 - mfrc522: Specifies an MFRC522 dependency. MFRC522 are SPI, I²C and UART
   capable ICs from Mifare Semiconductor used for RFID communication. You know
   those little blue access keys right? These cna be controlled via a MFRC522
@@ -422,7 +458,8 @@ specified with the type field within the trigger:
 	bit fields to be populated with an integer, a character and an integer
 	respectively. A target should also be specified, what the desired value
 	of the GPIO pin is. In case this is not specified, HIGH is assumed.
--secondary_trans: Secondary transmission triggers are built into a device
+
+- secondary_trans: Secondary transmission triggers are built into a device
 	for the sole purpose of relaying information. It specifies, that the 
 	string specified within the string field to whatever the device has
 	built-in as secondary means of communication. The null-termination is 
@@ -435,7 +472,8 @@ is a 3-dimensional array. The first array contains hints correlating to the
 events array. So each array in the second dimension, is directly linked to the
 corresponding event, in the event array. The second dimension contains arrays of
 triggers, with each array representing a hint, so an event may have any amount
-of hints, iwith each any amount of triggers.
+of hints, with each any amount of triggers. A specified "hidden" or "hintable"
+field doesn't change this behaviour.
 
 ### Auto hinting
 
@@ -454,8 +492,8 @@ to execute in the first array, the hint 11,0 get's executed.
 
 The "langs" field, which is an array of strings, declares, in which languages
 the game is available. The languages are internally represented by the
-corresponding index in the array. The "default_lang" inside of the root object
-defines, which index is used by default. 
+corresponding index in the array. The "default_lang" field in the root 
+object defines, which index is used by default.
 
 # Cutting stuff out
 
@@ -484,6 +522,7 @@ contact them:
 - tyrolyean@tyrolyean.net:	Everything to date.
 
 # ERRATA
+
 ## Raspberry Pi
 
 If the host is a raspberry pi and the native USART connection is used, it is
@@ -497,14 +536,17 @@ If you forget to disable bluetooth you will be able to send stuff via uart, but
 you are unable to controll the clock speed and if bluetooth changes clock speed,
 so does your connection. This is probably not what you want.
 
+## Special device capabilities regression
+
+After I discovered that I created an regression where I basically had to 
+assume that a device is GPIO capable, I made first steps to remove this
+regression from future versions, but first all installations need to be
+updated. This is still under way...
+
 # TODO
 
 ## Postgresql
 
 It was requested, athat all data may be dumped into a postgresql database for
 later analysys. This is required to be added very carefully.
-
-## Timer length based dependency
-
-It was requested, that the program should be able to do something, in case the
 

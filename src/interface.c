@@ -387,7 +387,7 @@ int execute_command(int sock_fd, char* command){
 		break;
 	case 18:
 		/* Executes a trigger sent by the client */
-		execute_client_trigger_interface(sock_fd, parsed);
+		execute_client_trigger_interface( parsed);
 
 		break;
 
@@ -782,11 +782,34 @@ int print_modules_interface(int sock_fd){
 
 }
 
-int execute_client_trigger_interface(int sock_fd, json_object* req){
+int execute_client_trigger_interface( json_object* req){
 
 	json_object* trigger = json_object_object_get(req, "trigger");
 
+	if(trigger == NULL){
+		println("Received a trigger request from interface with no "
+			"trigger! Dumping root:", WARNING);
 	
+		json_object_to_fd(STDOUT_FILENO, req,
+			JSON_C_TO_STRING_PLAIN);
+		return -1;
+
+	}
+
+	if(execute_trigger(trigger ,false) < 0){
+		println("Failed to execute trigger received via interface!"
+			" Dumping root!",
+			ERROR);
+		
+		json_object_to_fd(STDOUT_FILENO, req,
+			JSON_C_TO_STRING_PLAIN);
+		
+		return -1;
+	}else{
+		println("Succesfully triggered interface received trigger!", 
+			DEBUG);
+		
+	}
 
 	return 0;
 }
