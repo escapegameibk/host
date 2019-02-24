@@ -39,6 +39,8 @@
 
 int init_interface(){
 
+	pthread_mutex_init(&control_lock, NULL);
+
 	/* Load and map events to the interface events, as not all are
 	 * printable / should be printed */
 
@@ -180,8 +182,6 @@ for %i/%s",
 						JSON_C_TO_STRING_PRETTY);
 					return -1;
 				}
-				const char* val_name = json_object_get_string(
-					json_object_object_get(ctrl, "value"));
 				
 				if(json_object_object_get(ctrl, "trigger") == 
 						NULL){
@@ -207,20 +207,12 @@ for %i/%s",
 					json_object_object_get(ctrl, 
 					"initial"));
 
-				for(size_t i = 0; i < json_object_array_length(
-					json_object_object_get(ctrl,"trigger"));
-					i++){
-					
-					json_object* trigger = 
-						json_object_array_get_idx(
-						json_object_object_get(
-						ctrl,"trigger"), i);
-
-					json_object_object_del(trigger,
-						val_name);
-					json_object_object_add(trigger,val_name,
-						json_object_new_int(init_val));
-
+				if(update_interface_control(i, init_val) < 0){
+					println("Failed to initialize control!",
+						ERROR);
+					json_object_to_fd(STDOUT_FILENO, ctrl,
+						JSON_C_TO_STRING_PRETTY);
+					return -1;
 				}
 
 
@@ -519,6 +511,31 @@ int execute_command(int sock_fd, char* command){
 		execute_client_trigger_interface( parsed);
 
 		break;
+	case 19:
+		/* Update a control value */
+		if(json_object_object_get(parsed, "control") == NULL){
+			println("Received control update without control id!",
+				ERROR);
+			json_object_to_fd(STDOUT_FILENO, parsed,
+				JSON_C_TO_STRING_PRETTY);
+			return -1;
+		}
+		
+		if(json_object_object_get(parsed, "value") == NULL){
+			println("Received control update without value!",
+				ERROR);
+			json_object_to_fd(STDOUT_FILENO, parsed,
+				JSON_C_TO_STRING_PRETTY);
+			return -1;
+		}
+		
+		update_interface_control(
+			json_object_get_int(json_object_object_get(parsed,
+				"control")),
+			json_object_get_int(json_object_object_get(parsed,
+				"value")));
+
+		break;
 
         default:
                 /* OOPS */
@@ -586,11 +603,75 @@ int print_info_interface(int sock_fd){
 		json_object_object_add(obj, "langs",  langs);
 	}
 	
-	json_object* controls = NULL;
-	json_object_deep_copy(json_object_object_get(config_glob, "controls"), 
-		&controls,json_c_shallow_copy_default);
-	if(controls != NULL){
+	
+	json_object* ctrls = json_object_object_get(config_glob, "controls");
+	if(ctrls != NULL){
+	
+		json_object* controls = json_object_new_array();
+		
+		for(size_t i = 0; i < json_object_array_length(ctrls); i++){
+			json_object* ctrl = json_object_array_get_idx(ctrls, i);
+			
+			const char* type = json_object_get_string(
+				json_object_object_get(ctrl, "type"));
+
+			if(type == NULL){
+				println("Invalid control defined! No type!!",
+					ERROR);
+				json_object_to_fd(STDOUT_FILENO, ctrl,
+					JSON_C_TO_STRING_PRETTY);
+				return -1;
+			}else if(strcasecmp(type, "linear") == 0){
+			
+				char* fields[] = {
+					"type",
+					"min",
+					"max",
+					"step",
+					"initial"};
+				
+				json_object* copied = json_object_new_object();
+
+				for(size_t i = 0; i < 
+					(sizeof(fields) / sizeof(char*)); i++){
+	
+					json_object* cop = NULL;
+					
+					json_object_deep_copy(
+					json_object_object_get(ctrl, fields[i]), 
+					&cop,json_c_shallow_copy_default);
+					
+					json_object_object_add(copied,
+						fields[i], cop);
+
+				}
+					
+				json_object_object_add(copied,
+						"name", 
+						json_object_new_string(
+						get_name_from_object(ctrl)));
+
+
+				json_object_array_add(controls,copied);
+
+			}else{
+				
+				println("Invalid control defined! wut type??",
+					ERROR);
+				json_object_to_fd(STDOUT_FILENO, ctrl,
+					JSON_C_TO_STRING_PRETTY);
+				return -1;
+
+			}
+        
+		
+			
+			
+
+		}
+			
 		json_object_object_add(obj, "controls",  controls);
+
 	}
 
 
@@ -632,6 +713,21 @@ int print_changeables_interface(int sockfd){
 	n|= json_object_object_add(obj, "lang",
                 json_object_new_int(language));
 	
+	json_object* ctrls = json_object_object_get(config_glob, "controls");
+	if(ctrls != NULL){
+	
+		json_object* controls = json_object_new_array();
+		
+		for(size_t i = 0; i < json_object_array_length(ctrls); i++){
+			json_object_array_add(controls, json_object_new_int(
+				get_interface_control_state(i)));
+		}
+			
+		json_object_object_add(obj, "controls",  controls);
+
+	}
+	
+
 
         json_object_to_fd(sockfd, obj, JSON_C_TO_STRING_PLAIN);
         
@@ -920,6 +1016,7 @@ int print_modules_interface(int sock_fd){
 
 }
 
+
 int execute_client_trigger_interface( json_object* req){
 
 	json_object* trigger = json_object_object_get(req, "trigger");
@@ -950,6 +1047,233 @@ int execute_client_trigger_interface( json_object* req){
 	}
 
 	return 0;
+}
+
+int32_t get_interface_control_state(size_t ctrl_id){
+	
+	int32_t ret = 0;
+	
+	pthread_mutex_lock(&control_lock);
+
+	json_object* ctrls = json_object_object_get(config_glob, "controls");
+	if(ctrls != NULL){
+		
+		if(ctrl_id >= json_object_array_length(ctrls)){
+
+			println("Invalid control id in update! %i/%i",
+				ERROR, ctrl_id, 
+				json_object_array_length(ctrls));
+			ret = -1;
+			goto out;
+		}
+
+		json_object* ctrl = json_object_array_get_idx(ctrls, ctrl_id);
+		
+		const char* type = json_object_get_string(
+			json_object_object_get(ctrl, "type"));
+
+		if(type == NULL){
+			println("Invalid control defined! No type!!",
+				ERROR);
+			json_object_to_fd(STDOUT_FILENO, ctrl,
+				JSON_C_TO_STRING_PRETTY);
+			ret = -1;
+			goto out;
+		}else if(strcasecmp(type, "linear") == 0){
+			
+			ret =  get_interface_control_state_linear(ctrl);			
+
+		}else{
+			
+			println("Invalid control defined! wut type??",
+				ERROR);
+			json_object_to_fd(STDOUT_FILENO, ctrl,
+				JSON_C_TO_STRING_PRETTY);
+			ret = -1;
+			goto out;
+
+		}
+			
+
+	}else{
+		ret = -1;
+		goto out;
+	}
+
+
+out:
+	pthread_mutex_unlock(&control_lock);
+
+	return ret;
+	
+}
+
+int32_t get_interface_control_state_linear(json_object* control){
+
+	return json_object_get_int(json_object_object_get(control, "current"));
+	
+}
+
+
+int update_interface_control(size_t ctrl_id, int32_t val){
+
+	int ret = 0;
+	
+	pthread_mutex_lock(&control_lock);
+
+	json_object* ctrls = json_object_object_get(config_glob, "controls");
+	if(ctrls != NULL){
+		
+		if(ctrl_id >= json_object_array_length(ctrls)){
+
+			println("Invalid control id in update! %i/%i",
+				ERROR, ctrl_id, 
+				json_object_array_length(ctrls));
+			ret = -1;
+			goto out;
+		}
+
+		json_object* ctrl = json_object_array_get_idx(ctrls, ctrl_id);
+		
+		const char* type = json_object_get_string(
+			json_object_object_get(ctrl, "type"));
+		println("Updating %s control umber %i to %i", DEBUG,
+			type, ctrl_id, val);
+
+		if(type == NULL){
+			println("Invalid control defined! No type!!",
+				ERROR);
+			json_object_to_fd(STDOUT_FILENO, ctrl,
+				JSON_C_TO_STRING_PRETTY);
+			ret = -1;
+			goto out;
+		}else if(strcasecmp(type, "linear") == 0){
+			
+			ret =  update_interface_control_linear(ctrl, val);			
+
+		}else{
+			
+			println("Invalid control defined! wut type??",
+				ERROR);
+			json_object_to_fd(STDOUT_FILENO, ctrl,
+				JSON_C_TO_STRING_PRETTY);
+			ret = -1;
+			goto out;
+
+		}
+
+	}else{
+		ret = -1;
+		goto out;
+	}
+
+
+out:
+	pthread_mutex_unlock(&control_lock);
+
+	return ret;
+}
+
+int update_interface_control_linear(json_object* control, int32_t val){
+
+	json_object* triggers = json_object_object_get(control, "trigger");
+	const char* value = json_object_get_string(
+		json_object_object_get(control, "value"));
+		
+	json_object* previous = json_object_object_get(control, "current");
+	int32_t prev = 0;
+	if(previous == NULL){
+		prev = val;
+	}else{
+		prev = json_object_get_int(previous);
+	}
+	
+
+	json_object_object_del(control, "current");
+	json_object_object_add(control, "current", 
+		json_object_new_int(val));
+	
+	json_object* inter = json_object_object_get(control,
+			"intermediate");
+
+	for(size_t i = 0; i < json_object_array_length(triggers); i++){
+
+		json_object* trigger = json_object_array_get_idx(triggers, i);
+		
+
+		json_object_object_del(trigger, value);
+		
+		json_object_object_add(trigger, value, 
+			json_object_new_int(val));
+		
+		
+		if(inter != NULL && json_object_get_boolean(inter) && 
+			previous != NULL){
+			
+			
+			println("Running trigger for values between %i %i",
+				DEBUG, prev, val);
+
+			if(prev < val){
+				for(ssize_t i = prev + 1; i <= val; i++){
+					
+					json_object_object_del(trigger, value);
+					
+					json_object_object_add(trigger, value, 
+						json_object_new_int(i));
+			
+					if(execute_trigger(trigger,false) < 0){
+						
+						println("Failed to update "
+							"linear control!", 
+							ERROR);
+						return -1;
+					}
+
+				}
+
+			}else if (prev > val){
+				
+				for(ssize_t i = prev -1; i >= val; i--){
+					json_object_object_del(trigger, value);
+					
+					json_object_object_add(trigger, value, 
+						json_object_new_int(i));
+			
+					if(execute_trigger(trigger,false) < 0){
+						
+						println("Failed to update "
+							"linear control!", 
+							ERROR);
+						return -1;
+					}
+
+				}
+				
+			}else{
+				if(execute_trigger(trigger,false) < 0){
+					println("Failed to update linear "
+						"control!", 
+						ERROR);
+					return -1;
+				}
+				
+			}
+			
+		}else{
+			if(execute_trigger(trigger,false) < 0){
+				println("Failed to update linear control!", 
+					ERROR);
+				return -1;
+			}
+
+		}
+
+		
+		
+	}
+	return 0;
+
 }
 
 /* ############################################################################

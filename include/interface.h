@@ -56,6 +56,14 @@ int print_log_size_interface(int sock_fd);
 int print_log_interface(int sock_fd);
 #endif /* NOMEMLOG */
 
+int32_t get_interface_control_state(size_t ctrl_id);
+int32_t get_interface_control_state_linear(json_object* control);
+
+int update_interface_control(size_t ctrl_id, int32_t val);
+int update_interface_control_linear(json_object* control, int32_t val);
+
+pthread_mutex_t control_lock;
+
 int print_modules_interface(int sock_fd);
 int execute_client_trigger_interface(json_object* req);
 /* Helper functions */
