@@ -110,6 +110,135 @@ for %i/%s",
                 close(unix_fd);
                 return -4;
         }
+	
+	/* ####################################################################
+	 * Initialize controls 
+	 * ####################################################################
+	 */
+	json_object* ctrls = json_object_object_get(config_glob, "controls");
+	if(ctrls != NULL){
+		for(size_t i = 0; i < json_object_array_length(ctrls); i++){
+			
+			json_object* ctrl = json_object_array_get_idx(ctrls, i);
+
+			const char* type = json_object_get_string(
+				json_object_object_get(ctrl,"type"));
+			if(type == NULL){
+				println("Invalid control defined! No type!!",
+					ERROR);
+				json_object_to_fd(STDOUT_FILENO, ctrl,
+					JSON_C_TO_STRING_PRETTY);
+				return -1;
+			}else if(strcasecmp(type, "linear") == 0){
+				
+				if(json_object_object_get(ctrl, "min") == 
+						NULL){
+					println("missing min in linear "
+						"control!",ERROR);
+
+					json_object_to_fd(STDOUT_FILENO, ctrl,
+						JSON_C_TO_STRING_PRETTY);
+					return -1;
+				}
+				
+				if(json_object_object_get(ctrl, "name") == 
+						NULL){
+					println("missing name in linear "
+						"control!",ERROR);
+
+					json_object_to_fd(STDOUT_FILENO, ctrl,
+						JSON_C_TO_STRING_PRETTY);
+					return -1;
+				}
+				
+				if(json_object_object_get(ctrl, "max") == 
+						NULL){
+					println("missing max in linear "
+						"control!",ERROR);
+
+					json_object_to_fd(STDOUT_FILENO, ctrl,
+						JSON_C_TO_STRING_PRETTY);
+					return -1;
+				}
+				
+				if(json_object_object_get(ctrl, "step") == 
+						NULL){
+					println("missing step in linear "
+						"control!",ERROR);
+
+					json_object_to_fd(STDOUT_FILENO, ctrl,
+						JSON_C_TO_STRING_PRETTY);
+					return -1;
+				}
+				
+				if(json_object_object_get(ctrl, "value") == 
+						NULL){
+					println("missing value in linear "
+						"control!",ERROR);
+
+					json_object_to_fd(STDOUT_FILENO, ctrl,
+						JSON_C_TO_STRING_PRETTY);
+					return -1;
+				}
+				const char* val_name = json_object_get_string(
+					json_object_object_get(ctrl, "value"));
+				
+				if(json_object_object_get(ctrl, "trigger") == 
+						NULL){
+					println("missing trigger in linear "
+						"control!",ERROR);
+
+					json_object_to_fd(STDOUT_FILENO, ctrl,
+						JSON_C_TO_STRING_PRETTY);
+					return -1;
+				}
+				
+				if(json_object_object_get(ctrl, "initial") == 
+						NULL){
+					println("missing initial value in"
+						"linear control!",ERROR);
+
+					json_object_to_fd(STDOUT_FILENO, ctrl,
+						JSON_C_TO_STRING_PRETTY);
+					return -1;
+				}
+				
+				int32_t init_val = json_object_get_int(
+					json_object_object_get(ctrl, 
+					"initial"));
+
+				for(size_t i = 0; i < json_object_array_length(
+					json_object_object_get(ctrl,"trigger"));
+					i++){
+					
+					json_object* trigger = 
+						json_object_array_get_idx(
+						json_object_object_get(
+						ctrl,"trigger"), i);
+
+					json_object_object_del(trigger,
+						val_name);
+					json_object_object_add(trigger,val_name,
+						json_object_new_int(init_val));
+
+				}
+
+
+			}else{
+				println("Unknown type in control: %s!", ERROR,
+					type);
+				json_object_to_fd(STDOUT_FILENO, ctrl,
+					JSON_C_TO_STRING_PRETTY);
+				return -1;
+
+			}
+			
+
+		}
+
+	}
+	println("Initialized interface controls!", DEBUG);
+	
 
         /* Initialize the pthread object */
         memset(&interface_thread, 0, sizeof(interface_thread));
@@ -456,10 +585,19 @@ int print_info_interface(int sock_fd){
 	if(langs != NULL){
 		json_object_object_add(obj, "langs",  langs);
 	}
+	
+	json_object* controls = NULL;
+	json_object_deep_copy(json_object_object_get(config_glob, "controls"), 
+		&controls,json_c_shallow_copy_default);
+	if(controls != NULL){
+		json_object_object_add(obj, "controls",  controls);
+	}
+
 
         json_object_to_fd(sock_fd, obj, JSON_C_TO_STRING_PRETTY);
-
+	
         json_object_put(obj);
+
         return n;
 
 }
@@ -813,7 +951,6 @@ int execute_client_trigger_interface( json_object* req){
 
 	return 0;
 }
-
 
 /* ############################################################################
  * # Helper functions.							      #
