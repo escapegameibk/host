@@ -1236,7 +1236,10 @@ int update_interface_control_linear(json_object* control, int32_t val){
 			previous != NULL){
 			
 			unsigned int stepsize = (powl(10, log10l(abs(prev - 
-				val)))) / 3;
+				val)))) / 8;
+			if(stepsize == 0){ /* Shouldn't happen, but can */
+				stepsize = 1;
+			}
 
 			println("Running trigger for values between %i %i",
 				DEBUG, prev, val);
@@ -1279,7 +1282,12 @@ int update_interface_control_linear(json_object* control, int32_t val){
 					}
 
 				}
-				}
+			}
+					
+			json_object_object_del(trigger, value);
+			
+			json_object_object_add(trigger, value, 
+				json_object_new_int(val));
 			
 			if(execute_trigger(trigger,false) < 0){
 				println("Failed to update linear "
