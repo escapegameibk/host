@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <sys/un.h>
 #include <stdio.h>
+#include <math.h>
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
@@ -250,6 +251,30 @@ int start_interface(){
                 println("failed to create thread", ERROR);
                 return -1;
         }
+	
+	/* If needed initialize controls */
+	json_object* ctrls = json_object_object_get(config_glob, "controls");
+	if(ctrls != NULL){
+		for(size_t i = 0; i < json_object_array_length(ctrls); i++){
+			
+			json_object* ctrl = json_object_array_get_idx(ctrls, i);
+
+			int32_t init_val = json_object_get_int(
+				json_object_object_get(ctrl, 
+				"initial"));
+
+			if(update_interface_control(i, init_val) < 0){
+				println("Failed to initialize control!",
+					ERROR);
+				json_object_to_fd(STDOUT_FILENO, ctrl,
+					JSON_C_TO_STRING_PRETTY);
+				return -1;
+			}
+			
+
+		}
+
+	}
 
         return 0;
 }
@@ -1210,12 +1235,14 @@ int update_interface_control_linear(json_object* control, int32_t val){
 		if(inter != NULL && json_object_get_boolean(inter) && 
 			previous != NULL){
 			
-			
+			unsigned int stepsize = (powl(7, log10l(abs(prev - val))));
+
 			println("Running trigger for values between %i %i",
 				DEBUG, prev, val);
 
 			if(prev < val){
-				for(ssize_t i = prev + 1; i <= val; i++){
+				for(ssize_t i = prev + 1; i <= val; i += 
+					stepsize){
 					
 					json_object_object_del(trigger, value);
 					
@@ -1234,7 +1261,9 @@ int update_interface_control_linear(json_object* control, int32_t val){
 
 			}else if (prev > val){
 				
-				for(ssize_t i = prev -1; i >= val; i--){
+				for(ssize_t i = prev -1; i >= val; i -= 
+					stepsize){
+
 					json_object_object_del(trigger, value);
 					
 					json_object_object_add(trigger, value, 
@@ -1249,16 +1278,15 @@ int update_interface_control_linear(json_object* control, int32_t val){
 					}
 
 				}
-				
-			}else{
-				if(execute_trigger(trigger,false) < 0){
-					println("Failed to update linear "
-						"control!", 
-						ERROR);
-					return -1;
 				}
-				
+			
+			if(execute_trigger(trigger,false) < 0){
+				println("Failed to update linear "
+					"control!", 
+					ERROR);
+				return -1;
 			}
+				
 			
 		}else{
 			if(execute_trigger(trigger,false) < 0){
