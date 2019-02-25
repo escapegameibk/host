@@ -1235,7 +1235,8 @@ int update_interface_control_linear(json_object* control, int32_t val){
 		if(inter != NULL && json_object_get_boolean(inter) && 
 			previous != NULL){
 			
-			unsigned int stepsize = (powl(7, log10l(abs(prev - val))));
+			unsigned int stepsize = (powl(10, log10l(abs(prev - 
+				val)))) / 3;
 
 			println("Running trigger for values between %i %i",
 				DEBUG, prev, val);
