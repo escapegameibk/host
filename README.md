@@ -488,6 +488,16 @@ triggered the next time, and the correlating hint is executed. So for example if
 the latest event which has been executed is 10, and all dependencies are clear
 to execute in the first array, the hint 11,0 get's executed.
 
+## Controls
+
+This was added as a way to add controls to the interface and add linear
+actuators for light, without the need for an event for all that. Controls
+are things that execute triggers when they are updated. The type field
+would specify what kind of trigger that would be, but thus far, only a linear
+type has been implemented, which should represent a slider in the interface. The
+linear field requires the min, max, step, initial, value and trigger fields
+ to be populated wih an integer, an integer an integer, 
+
 ## Language
 
 The "langs" field, which is an array of strings, declares, in which languages
