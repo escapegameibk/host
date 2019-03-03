@@ -67,8 +67,6 @@ int sleep_ms(uint32_t ms){
 	tim.tv_sec = (ms - (ms % 1000)) / 1000;
 	tim.tv_nsec = (ms % 1000) * 1000000;
 
-	println("sleeping %is and %ins", DEBUG, tim.tv_sec, tim.tv_nsec);
-	
 	struct timespec rel;
 
 	nanosleep(&tim, &rel);

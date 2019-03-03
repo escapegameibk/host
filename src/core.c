@@ -527,6 +527,8 @@ int core_check_dependency(json_object* dependency,float* percentage){
 			/* If the dependency should be forefilled "after" a
 			 * certain amount of time.
 			 */
+			 
+			 /* Default values! */
 			above = true;
 			below = false;
 			
@@ -582,6 +584,7 @@ int core_check_dependency(json_object* dependency,float* percentage){
 
 			
 	}else if(strcasecmp(type,"length") == 0){
+
 		/* This is used to specify a length dependency. */
 		for(size_t i = 0; i < length_dependency_count; i++){
 			struct length_dependency_t* dep = 
@@ -594,7 +597,9 @@ int core_check_dependency(json_object* dependency,float* percentage){
 			
 			/* Currently the dependency is not fullfilled */
 			if(dep->activation == 0){
-				return 0;
+				
+				percent_ret = 0;
+				goto ret_vals;
 			}
 
 			time_t current_time = 

@@ -339,30 +339,20 @@ int execute_command(int sock_fd, char* command){
         struct json_tokener *tok = json_tokener_new();
         struct json_object* parsed = json_tokener_parse_ex(tok, command,
                         strlen(command));
-        char * debug;
-#define INT_LEN 64
 
         if(parsed == NULL){
                 /* failed to parse */
-                debug = malloc(INT_LEN);
-                memset(debug,0,INT_LEN);
-                sprintf(debug,"invalid json received for fd %i",sock_fd);
-                println(debug,WARNING);
-                free(debug);
+                println("invalid json received for fd %i", WARNING, sock_fd);
                 return -1;
         }
         json_tokener_free(tok);
 
-        /* every valid comand is required to have a action */
+        /* every valid comand is required to have an action */
         struct json_object* act = json_object_object_get(parsed,"action");
         if(act == NULL){
                 /* no action given */ 
-                debug = malloc(INT_LEN);
-                memset(debug,0,INT_LEN);
-                sprintf(debug,"no action provided by fd %i",sock_fd);
-                println(debug,WARNING);
-                free(debug);
-                free(parsed);
+                println("no action provided by fd %i", WARNING, sock_fd);
+                json_object_put(parsed);
                 return -2;
         }
         int32_t action = json_object_get_int(act);
@@ -570,7 +560,6 @@ int execute_command(int sock_fd, char* command){
         }
 
 
-#undef INT_LEN
         /* cleanup */
         json_object_put(parsed);
         return 0;
