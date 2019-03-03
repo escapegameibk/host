@@ -386,22 +386,38 @@ int execute_command(int sock_fd, char* command){
                 break;
 
         case 4:
-                        /* Force-triggers the incoming event and ignores all
-                         * dependencies. It will not be triggerable until the
-                         * the game is reset to the start state.
-                         */
+		/* Force-triggers the incoming event and ignores all
+		 * dependencies. It will not be triggerable until the
+		 * the game is reset to the start state.
+		 */
 
-			println("Enforced trigger for event %i!", INFO, 
-				printable_events[json_object_get_int(
-				json_object_object_get(parsed,"event"))]);
+		 if(json_object_get_int(json_object_object_get(
+			 parsed,"event")) >= (ssize_t)state_cnt){
+			println("Received invalid event in interface"
+				"for action 4",
+				WARNING);
+			break;
+		 }
 
-                        async_trigger_event(printable_events[
-				json_object_get_int(json_object_object_get(
-				parsed,"event"))]);
+		println("Enforced trigger for event %i!", INFO, 
+			printable_events[json_object_get_int(
+			json_object_object_get(parsed,"event"))]);
+
+		async_trigger_event(printable_events[
+			json_object_get_int(json_object_object_get(
+			parsed,"event"))]);
 		break;
 	case 5:
 		/* Forced untrigger the incoming event. Does NOT reset
 		the triggers. */
+			 
+		 if(json_object_get_int(json_object_object_get(
+			 parsed,"event")) >= (ssize_t)state_cnt){
+			println("Received invalid event in interface"
+				"for action 5",
+				WARNING);
+			break;
+		 }
 
 		println("Enforced un-trigger for event %i!", INFO, 
 			printable_events[json_object_get_int(

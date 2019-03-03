@@ -80,8 +80,8 @@ struct length_dependency_t{
 	json_object* root_dependency;
 	json_object* sub_dependency;
 	time_t activation; /* When the dependency was fullfilled
-			    * for the first time. UNIX 
-			    * Timestamp. 0 is never.
+			    * for the first time. ECP time 
+			    * timestamp. 0 is never.
 			    */
 };
 

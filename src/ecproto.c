@@ -354,7 +354,7 @@ int init_ecp(){
 		return -4;
 	}
 	println("ECP device map:", DEBUG);
-	/* Debug output all devices and registers */
+	
 	for(size_t dev = 0; dev < ecp_devcnt; dev++){
 		struct ecproto_device_t* device = &ecp_devs[dev];
 		
@@ -363,11 +363,11 @@ int init_ecp(){
 			println("\t%i : %c", DEBUG, reg, device->regs[reg].id);
 		
 			/* If you want more debug enable this */
-			/*for(size_t bit = 0; bit < ECP_REG_WIDTH; bit++){
+			for(size_t bit = 0; bit < ECP_REG_WIDTH; bit++){
 				println("\t\t%i : %i", DEBUG, bit, 
 					device->regs[reg].bits[bit].enabled);
 				
-			} */
+			}
 
 		}
 	}
@@ -1102,6 +1102,12 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 				
 				for(size_t i = 0; i < dev->received_regcnt; 
 					i++){
+
+#if DEBUG_LVL > DEBUG_NORM
+					println("Reg list dev %i reg %c",
+						DEBUG, recv_frm[ECP_ADDR_IDX],
+						recv_frm[ECP_PAYLOAD_IDX + i]);
+#endif			
 					
 					ecp_register_register(
 						recv_frm[ECP_ADDR_IDX], 
@@ -1593,7 +1599,21 @@ int send_ecp_port(size_t device_id, char reg_id, size_t pin_id, bool port){
 
 	struct ecproto_port_register_t* reg = escp_get_reg_from_dev(reg_id, 
 		dev);
+
+	if(reg == NULL){
+		println("Attempted unknown port write: dev %i reg %c pin%i ->"
+		" %i", ERROR, device_id, reg_id, pin_id, port);
+		return -1;
+	}
+
 	struct ecproto_port_t* prt = &reg->bits[pin_id];
+	
+	if(prt == NULL){
+		println("Attempted unknown port write: dev %i reg %c pin%i ->"
+		" %i", ERROR, device_id, reg_id, pin_id, port);
+		return -1;
+	}
+
 
 	prt->target = port;
 	
