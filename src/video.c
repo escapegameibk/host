@@ -246,6 +246,7 @@ int video_trigger(json_object* trigger, bool dry){
 				video_perma_urls[i] = NULL;
 				video_current_urls[i] = NULL;
 			}
+			pthread_mutex_unlock(&video_urls_lock);
 
 		}else{
 			println("Immediately halting video playback on dev %i", 
