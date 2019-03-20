@@ -260,6 +260,11 @@ int video_trigger(json_object* trigger, bool dry){
 		}
 
 
+	}else{
+		println("Unknown action for video trigger: \"%s\"", 
+			ERROR, act);
+		return -1;
+		
 	}
 
 	return 0;
