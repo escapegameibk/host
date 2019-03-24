@@ -996,10 +996,10 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 				return -1;
 			}
 			/* Print error string */
-			println("ECP action aborted due to error response:",
-				ERROR);
-			println("%s\n", ERROR, &recv_frm[ECP_PAYLOAD_IDX]);
-			return -4;
+			println("ECP action aborted due to error response:"
+				" \"%s\"",
+				ERROR, &recv_frm[ECP_PAYLOAD_IDX]);
+			return -1;
 			break;
 		case INIT_ACTION:
 			println("ECP slave %i has requested an initialisation",
@@ -1187,7 +1187,7 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 		case GET_PURPOSE:
 		{
 #if DEBUG_LVL > DEBUG_NORM
-			println("Device %i notified us of it's %i special "
+			println("Device %i notified us of it's %i "
 				"capablilties", DEBUG, recv_frm[ECP_ADDR_IDX],
 				recv_frm[ECP_PAYLOAD_IDX]);
 #endif			
@@ -1201,6 +1201,12 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			}
 
 			for(size_t i = 0; i < recv_frm[ECP_PAYLOAD_IDX]; i++){
+#if DEBUG_LVL > DEBUG_NORM
+				println("Device %i notified us of it's %i "
+					"capablilty", DEBUG, 
+					recv_frm[ECP_ADDR_IDX],
+					recv_frm[ECP_PAYLOAD_IDX + i + 1]);
+#endif			
 				
 				switch(recv_frm[ECP_PAYLOAD_IDX + i + 1]){
 					
@@ -1211,6 +1217,7 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 						dev->mfrc522_capable = true;
 						break;
 					case SPECIALDEV_PWM:
+					case SPECIALDEV_OLD_ANALOG:
 						break;
 
 					default:
