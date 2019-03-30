@@ -432,6 +432,8 @@ int ecp_get_updates(){
 				continue;
 			}
 			
+			/* TODO: Update old ECPROTO Devices to be able to remove
+			 * this code... */
 			if(ecp_devs[i].analog->used){
 
 				if(send_ecp_analog_req(ecp_devs[i].id) < 0){
@@ -446,7 +448,9 @@ int ecp_get_updates(){
 
 int reset_ecp(){
 	
-	/* Asynchroneusly gets all device states. Avoids running asynchroneus */
+	/* The update thread will eventually see this and will throw on the
+	 * initialisation routine
+	 */
 	ecp_initialized = false;
 	
 	return 0;
@@ -1882,6 +1886,52 @@ int set_ecp_current_state(size_t dev_id, char reg_id, size_t bit, bool state){
 	port->current = state;
 
 	return 0;
+}
+
+/* This function is used to assemble all GPIO pins to the DDIR register */
+uint8_t get_ddir_from_register(struct ecproto_port_register_t* reg){
+	
+	uint8_t ddir = 00;
+	for(size_t i = 0; i < ECP_REG_WIDTH; i++){
+		struct ecproto_port_t port = reg->bits[i];
+		
+		ddir |= port.ddir << i;
+
+
+	}
+	return ddir;
+}
+
+/* This function is used to assemble all GPIO pins to the DDIR register */
+uint8_t get_port_from_register(struct ecproto_port_register_t* reg){
+	
+	uint8_t prt = 00;
+	for(size_t i = 0; i < ECP_REG_WIDTH; i++){
+		struct ecproto_port_t port = reg->bits[i];
+		
+		prt |= port.target << i;
+
+
+	}
+
+	return prt;
+	
+}
+
+/* This functions assembles the pin enable states, as if they were a register */
+uint8_t get_pins_enabled_from_register(struct ecproto_port_register_t* reg){
+	
+	uint8_t en = 00;
+	for(size_t i = 0; i < ECP_REG_WIDTH; i++){
+		struct ecproto_port_t port = reg->bits[i];
+		
+		en |= port.enabled << i;
+
+
+	}
+
+	return en;
+	
 }
 
 #endif /* NOEC */

@@ -106,8 +106,8 @@ struct ecproto_mfrc522_dev_t{
 	bool working;
 };
 
-struct ecproto_device_t
-{
+struct ecproto_device_t{
+
 	size_t id;
 	bool gpio_capable;
 	/* v This contains the register count that the device told us v */
