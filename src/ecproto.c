@@ -957,6 +957,13 @@ uint8_t* recv_ecp_frame(int fd, size_t* len){
 
 	
 	}
+
+#if DEBUG_LVL > DEBUG_MORE
+	char * prnt = printable_bytes(frame, *len);
+	println("ECP Received: %s", DEBUG, prnt);
+	free(prnt);
+#endif
+
 	pthread_mutex_unlock(&ecp_readlock);
 	return frame;
 }
@@ -1928,7 +1935,7 @@ int write_ecp_msg(size_t dev_id, int fd, uint8_t action_id, uint8_t* payload,
 	frame[frame[ECP_LEN_IDX] - 1] = 0xFF;
 #if DEBUG_LVL > DEBUG_MORE
 	char * prnt = printable_bytes(frame, frame[ECP_LEN_IDX]);
-	println(prnt, DEBUG);
+	println("ECP Transmitting: %s", DEBUG, prnt);
 	free(prnt);
 #endif
 	if(!validate_ecp_frame(frame, frame[ECP_LEN_IDX])){
@@ -2133,7 +2140,7 @@ int ecp_ddir_to_register(struct ecproto_port_register_t* regp, uint8_t reg){
 
 	}
 	
-	return true;	
+	return 0;	
 
 }
 
@@ -2148,7 +2155,7 @@ int ecp_pin_to_register(struct ecproto_port_register_t* regp, uint8_t reg){
 
 	}
 	
-	return true;	
+	return 0;	
 
 }
 
