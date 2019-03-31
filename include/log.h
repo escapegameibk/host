@@ -18,12 +18,7 @@
 #ifndef LOG_H
 #define LOG_H
 
-#ifndef DEBUG_LVL
-#define DEBUG_LVL 1
-#endif
-#define DEBUG_NORM 0 
-#define DEBUG_MORE 1
-#define DEBUG_ALL  2
+#define DEBUG_LVL_DEFAULT DEBUG
 
 #define _GNU_SOURCE
 #include <pthread.h>
@@ -33,7 +28,7 @@
  * This enum IS REQUIRED to start at 0in order to make the array where the
  * actual string representation is stored work
  */
-enum log_type { DEBUG=0, INFO, WARNING, ERROR };
+enum log_type {DEBUG_ALL=0, DEBUG_MOST, DEBUG_MORE, DEBUG, INFO, WARNING, ERROR };
 
 int println(const char* output, int type,...);
 char* log_generate_prestring(int type);

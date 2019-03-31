@@ -6,23 +6,26 @@ CCC := g++
 RM_RF = rm -rf
 CURL := curl -L
 TAR := tar
+DIRNAME := dirname
 # directories
-CWD := $(realpath .)
+CWD := .
 BINDIR := $(CWD)/bin
 BUILDDIR := $(CWD)/build
 SRCDIR := $(CWD)/src
 INCLUDEDIR := $(CWD)/include
 
 # flags
-GAME := -D NOMODBUS -D NOMTSP -D NOLOL -D NOEC
-CFLAGS := -I$(INCLUDEDIR) -D COLOR -Wall -ggdb3 -Wextra -std=gnu11 -O2 $(GAME)
+GAME := -D NOMTSP -D NOMODBUS -D NOLOL
+OPTIMISATIONS := -O2
+CFLAGS := -I$(INCLUDEDIR) -D COLOR -Wall -ggdb3 -Wextra -std=gnu11 $(OPTIMISATIONS) $(GAME)
 LDFLAGS := -pthread -ljson-c -lvlc -lm
 
 # target files
 DIRS_TARGET := $(BINDIR) $(BUILDDIR)
 TARGET := $(BINDIR)/host
-SRCFILES := $(wildcard $(SRCDIR)/*.c)
-OBJFILES := $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(SRCFILES))
+SRCFILES := $(shell find $(SRCDIR) -name '*.c')
+OBJFILES_INT = $(subst $(SRCDIR)/,$(BUILDDIR)/,$(SRCFILES))
+OBJFILES := $(subst .c,.o,$(OBJFILES_INT))
 
 # fancy targets
 all:  directories  $(TARGET)
@@ -35,10 +38,11 @@ $(DIRS_TARGET):
 	$(MKDIR_P) $@
 
 $(TARGET): $(OBJFILES)
-	$(CC) $(LDFLAGS) -o $@  $^
+	$(CC) $(LDFLAGS) -o "$@"  $^
  
-$(BUILDDIR)/%.o: $(SRCDIR)/%.c
-	$(CC) $(CFLAGS) -c -o $@ $<                              
+$(OBJFILES):
+	$(MKDIR_P) $(@D)
+	$(CC) $(CFLAGS) -c -o "$@" $(subst build/,src/,$(subst .o,.c,$@))
 
 clean:                                                                          
 	$(RM_RF) $(DIRS_TARGET)     

@@ -28,9 +28,15 @@
 #include <pthread.h>
 #include <signal.h>
 
+int current_debug_lvl = DEBUG_LVL_DEFAULT;
 
 int println(const char* output, int type, ...){
         
+	if(type < current_debug_lvl){
+		/* output is surpressed */
+		return 0;
+	}
+
         va_list arg;
         va_start (arg, type);
         char* pre = log_generate_prestring(type);
@@ -52,6 +58,9 @@ int println(const char* output, int type, ...){
 
 #ifndef COLOR
 char* log_typestr[] = {
+        "INVALID  ",
+        "DEBUG+2  ",
+        "DEBUG+1  ",
         "DEBUG    ",
         "INFO     ",
         "WARNING  ",
@@ -59,7 +68,10 @@ char* log_typestr[] = {
 };
 #else
 char* log_typestr[] = {
-                "DEBUG       ",
+        "INVALID     ",
+        "DEBUG+2     ",
+        "DEBUG+1     ",
+        "DEBUG       ",
         "\e[0;32mINFO\e[0m        ",
         "\e[0;33mWARNING\e[0m     ",
         "\e[0;31mERROR\e[0m       "

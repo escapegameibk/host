@@ -122,16 +122,14 @@ void* lol_listen_fordata(){
 			}
 
 			/* If debug is set, print frame */
-#if DEBUG_LVL >= DEBUG_ALL
 			char* print_frame = printable_bytes(frame->payload, 
 				frame->len);
 			
-			println("LOL FRAME RECEIVED:", DEBUG);
-			println("ADD %x: %s", DEBUG, frame->address, 
+			println("LOL FRAME RECEIVED:", DEBUG_MOST);
+			println("ADD %x: %s", DEBUG_MOST, frame->address, 
 				print_frame);
 
 			free(print_frame);
-#endif
 
 			/* Process frame */
 			// TODO
@@ -217,9 +215,7 @@ int recieve_lol_frame(struct lol_frame_t* frame){
 	}
 
 	uint8_t address = (status & 0b111111);
-#if DEBUG_LVL >= DEBUG_ALL
-	println("lol-frame recv from %x", DEBUG, address);
-#endif
+	println("lol-frame recv from %x", DEBUG_MOST, address);
 
 	uint8_t * frame_raw = malloc(len);
 	memset(frame_raw, 0, len);

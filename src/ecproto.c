@@ -958,11 +958,9 @@ uint8_t* recv_ecp_frame(int fd, size_t* len){
 	
 	}
 
-#if DEBUG_LVL > DEBUG_MORE
 	char * prnt = printable_bytes(frame, *len);
-	println("ECP Received: %s", DEBUG, prnt);
+	println("ECP Received: %s", DEBUG_MOST, prnt);
 	free(prnt);
-#endif
 
 	pthread_mutex_unlock(&ecp_readlock);
 	return frame;
@@ -1057,14 +1055,13 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 				return -1;
 			}
 			
-#if DEBUG_LVL > DEBUG_NORM
 			println("ECP Port update: %i dev %c reg %i bit --> %i",
-				DEBUG,
+				DEBUG_MORE,
 				recv_frm[ECP_ADDR_IDX], 
 				recv_frm[ECP_PAYLOAD_IDX], 
 				recv_frm[ECP_PAYLOAD_IDX + 1], 
 				recv_frm[ECP_PAYLOAD_IDX + 2]);
-#endif
+			
 			return set_ecp_current_state(recv_frm[ECP_ADDR_IDX], 
 				recv_frm[ECP_PAYLOAD_IDX], 
 				recv_frm[ECP_PAYLOAD_IDX + 1], 
@@ -1094,12 +1091,11 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 
 				dev->received_regcnt = 
 					recv_frm[ECP_PAYLOAD_IDX];
-#if DEBUG_LVL > DEBUG_NORM
+				
 				println("ECP dev %i notified us of %i regs!", 
-					DEBUG, recv_frm[ECP_ADDR_IDX],
+					DEBUG_MORE, recv_frm[ECP_ADDR_IDX],
 					recv_frm[ECP_PAYLOAD_IDX]
 					);
-#endif
 			}else{
 				println("ECP register count without payload!",
 					ERROR);
@@ -1128,12 +1124,10 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 				for(size_t i = 0; i < dev->received_regcnt; 
 					i++){
 
-#if DEBUG_LVL > DEBUG_NORM
 					println("Reg list dev %i reg %c",
-						DEBUG, recv_frm[ECP_ADDR_IDX],
+						DEBUG_MORE, recv_frm[ECP_ADDR_IDX],
 						recv_frm[ECP_PAYLOAD_IDX + i]);
-#endif			
-					
+
 					ecp_register_register(
 						recv_frm[ECP_ADDR_IDX], 
 						recv_frm[ECP_PAYLOAD_IDX + i]);
@@ -1184,15 +1178,13 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 						, ERROR);
 					return -1;
 				}
-#if DEBUG_LVL > DEBUG_NORM
 				println("ECP Port enabled: %i dev %c reg %i bit"
 					" --> %i",
-					DEBUG,
+					DEBUG_MORE,
 					recv_frm[ECP_ADDR_IDX],
 					recv_frm[ECP_PAYLOAD_IDX],
 					recv_frm[ECP_PAYLOAD_IDX + 1],
 					recv_frm[ECP_PAYLOAD_IDX + 2]);
-#endif
 
 				prt->enabled = recv_frm[ECP_PAYLOAD_IDX + 2];
 			}
@@ -1221,11 +1213,11 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 
 		case GET_PURPOSE:
 		{
-#if DEBUG_LVL > DEBUG_NORM
 			println("Device %i notified us of it's %i "
-				"capablilties", DEBUG, recv_frm[ECP_ADDR_IDX],
+				"capablilties", DEBUG_MORE, 
+				recv_frm[ECP_ADDR_IDX],
 				recv_frm[ECP_PAYLOAD_IDX]);
-#endif			
+			
 			struct ecproto_device_t* dev = escp_get_dev_from_id(
 				recv_frm[ECP_ADDR_IDX]);
 
@@ -1305,37 +1297,28 @@ int ecp_enable_purpose(struct ecproto_device_t* const dev, uint8_t purpose){
 		
 		case SPECIALDEV_GPIO:
 			dev->gpio_capable = true;
-#if DEBUG_LVL > DEBUG_NORM
-			println("Device %i: Capable of GPIO!", DEBUG, 
+			println("Device %i: Capable of GPIO!", DEBUG_MORE, 
 				dev->id);
-#endif		
 			break;
 		case SPECIALDEV_MFRC522:
 			dev->mfrc522_capable = true;
-#if DEBUG_LVL > DEBUG_NORM
-			println("Device %i: Capable of MFRC522!", DEBUG, 
+			println("Device %i: Capable of MFRC522!", DEBUG_MORE, 
 				dev->id);
-#endif		
 			break;
 		case SPECIALDEV_PWM:
-#if DEBUG_LVL > DEBUG_NORM
-			println("Device %i: Capable of PWM!", DEBUG, dev->id);
-#endif		
+			println("Device %i: Capable of PWM!", DEBUG_MORE, 
+				dev->id);
 			break;
 		
 		case SPECIALDEV_FAST_GPIO:
-#if DEBUG_LVL > DEBUG_NORM
-			println("Device %i: Capable of fast GPIO!", DEBUG, 
+			println("Device %i: Capable of fast GPIO!", DEBUG_MORE, 
 				dev->id);
-#endif
 			dev->fast_gpio_capable = true;
 			break;
 
 		case SPECIALDEV_OLD_ANALOG:
-#if DEBUG_LVL > DEBUG_NORM
-			println("Device %i: Capable of old analog!", DEBUG, 
+			println("Device %i: Capable of old analog!", DEBUG_MORE, 
 				dev->id);
-#endif		
 			break;
 
 		default:
@@ -1518,7 +1501,8 @@ int init_ecp_device(struct ecproto_device_t* device){
 	}
 
 	/* TODO update old firmware in currently used Escape Game System
-	 * installations so this is no longer neded! 
+	 * installations so this is no longer neded!
+	 * Last installation left: Escape Game Munich Orphanage WESTPARK 3
 	 */
 	if(old_fw){
 		println("OUTDATED ECP MICROCONTROLLER VERSION ASSUMED!"
@@ -1933,11 +1917,11 @@ int write_ecp_msg(size_t dev_id, int fd, uint8_t action_id, uint8_t* payload,
 	frame[frame[ECP_LEN_IDX] - 3] = crc_high;
 	frame[frame[ECP_LEN_IDX] - 2] = crc_low;
 	frame[frame[ECP_LEN_IDX] - 1] = 0xFF;
-#if DEBUG_LVL > DEBUG_MORE
+	
 	char * prnt = printable_bytes(frame, frame[ECP_LEN_IDX]);
-	println("ECP Transmitting: %s", DEBUG, prnt);
+	println("ECP Transmitting: %s", DEBUG_MOST, prnt);
 	free(prnt);
-#endif
+	
 	if(!validate_ecp_frame(frame, frame[ECP_LEN_IDX])){
 		println("Failed to construct ecp frame!", ERROR);
 		return -1;
