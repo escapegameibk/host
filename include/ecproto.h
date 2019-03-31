@@ -48,18 +48,22 @@
 #define GET_PURPOSE            0x10
 #define SPECIAL_INTERACT       0x11
 #define SET_PWM                0x12
+#define GET_GPIO_REGS          0x13
+#define SET_GPIO_REGS          0x14
+#define GET_DISABLED_PINS      0x15
 
 #define ECP_LEN_IDX 0
 #define ECP_ADDR_IDX 1
 #define ECP_ID_IDX 2
 #define ECP_PAYLOAD_IDX 3
 
-
 #define SPECIALDEV_GPIO        0x00
 #define SPECIALDEV_OLD_ANALOG  0x01
 #define SPECIALDEV_NEW_ANALOG  0x02
 #define SPECIALDEV_MFRC522     0x03
 #define SPECIALDEV_PWM         0x04
+#define SPECIALDEV_FAST_GPIO   0x05
+
 
 #define MFRC522_GET_ALL_DEVS   0x00
 #define MFRC522_GET_TAG	       0x01
@@ -126,6 +130,9 @@ struct ecproto_device_t{
 	
 	struct ecproto_mfrc522_dev_t* mfrc522_devs;
 
+	bool fast_gpio_capable; /* < Defines weather the device supports the
+	                         *   faster GPIO initialisation routines. */
+
 };
 
 /* Storage for devices */
@@ -172,6 +179,7 @@ bool validate_ecp_frame(uint8_t* frame, size_t len);
 int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 	snd_len);
 
+int ecp_enable_purpose(struct ecproto_device_t* const dev, uint8_t purpose);
 int ecp_handle_special_interact(uint8_t* recv_frm);
 int ecp_handle_mfrc522(uint8_t* recv_frm);
 
@@ -179,6 +187,9 @@ int ecp_handle_mfrc522(uint8_t* recv_frm);
 int ecp_bus_init();
 int init_ecp_device(struct ecproto_device_t* device);
 int init_ecp_gpio(struct ecproto_device_t* device);
+int init_ecp_gpio_fast(struct ecproto_device_t* device);
+int ecp_bitwise_init_gpio_reg(struct ecproto_device_t* device,
+	struct ecproto_port_register_t* regp);
 
 int get_ecp_port(size_t device_id, char reg_id, size_t pin_id);
 int send_ecp_port(size_t device_id, char reg_id, size_t pin_id, bool port);
@@ -200,6 +211,11 @@ struct ecproto_port_register_t* escp_get_reg_from_dev(char id, struct
 	ecproto_device_t* dev);
 int init_ecp_port_reg(struct ecproto_port_register_t* prt_reg);
 int set_ecp_current_state(size_t dev_id, char reg_id, size_t bit, bool state);
+uint8_t get_ddir_from_register(struct ecproto_port_register_t* reg);
+uint8_t get_port_from_register(struct ecproto_port_register_t* reg);
+uint8_t get_pins_enabled_from_register(struct ecproto_port_register_t* reg);
+int ecp_ddir_to_register(struct ecproto_port_register_t* regp, uint8_t reg);
+int ecp_pin_to_register(struct ecproto_port_register_t* regp, uint8_t reg);
 
 #endif /* ECPROTO_H */
 #endif /* NOEC */

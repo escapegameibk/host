@@ -903,7 +903,10 @@ uint8_t* recv_ecp_frame(int fd, size_t* len){
 		if(n == 0){
 			println("Timeout in poll on ecp fd recv!", WARNING);
 			if(frame != NULL){
-				println(printable_bytes(frame, frame_length), WARNING);
+				println("Found valid data in buffer though:",
+					WARNING);
+				println(printable_bytes(frame, frame_length), 
+					WARNING);
 			}
 			free(frame);
 			frame = NULL;
@@ -932,8 +935,17 @@ uint8_t* recv_ecp_frame(int fd, size_t* len){
 	
 		frame = realloc(frame, ++frame_length);
 		frame[frame_length - 1] = octet;
-		if(octet == 0xFF){
+
+		/* Frame finished */
+		if(frame != NULL && frame_length > ECP_LEN_IDX && 
+			frame_length >= frame[ECP_LEN_IDX]){
+
 			if(frame_length < ECPROTO_OVERHEAD){
+				char* printable = printable_bytes(frame,
+					frame_length);
+				println("Received too short frame: %s", ERROR,
+					printable);
+				free(printable);
 				free(frame);
 				frame = NULL;
 				*len = 0;
@@ -1011,6 +1023,7 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 
 			ecp_initialized = false;
 			break;
+
 		case SEND_NOTIFY:
 			/* I will now get some more frames. Tell the overlying
 			 * function that it should read some more frames */
@@ -1019,6 +1032,7 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			}
 			break;
 
+		case SET_GPIO_REGS:
 		case SET_PWM:
 		case WRITE_PORT_ACTION:
 		case DEFINE_PORT_ACTION:
@@ -1163,6 +1177,16 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 						, ERROR);
 					return -1;
 				}
+#if DEBUG_LVL > DEBUG_NORM
+				println("ECP Port enabled: %i dev %c reg %i bit"
+					" --> %i",
+					DEBUG,
+					recv_frm[ECP_ADDR_IDX],
+					recv_frm[ECP_PAYLOAD_IDX],
+					recv_frm[ECP_PAYLOAD_IDX + 1],
+					recv_frm[ECP_PAYLOAD_IDX + 2]);
+#endif
+
 				prt->enabled = recv_frm[ECP_PAYLOAD_IDX + 2];
 			}
 			break;
@@ -1205,36 +1229,10 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			}
 
 			for(size_t i = 0; i < recv_frm[ECP_PAYLOAD_IDX]; i++){
-#if DEBUG_LVL > DEBUG_NORM
-				println("Device %i notified us of it's %i "
-					"capablilty", DEBUG, 
-					recv_frm[ECP_ADDR_IDX],
-					recv_frm[ECP_PAYLOAD_IDX + i + 1]);
-#endif			
 				
-				switch(recv_frm[ECP_PAYLOAD_IDX + i + 1]){
-					
-					case SPECIALDEV_GPIO:
-						dev->gpio_capable = true;
-						break;
-					case SPECIALDEV_MFRC522:
-						dev->mfrc522_capable = true;
-						break;
-					case SPECIALDEV_PWM:
-					case SPECIALDEV_OLD_ANALOG:
-						break;
-
-					default:
-						println("Fancy! A new purpose!"
-							"Now would you mind"
-							"Implementing it please"
-							"? %i ecp purpose recvd"
-							,WARNING, 
-							recv_frm[ECP_PAYLOAD_IDX 
-							+ i + 1]);
-
-
-				}
+				ecp_enable_purpose(dev, 
+					recv_frm[ECP_PAYLOAD_IDX + i + 1]);
+				
 
 			}
 
@@ -1248,11 +1246,96 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			
 			break;
 
+		case GET_GPIO_REGS:
+			if(recv_payload_len < 4){
+				println("Received ecp frame 19 with <4 params",
+					ERROR);
+				return -1;
+			}
+			{
+				struct ecproto_device_t* dev = 
+					escp_get_dev_from_id(
+					recv_frm[ECP_ADDR_IDX]);
+				
+				if(dev == NULL){
+					println("Recv 11 from unknown dev! wut?"
+						, ERROR);
+					return -1;
+				}
+				
+				struct ecproto_port_register_t* reg = 
+					escp_get_reg_from_dev(
+					recv_frm[ECP_PAYLOAD_IDX], dev);
+				
+				if(reg == NULL){
+					println("Recv 11 with unknown reg! wut?"
+						, ERROR);
+					return -1;
+				}
+
+				return ecp_pin_to_register(reg,
+					recv_frm[ECP_PAYLOAD_IDX + 3]);
+			}
+			break;
+
+		case GET_DISABLED_PINS:
+			println("Received disabled pins message! NOT STANDART!",
+				ERROR);
+			return -1;
+
 		default:
 			/* You lazy bastard! */
 			println("Unimplemented ECP response: %i!", WARNING,
 				recv_frm[ECP_ID_IDX]);
 			break;
+	}
+	return 0;
+}
+
+int ecp_enable_purpose(struct ecproto_device_t* const dev, uint8_t purpose){
+
+	switch(purpose){
+		
+		case SPECIALDEV_GPIO:
+			dev->gpio_capable = true;
+#if DEBUG_LVL > DEBUG_NORM
+			println("Device %i: Capable of GPIO!", DEBUG, 
+				dev->id);
+#endif		
+			break;
+		case SPECIALDEV_MFRC522:
+			dev->mfrc522_capable = true;
+#if DEBUG_LVL > DEBUG_NORM
+			println("Device %i: Capable of MFRC522!", DEBUG, 
+				dev->id);
+#endif		
+			break;
+		case SPECIALDEV_PWM:
+#if DEBUG_LVL > DEBUG_NORM
+			println("Device %i: Capable of PWM!", DEBUG, dev->id);
+#endif		
+			break;
+		
+		case SPECIALDEV_FAST_GPIO:
+#if DEBUG_LVL > DEBUG_NORM
+			println("Device %i: Capable of fast GPIO!", DEBUG, 
+				dev->id);
+#endif
+			dev->fast_gpio_capable = true;
+			break;
+
+		case SPECIALDEV_OLD_ANALOG:
+#if DEBUG_LVL > DEBUG_NORM
+			println("Device %i: Capable of old analog!", DEBUG, 
+				dev->id);
+#endif		
+			break;
+
+		default:
+			println("Unknown ecp purpose received from dev %i: %i",
+				WARNING, dev->id, purpose);
+
+
 	}
 	return 0;
 }
@@ -1478,6 +1561,11 @@ int init_ecp_gpio(struct ecproto_device_t* device){
 	
 	int n = 0;
 	
+	if(device->fast_gpio_capable){
+		/* The device is capable to initialize a faster way! */
+		return init_ecp_gpio_fast(device);
+	}
+
 	/* Get a register count */
 	n |= ecp_send_message(device->id, REGISTER_COUNT, NULL, 0);
 	
@@ -1501,88 +1589,182 @@ int init_ecp_gpio(struct ecproto_device_t* device){
 		struct ecproto_port_register_t* regp = &device->regs[reg];
 		
 		/* INIT All registers */
-
-		for(size_t bt = 0; bt < ECP_REG_WIDTH; bt++){
-			
-			struct ecproto_port_t* bit = &regp->bits[bt];
-			
-			uint8_t enable_dat [] = {regp->id, bit->bit};
-			
-			n |= ecp_send_message(device->id, PIN_ENABLED,
-				enable_dat, sizeof(enable_dat));
-			
-			if(n){
-				println("Failed to get ECP port enable state",
-					WARNING);
-				return -1;
-			}
-			if(!bit->enabled){
-				/* Skip further initialisation of this port.
-				 * It is disabled man, I can't do anything */
-				continue;
-			}
-			
-			n |= send_ecp_ddir(device->id, regp->id, 
-				bit->bit, bit->ddir); 
-
-			if(n){
-				println("Failed to set ECP DDIR",
-					WARNING);
-				return -1;
-			}
-			
-			if(bit->ddir != ECP_OUTPUT){
-			
-				n |= send_ecp_port(device->id, regp->id, 
-					bit->bit, bit->target); 
-				
-				if(n){
-					println("Failed to set ECP port"
-						,WARNING);
-					return -1;
-				}
-
-			}
-			
-			n |= get_ecp_port(device->id, regp->id, 
-				bit->bit); 
-			if(n){
-				println("Failed to get ECP Port",
-					WARNING);
-				return -1;
-			}
-			
-			
-			if(bit->ddir == ECP_OUTPUT){
-				bit->target = bit->current;
-			}
-			
-			/* In case the targeted pin is not an input pin (in
-			 * which case this addresses the pullup-resistors), nor
-			 * is the targeted pin other than the default value
-			 * for all outputs, it can be assumed, that he pin is
-			 * doesn't need a refresh. 
-			 */
-
-			if(bit->ddir != ECP_OUTPUT || bit->target != 
-				ECP_DEFAULT_TARGET){
-			
-				n |= send_ecp_port(device->id, regp->id, 
-					bit->bit, bit->target); 
-				
-				if(n){
-					println("Failed to set ECP PORT"
-						,WARNING);
-					return -1;
-				}
-
-			}
+		if(ecp_bitwise_init_gpio_reg(device, regp)){
+			println("Failed to init ECP GPIO REG %c for device %i!",
+				ERROR, device->id, regp->id);
+			return -1;
 		}
+
 	
 	}
 	
 	return n;
 
+}
+/* Initialise a device's GPIO subpart, but faster! */
+int init_ecp_gpio_fast(struct ecproto_device_t* device){
+	
+	int n = 0;
+
+	/* Get a register count */
+	n |= ecp_send_message(device->id, REGISTER_COUNT, NULL, 0);
+	
+	if(n){
+
+		println("Failed to count ecp regs for dev %i", ERROR, 
+			device->id);
+		return -1;
+	}
+	
+	/* Get a list containing the above received amount of registers */
+	n |= ecp_send_message(device->id, REGISTER_LIST, NULL, 0);
+	if(n){
+		println("Failed to list ecp regs for dev %i",
+			ERROR, device->id);
+		return -1;
+	}
+	
+	/* Get a list of disabled pins in order to ignore them */
+	n |= ecp_send_message(device->id, GET_DISABLED_PINS, NULL, 0);
+	if(n){
+		println("Failed to list disabled pins for dev %i",
+			ERROR, device->id);
+		return -1;
+	}
+	println("Fastly initializeing %i regs for dev %i!", DEBUG,
+		device->regcnt, device->id);
+	
+	for(size_t reg = 0; reg < device->regcnt; reg++){
+		
+		struct ecproto_port_register_t* regp = &device->regs[reg];
+
+		if(get_pins_enabled_from_register(regp) == 0xFF){
+			/* Fast init is possible for this register */
+			println("Fast init dev %i reg %c!", DEBUG,
+				device->id, regp->id);
+			
+			uint8_t payload_set[] = {regp->id,
+				get_ddir_from_register(regp),
+				get_port_from_register(regp)};
+
+			n |= ecp_send_message(device->id, SET_GPIO_REGS,
+				payload_set, sizeof(payload_set));
+			if(n){
+				println("Failed to set register %c at dev %i!",
+					ERROR,regp->id, device->id);
+				return -1;
+			}
+			uint8_t payload_get = regp->id;
+			n |= ecp_send_message(device->id, GET_GPIO_REGS,
+				&payload_get, sizeof(payload_get));
+			if(n){
+				println("Failed to set register %c at dev %i!",
+					ERROR,regp->id, device->id);
+				return -1;
+			}
+			
+
+		}else{
+			/* Fast init isn't possible for this register */
+			println("Slow init dev %i reg %c!", DEBUG,
+				device->id, regp->id);
+			if(ecp_bitwise_init_gpio_reg(device, regp)){
+				println("Failed to init ECP GPIO REG %c for "
+					"device %i!",
+					ERROR, device->id, regp->id);
+				return -1;
+			}
+
+		}
+
+	}
+
+	return n;
+}
+
+int ecp_bitwise_init_gpio_reg(struct ecproto_device_t* device,
+	struct ecproto_port_register_t* regp){
+
+	int n = 0;
+	
+	for(size_t bt = 0; bt < ECP_REG_WIDTH; bt++){
+		
+		struct ecproto_port_t* bit = &regp->bits[bt];
+		
+		uint8_t enable_dat [] = {regp->id, bit->bit};
+		
+		n |= ecp_send_message(device->id, PIN_ENABLED,
+			enable_dat, sizeof(enable_dat));
+		
+		if(n){
+			println("Failed to get ECP port enable state",
+				WARNING);
+			return -1;
+		}
+		if(!bit->enabled){
+			/* Skip further initialisation of this port.
+			 * It is disabled man, I can't do anything */
+			continue;
+		}
+		
+		n |= send_ecp_ddir(device->id, regp->id, 
+			bit->bit, bit->ddir); 
+
+		if(n){
+			println("Failed to set ECP DDIR",
+				WARNING);
+			return -1;
+		}
+		
+		if(bit->ddir != ECP_OUTPUT){
+		
+			n |= send_ecp_port(device->id, regp->id, 
+				bit->bit, bit->target); 
+			
+			if(n){
+				println("Failed to set ECP port"
+					,WARNING);
+				return -1;
+			}
+
+		}
+		
+		n |= get_ecp_port(device->id, regp->id, 
+			bit->bit); 
+		if(n){
+			println("Failed to get ECP Port",
+				WARNING);
+			return -1;
+		}
+		
+		
+		if(bit->ddir == ECP_OUTPUT){
+			bit->target = bit->current;
+		}
+		
+		/* In case the targeted pin is not an input pin (in
+		 * which case this addresses the pullup-resistors), nor
+		 * is the targeted pin other than the default value
+		 * for all outputs, it can be assumed, that he pin is
+		 * doesn't need a refresh. 
+		 */
+
+		if(bit->ddir != ECP_OUTPUT || bit->target != 
+			ECP_DEFAULT_TARGET){
+		
+			n |= send_ecp_port(device->id, regp->id, 
+				bit->bit, bit->target); 
+			
+			if(n){
+				println("Failed to set ECP PORT"
+					,WARNING);
+				return -1;
+			}
+
+		}
+	}
+
+	return n;
 }
 
     
@@ -1744,7 +1926,11 @@ int write_ecp_msg(size_t dev_id, int fd, uint8_t action_id, uint8_t* payload,
 	frame[frame[ECP_LEN_IDX] - 3] = crc_high;
 	frame[frame[ECP_LEN_IDX] - 2] = crc_low;
 	frame[frame[ECP_LEN_IDX] - 1] = 0xFF;
-	
+#if DEBUG_LVL > DEBUG_MORE
+	char * prnt = printable_bytes(frame, frame[ECP_LEN_IDX]);
+	println(prnt, DEBUG);
+	free(prnt);
+#endif
 	if(!validate_ecp_frame(frame, frame[ECP_LEN_IDX])){
 		println("Failed to construct ecp frame!", ERROR);
 		return -1;
@@ -1764,9 +1950,10 @@ int ecp_receive_msgs(uint8_t* snd_frame, size_t snd_len){
 	
 	size_t reads = 1;
 	int n = 0;
+
 	for(size_t i = 0; i < reads; i++){
 
-	size_t recv_len = 0;
+		size_t recv_len = 0;
 
 		uint8_t* recv_frame = recv_ecp_frame(ecp_fd, &recv_len);
 			
@@ -1776,8 +1963,10 @@ int ecp_receive_msgs(uint8_t* snd_frame, size_t snd_len){
 			if(snd_frame == NULL){
 				println("Unprintable!", ERROR);
 			}else{
-				println(printable_bytes(snd_frame,snd_len), 
-					ERROR);
+				char * prnt = printable_bytes(snd_frame,
+					snd_len);
+				println(prnt, ERROR);
+				free(prnt);
 			}
 	
 			/* Asynchroneously gets all device states. Hope that
@@ -1848,10 +2037,10 @@ int init_ecp_port_reg(struct ecproto_port_register_t* prt_reg){
 		 */
 		prt->bit = i;
 		prt->ddir = ECP_OUTPUT;
+		prt->enabled = true;
 		
 		/* This will be overwritten by a check at the beginning */
 		prt->current = false;
-		prt->enabled = false;
 		prt->target = ECP_DEFAULT_TARGET;
 	}
 
@@ -1924,7 +2113,6 @@ uint8_t get_pins_enabled_from_register(struct ecproto_port_register_t* reg){
 	uint8_t en = 00;
 	for(size_t i = 0; i < ECP_REG_WIDTH; i++){
 		struct ecproto_port_t port = reg->bits[i];
-		
 		en |= port.enabled << i;
 
 
@@ -1932,6 +2120,36 @@ uint8_t get_pins_enabled_from_register(struct ecproto_port_register_t* reg){
 
 	return en;
 	
+}
+
+int ecp_ddir_to_register(struct ecproto_port_register_t* regp, uint8_t reg){
+
+	if(regp == NULL){
+		return -1;
+	}
+
+	for(size_t i = 0; i < ECP_REG_WIDTH; i++){
+		regp->bits[i].ddir = (reg >> i) & 0x1;
+
+	}
+	
+	return true;	
+
+}
+
+int ecp_pin_to_register(struct ecproto_port_register_t* regp, uint8_t reg){
+
+	if(regp == NULL){
+		return -1;
+	}
+
+	for(size_t i = 0; i < ECP_REG_WIDTH; i++){
+		regp->bits[i].current = (reg >> i) & 0x1;
+
+	}
+	
+	return true;	
+
 }
 
 #endif /* NOEC */
