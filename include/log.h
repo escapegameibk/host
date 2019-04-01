@@ -28,12 +28,14 @@
  * This enum IS REQUIRED to start at 0in order to make the array where the
  * actual string representation is stored work
  */
-enum log_type {DEBUG_ALL=0, DEBUG_MOST, DEBUG_MORE, DEBUG, INFO, WARNING, ERROR };
+enum log_type {DEBUG_ALL, DEBUG_MOST, DEBUG_MORE, DEBUG, INFO, WARNING, ERROR};
 
 int println(const char* output, int type,...);
 char* log_generate_prestring(int type);
 
 int init_log();
+
+int init_log_config();
 
 #ifndef NOMEMLOG
 

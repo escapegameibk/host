@@ -72,10 +72,16 @@ int main(int argc, char * const argv[]){
         }
 
         if(load_config(config) < 0){
-                println("failed to load config!!",ERROR);
+                println("failed to load config!!", ERROR);
 		exit_code = EXIT_FAILURE;
                 goto shutdown;
         }
+
+	if(init_log_config() < 0){
+                println("failed to init log configuration!", ERROR);
+		exit_code = EXIT_FAILURE;
+                goto shutdown;
+	}
         
 	if(init_game() < 0){
                 println("failed to init game!!",ERROR);

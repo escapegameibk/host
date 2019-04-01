@@ -16,6 +16,7 @@
   */
 
 #include "log.h"
+#include "config.h"
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
@@ -27,6 +28,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <signal.h>
+#include <json-c/json.h>
 
 int current_debug_lvl = DEBUG_LVL_DEFAULT;
 
@@ -145,6 +147,45 @@ int init_log(){
 #endif /* NOMEMLOG */
 
 	return 0;
+}
+
+int init_log_config(){
+
+	json_object* log_level = json_object_object_get(config_glob, 
+		"log_level");
+
+	if(log_level == NULL){
+		println("Log level not configured, assumeing default %i",
+			DEBUG, current_debug_lvl);
+		return 0;
+	}else{
+		const char* log_lvl = json_object_get_string(log_level);
+
+		if(strcasecmp(log_lvl,"DEBUG_ALL") == 0){
+			current_debug_lvl = DEBUG_ALL;
+		}else if(strcasecmp(log_lvl,"DEBUG_MOST") == 0){
+			current_debug_lvl = DEBUG_MOST;
+		}else if(strcasecmp(log_lvl,"DEBUG_MORE") == 0){
+			current_debug_lvl = DEBUG_MORE;
+		}else if(strcasecmp(log_lvl,"DEBUG") == 0){
+			current_debug_lvl = DEBUG;
+		}else if(strcasecmp(log_lvl,"INFO") == 0){
+			current_debug_lvl = INFO;
+		}else if(strcasecmp(log_lvl,"WARNING") == 0){
+			current_debug_lvl = WARNING;
+		}else if(strcasecmp(log_lvl,"ERROR") == 0){
+			current_debug_lvl = ERROR;
+		}else{
+			println("INVALID log_level specified: %s:",
+				ERROR, log_lvl);
+			return -1;
+		}
+		println("Updated log level to %i", DEBUG, current_debug_lvl);
+			
+	}
+
+	return 0;
+
 }
 
 #ifndef NOMEMLOG

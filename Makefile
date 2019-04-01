@@ -40,7 +40,7 @@ $(DIRS_TARGET):
 $(TARGET): $(OBJFILES)
 	$(CC) $(LDFLAGS) -o "$@"  $^
  
-$(OBJFILES):
+$(OBJFILES): $(SRCFILES)
 	$(MKDIR_P) $(@D)
 	$(CC) $(CFLAGS) -c -o "$@" $(subst build/,src/,$(subst .o,.c,$@))
 
