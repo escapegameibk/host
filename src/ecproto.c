@@ -1781,6 +1781,12 @@ int send_ecp_port(size_t device_id, char reg_id, size_t pin_id, bool port){
 
 	struct ecproto_device_t* dev = escp_get_dev_from_id(device_id);
 
+	if(dev == NULL){
+		println("Port write to unknown device! ID: %i", ERROR, 
+			device_id);
+		return -1;
+	}
+
 	struct ecproto_port_register_t* reg = escp_get_reg_from_dev(reg_id, 
 		dev);
 
