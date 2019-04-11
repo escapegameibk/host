@@ -9,11 +9,18 @@
 	],
 	"mtsp_device" : "/dev/ttyUSB0",
 	"mtsp_baud" : 460800,
-	"ecp_device" : "/dev/ttyACM0",
-	"ecp_device_count" : 1,
+	"ecp_device" : "/dev/ttyUSB0",
+	"ecp_device_count" : 3,
+	"log_level" : "DEBUG_ALL",
 	"langs" :[
 		"english",
 		"deutsch"
+	],
+	"modules" :
+	[
+		"interface",
+		"core",
+		"video"
 	],
 	"default_lang" : 0,
 	"events":
@@ -146,6 +153,31 @@
 				]
 			}
 		]
+	],
+	"control" :
+	[
+		{
+			"name" : "Light",
+			"type" : "linear",
+			"min" : 0,
+			"max" : 255,
+			"step" : 1,
+			"initial" : 100,
+			"value" : "value",
+			"intermediate": true,
+			"trigger" :
+			[
+				{
+					"name" : "set PWM of light",
+					"type" : "pwm",
+					"module" : "ecp",
+					"device" : 0,
+					"counter" : 1,
+					"output" : 0,
+					"value" : 10
+				}
+			]
+		}
 	],
 	"color" :
 	{

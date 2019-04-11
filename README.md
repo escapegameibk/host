@@ -7,8 +7,6 @@ This is the host for games at the escape game innsbruck. It's main purpose is,
 to control an escape room. Afterwars, it became apparent to me, that it would
 also be kinda suitable as a home-automation system.
 
-
-
 ## License
 This program is licensed under the GPLv3 or any later version of the license,
 which permits you to use it commercially, but requires you to give users the
@@ -100,7 +98,7 @@ json file:
  - "duration": the normal duration of a game in seconds. it can be ommited and
    will default to 3600s or 1h. **omitting this field is discouraged**
  - "boot_sound": A URL pointing to an audio file which is beeing played on
-   startup. Requires snd module
+   startup. Requires snd module.
  - "events": an array containing all events to be executed. more information
    should follow this list.
  - "hints": an array containing hints in a special order. please consult the
@@ -112,7 +110,7 @@ json file:
  - "mtsp_baud" : The mtsp baud rate with which to connect onto the bus. Can be
    ommited and will be replaced with B460800
  - "langs" : An array of strings representing the language. These values are
-   never touched inside of the program.
+   never touched inside of the host and only forwarded to the fronteds.
  - "default_lang" : An integer defining which language is used at startup.
  - "mtsp_device" : Defines the device of the mtsp connection. For further 
    details please see the mtsp section further down.
@@ -122,7 +120,9 @@ json file:
    details please see the ecp section further down.
  - "ecp_baud" : Defines the baud rate of the ecp connection. For further 
    details please see the ecp section further down.
- - 
+ - "log_level": Defines the level to which output is surpressed. Possible
+   Values are (in order of output): DEBUG_ALL, DEBUG_MOST, DEBUG_MORE, DEBUG,
+   INFO, WARNING, ERROR;
 
 This is where it get's a bit more complicated. I will try to explain the
 construction of the "events" array now to you. The events array contains an

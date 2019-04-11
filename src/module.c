@@ -95,6 +95,79 @@ int init_modules(){
 
 	println("STEP 1/3: Attempting module initialization", DEBUG);
 
+	println("Getting needed modules...", DEBUG_MORE);
+
+	json_object* needed_modules = json_object_object_get(config_glob,
+		"modules");
+
+	if(needed_modules == NULL){
+
+		/* User didn't specify the modules field */		
+		println("No mmodules string has been specified, loading modules"
+			" by default configuration! This is discouraged", 
+			WARNING);
+
+	}else{
+		if(json_object_get_type(needed_modules) != json_type_array){
+			println("modules field is not an array!!", ERROR);
+			return -1;
+		}
+		/* Disable all modules*/
+		for(size_t i = 0; i < module_count; i++){
+			struct module_t* mod = &modules[i];
+		
+			mod->enabled = false;
+			
+		}
+		println("Enableing a total of %i modules...", DEBUG, 
+			json_object_array_length(needed_modules));
+		
+		/* Enable only those needed */
+		for(size_t i = 0; i < json_object_array_length(needed_modules);
+			i++){
+			const char* mod_name = json_object_get_string(
+				json_object_array_get_idx(needed_modules, i));
+			
+			struct module_t* module = get_module_by_name(mod_name);
+			if(module == NULL){
+				if(mod_name == NULL){
+					println("Module name resolved to 0 in "
+						"module array!", ERROR);
+					return -1;
+				}else{
+					println("Unknown module specified in "
+						"array  [%s]!", ERROR, 
+						mod_name);
+					return -1;
+				}
+			}else{
+				module->enabled = true;
+			}
+		}
+	}
+	println("Enabled modules:", DEBUG);
+	for(size_t i = 0; i < module_count; i++){
+		struct module_t* mod = &modules[i];
+		
+		if(!mod->enabled){
+			continue;
+		}
+		println("\t%i/%s", DEBUG, i, mod->name);
+
+	}
+
+	
+	/* CONFIGURATION SANITY CHECKS */
+	struct module_t* core_mod = get_module_by_name("core");
+	if(core_mod != NULL){
+		if(!core_mod->enabled){
+			println("Core module is NOT enabled!!!", WARNING);
+			println("This is probably NOT what you want!!",
+				WARNING);
+		}
+	}
+
+
 	for(size_t i = 0; i < module_count; i++){
 		struct module_t* mod = &modules[i];
 		
@@ -410,10 +483,6 @@ struct module_t* get_module_by_name(const char* name){
 	for(size_t i = 0; i < module_count; i++){
 		struct module_t* mod = &modules[i];
 		
-		if(!mod->enabled){
-			continue;
-		}
-
 		if(mod->name != NULL && strcasecmp(name,mod->name) == 0){
 			return mod;
 		}

@@ -45,4 +45,5 @@ int check_dependency(json_object* dependency, float* percentage);
 int execute_trigger(json_object* trigger, bool dry);
 int init_general_dependency(json_object* dependency);
 
+struct module_t* get_module_by_name(const char* name);
 #endif
