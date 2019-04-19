@@ -81,7 +81,8 @@ size_t module_count = (sizeof(modules) /  sizeof(struct module_t));
  * FUNCTIONS TO LOAD AND INITIALIZE MODULES
  *
  * All modules may be initialized, stated, and reset in here. Please add your
- * module to the desired functions and add a #IFNDEF entry
+ * module to the desired functions and add a #IFNDEF entry to be able to disable
+ * it in case there is would be a reason to do so.
  *
  */
 

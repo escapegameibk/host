@@ -1,4 +1,8 @@
 /* A EC-Proto implementation for the escape game innsbruck's host
+ *
+ * This file is as of now the central header file for the ECPROTO source files.
+ * All function declarations should be in here.
+ *
  * Copyright © 2018 tyrolyean
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -206,8 +210,8 @@ int ecp_receive_msgs(uint8_t* snd_frame, size_t snd_len);
 
 /* HELPER FUNCTIONS */
 
-struct ecproto_device_t* escp_get_dev_from_id(size_t id);
-struct ecproto_port_register_t* escp_get_reg_from_dev(char id, struct 
+struct ecproto_device_t* ecp_get_dev_from_id(size_t id);
+struct ecproto_port_register_t* ecp_get_reg_from_dev(char id, struct 
 	ecproto_device_t* dev);
 int init_ecp_port_reg(struct ecproto_port_register_t* prt_reg);
 int set_ecp_current_state(size_t dev_id, char reg_id, size_t bit, bool state);

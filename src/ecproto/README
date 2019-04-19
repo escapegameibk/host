@@ -1,0 +1,23 @@
+This directory contains the ECPROTO implementation for the escape game system's
+host.
+
+The directory consists of the following files:
+
+ - ecp_game.c:
+	This file contains game related content, such as the init, reset and 
+	start functions. Triggers and dependencies have been offloaded
+	into separate files though...
+ - ecp_init:
+	This file contains bus initialisation routines which are used to
+	initialy sync the devices on the bus or recover devices after errors.
+ - ecp_io.c:
+	This file contains device interaction stuff, used to receive frames from
+	the underlying layer, most of the time it should be hardware.
+ - ecp_msg_handleing.c
+	This file contains the parseing logic for frames, calling responsible
+	functions and altering objects.
+ - ecp_tools.c:
+	This file contains tool functions. These functions should AT NO COST
+	alter any kind of global object, nor should they have any kind of effect
+	or so. They are usually just some tools to convert something, set a few
+	flags in an object passed onto them, or such...

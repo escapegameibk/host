@@ -111,6 +111,7 @@ int init_lol_dependency(json_object* dependency){
 }
 
 void* lol_listen_fordata(){
+
 	while(!shutting_down){
 		if(wait_for_data(0, lolfd) >= 0 ){
 			/* Frame incoming */
@@ -121,12 +122,12 @@ void* lol_listen_fordata(){
 				continue;
 			}
 
-			/* If debug is set, print frame */
-			char* print_frame = printable_bytes(frame->payload, 
-				frame->len);
+			/* Print frame */
+			char* print_frame = printable_bytes(frame.payload, 
+				frame.len);
 			
 			println("LOL FRAME RECEIVED:", DEBUG_MOST);
-			println("ADD %x: %s", DEBUG_MOST, frame->address, 
+			println("ADD %x: %s", DEBUG_MOST, frame.address, 
 				print_frame);
 
 			free(print_frame);
