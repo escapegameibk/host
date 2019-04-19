@@ -5,7 +5,7 @@
 This file contains the programmers guide for the escape game system's host. It
 was created to allow anyone else than the original programmer tyrolyean/waschtl
 to add features, implement modules and do other stuff with the escape game 
-system.
+system. I am dearly sorry. This file is not yet complete. Please don't kill me.
 
 # General Principles
 

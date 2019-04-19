@@ -3,11 +3,13 @@
 # Host
 
 ## About
+
 This is the host for games at the escape game innsbruck. It's main purpose is,
 to control an escape room. Afterwars, it became apparent to me, that it would
 also be kinda suitable as a home-automation system.
 
 ## License
+
 This program is licensed under the GPLv3 or any later version of the license,
 which permits you to use it commercially, but requires you to give users the
 source code and the right to re-sell the program. in any case, we don't sell the
@@ -29,18 +31,24 @@ As of now, the program has the following dependencies:
 - gcc >= 5.0
 - make
 
-#### LIBVLC
+### Include directories
 
 The vlc includes are required to be in <vlc/> and the json-c includes are 
 required to be in <json-c/> of the global include path, as these are hard-coded
 into the program. This is meant ot change in the future, or as soon as i find 
-time to correctly configure the autotools.
+time to correctly configure autotools.
+
+#### LIBVLC
+
 
 The simplest way is to install the 'vlc', 'libvlc-core' and 'libvlc-dev'
 packages on a debian based system, or if you are running an ArchLinux
 based system, the package vlc does the same thing. The dependencies should
-allow the rest to work fine. Instalation of the ogg packages is also recommended
-as is usage of the ogg file format for audio playback.
+allow the rest to work fine. You may need to install vlc's dependencies if you
+would like to use some of it's features.
+
+If the sound module is disabled via the NOSND option, this dependency may be 
+ignored.
 
 #### JSON-C
 
@@ -76,6 +84,11 @@ and the libldlinux can find the libraries.
 LibVLC: https://wiki.videolan.org/LibVLC/
 
 JSON-C: https://json-c.github.io/json-c/
+
+## cross-compilation
+
+As of now i have no clue how to make cross-compilation a thing for this. This is
+a TODO.
 
 # Configuration
 
@@ -123,6 +136,8 @@ json file:
  - "log_level": Defines the level to which output is surpressed. Possible
    Values are (in order of output): DEBUG_ALL, DEBUG_MOST, DEBUG_MORE, DEBUG,
    INFO, WARNING, ERROR;
+- "modules": Defines the modules that the ecp configuration wants. Is an array
+   of module identifier strings.
 
 This is where it get's a bit more complicated. I will try to explain the
 construction of the "events" array now to you. The events array contains an
@@ -374,7 +389,7 @@ any language.
 The module called MTSP which is an acronym for **M**inimum **T**ransport 
 **S**ecurity
 **P**rotocol provides an interface for hardware from the esd team, a russian group
-of people which thought using a 480600 baud connection for more than 2m would
+of people which thought using a 480600 baud connection for more than 100m would
 be a good idea. It heavily uses caching and error checking as it is highly
 probable, that messages get lost from this protocol. It can be trigger, as well
 as dependency, and is specified as mtsp in the module field. The MTSP takes 
@@ -508,12 +523,14 @@ object defines, which index is used by default.
 # Cutting stuff out
 
 Some things may be completely omitted via a preprocessor definition. You can,
-for example, add a -D NOMTSP to the gcc comandline inside the Makefile. The
-following is a list of these definitions:
+for example, add a -D NOMTSP to the gcc comandline inside the Makefile, to cut
+out the MTSP module. This might be done to minimize the size of the binary, or
+if a module isn't nescessary and you would like to avoid it's dependencies.
+The following is a list of these definitions:
 
 - NOMTSP : Completely disables and removes the MTSP module.
 - COLOR : Enables Color in the debug output.
-- HEADLESS : Completely disables and removes the interface.
+- HEADLESS : Completely disables and removes the interface module.
 - NOHINTS : Completely disables ad removes the Hinting system.
 - NOALARM : Completely disables and removes the alarm system.
 - NOEC : Completely disables and removes the ECPROTO module.
@@ -558,5 +575,10 @@ updated. This is still under way...
 ## Postgresql
 
 It was requested, athat all data may be dumped into a postgresql database for
-later analysys. This is required to be added very carefully.
+later analysys. Maybe one day :D
+
+## Camera
+
+Maybe a camera control interface would be a good idea to be able to control the
+entire room by one thing...
 
