@@ -451,7 +451,8 @@ with the type field within the dependency:
   which specifies wether the pin is used as an input pin or not, assumed by 
   default to be true);
 
-- analog: DEPRECATED. Kept for compliance with old ecp systems
+- analog: DEPRECATED. Kept for compliance with old ecp systems. !If you still
+  maintain things using this, please update them to the adc type!
 
 - mfrc522: Specifies an MFRC522 dependency. MFRC522 are SPI, I²C and UART
   capable ICs from Mifare Semiconductor used for RFID communication. You know
@@ -460,6 +461,14 @@ with the type field within the dependency:
   populated with integers respectively, where the tag specifies which MFRC522
   connection on the device is to be used, and the tag_id specifies the desired
   values.
+
+- adc: Specifies an analog signal which has been converted to a digital value.
+  The threshold, value and channel fields ned to populated with a string, an
+  integer and an integer respectively. The threshold field specifies, in what
+  way the value field should be interpreted and can have the value "above",
+  "below" or "is" respectively. The value field specifies the point at which the
+  dependency is considered fullfulled. The channel field specifies the device's
+  ADC channel to be used.
 
 if not specified, the port dependency is automatically selected.
 

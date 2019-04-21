@@ -60,7 +60,7 @@ int init_ecp(){
 		println("Failed to open ECP device at %s!", ERROR, device);
 		return -1;
 	}
-
+	sleep(1);
 	/* Set the timeout for the mtsp devices to reply*/
         struct termios termios;
         tcgetattr(ecp_fd, &termios);
@@ -218,7 +218,8 @@ int ecp_get_updates(){
 				continue;
 			}
 
-			/* TODO: Make new analog system work and update al hosts */
+			/* TODO: Make new analog system work and update al hosts
+			*/
 			if(ecp_devs[i].analog->used){
 
 				if(send_ecp_analog_req(ecp_devs[i].id) < 0){

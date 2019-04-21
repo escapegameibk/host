@@ -48,6 +48,7 @@
 #define	PIN_ENABLED            0x0B
 #define SECONDARY_PRINT        0x0C
 #define ADC_GET                0x0D
+#define ADC_REG                0x0E
 #define ADC_GET2               0x0F
 #define GET_PURPOSE            0x10
 #define SPECIAL_INTERACT       0x11
@@ -103,10 +104,18 @@ struct ecproto_port_register_t{
 	struct ecproto_port_t bits[ECP_REG_WIDTH];
 };
 
+/* DEPRECATED! To be removed! */
 struct ecproto_analog_t{
 	bool used;
 	uint8_t value;
 };
+
+/* It's successor */
+struct ecproto_analog_channel_t{
+	uint16_t value;
+	uint8_t id;
+};
+
 
 struct ecproto_mfrc522_dev_t{
 	uint32_t tag;
@@ -136,6 +145,10 @@ struct ecproto_device_t{
 
 	bool fast_gpio_capable; /* < Defines weather the device supports the
 	                         *   faster GPIO initialisation routines. */
+	
+	/* Contains the new analog subsystem */
+	struct ecproto_analog_channel_t *analog_channels;
+	size_t analog_channel_count;
 
 };
 
@@ -153,6 +166,7 @@ bool ecp_initialized;
 int ecp_init_dependency(json_object* dependency);
 int ecp_init_port_dependency(json_object* dependency);
 int ecp_init_analog_dependency(json_object* dependency);
+int ecp_init_new_analog_dependency(json_object* dependency);
 
 int ecp_register_input_pin(size_t device_id, char reg_id, size_t bit, 
 	bool pulled, bool is_input);
@@ -169,6 +183,7 @@ int ecp_check_dependency(json_object* dependency, float* percentage);
 int ecp_check_port_dependency(json_object* dependency);
 float ecp_check_analog_dependency(json_object* dependency);
 float ecp_check_mfrc522_dependency(json_object* dependency);
+float ecp_check_new_analog_dependency(json_object* dependency);
 
 int ecp_trigger(json_object* trigger, bool dry);
 int ecp_trigger_secondary_trans(json_object* trigger, bool dry);
@@ -194,6 +209,7 @@ int init_ecp_gpio(struct ecproto_device_t* device);
 int init_ecp_gpio_fast(struct ecproto_device_t* device);
 int ecp_bitwise_init_gpio_reg(struct ecproto_device_t* device,
 	struct ecproto_port_register_t* regp);
+int ecp_init_analog_channels(struct ecproto_device_t* device);
 
 int get_ecp_port(size_t device_id, char reg_id, size_t pin_id);
 int send_ecp_port(size_t device_id, char reg_id, size_t pin_id, bool port);
@@ -220,6 +236,8 @@ uint8_t get_port_from_register(struct ecproto_port_register_t* reg);
 uint8_t get_pins_enabled_from_register(struct ecproto_port_register_t* reg);
 int ecp_ddir_to_register(struct ecproto_port_register_t* regp, uint8_t reg);
 int ecp_pin_to_register(struct ecproto_port_register_t* regp, uint8_t reg);
+int ecp_set_device_analog_channel_value(struct ecproto_device_t* dev,           
+	uint8_t channel, uint16_t value);
 
 #endif /* ECPROTO_H */
 #endif /* NOEC */

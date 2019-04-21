@@ -126,6 +126,11 @@ int init_ecp_device(struct ecproto_device_t* device){
 			return -1;
 		}
 	}
+
+	if(n < 0){
+		return n;
+	}
+	
 	if(device->mfrc522_capable){
 		uint8_t pay[] = {SPECIALDEV_MFRC522, MFRC522_GET_ALL_DEVS};
 		n |= ecp_send_message(device->id, SPECIAL_INTERACT, pay,
@@ -140,9 +145,19 @@ int init_ecp_device(struct ecproto_device_t* device){
 		}
 	}
 
+	if(n < 0){
+		return n;
+	}
+
 	if(device->gpio_capable){
 		n |= init_ecp_gpio(device);
 	}
+
+	if(n < 0){
+		return n;
+	}
+
+	n |= ecp_init_analog_channels(device);
 
 	return n;
 
@@ -360,4 +375,63 @@ int ecp_bitwise_init_gpio_reg(struct ecproto_device_t* device,
 	return n;
 }
 
+int ecp_init_analog_channels(struct ecproto_device_t* device){
+	
+	if(device->analog_channel_count ==0){
+		println("No new analog initialisation needed for device %i",
+			DEBUG_MORE, device->id);
+		
+		return 0;
+	}
+
+	if(device->analog_channel_count >= (255 - ECPROTO_OVERHEAD - 1)){
+		println("Too many analog channels used on device %i: %i/%i", 
+			ERROR, device->id, device->analog_channel_count,
+			255 - ECPROTO_OVERHEAD - 1 );
+		return -1;
+	}
+
+	size_t len = (device->analog_channel_count + 1 ) * sizeof(uint8_t);
+
+	uint8_t* payload = malloc(len);
+	payload[0] = device->analog_channel_count;
+	
+	for(size_t i = 0; i < device->analog_channel_count; i++){
+		payload[i + 1] = device->analog_channels[i].id & 0xFF;
+	}
+	
+	/* Notify device of it's channels for later asynchroneus operation
+	 */
+	
+	if(ecp_send_message(device->id, ADC_REG, payload, len) < 0){
+		println("Failed to notify device %i of it's %i analog channels!"
+			, ERROR, device->id, device->analog_channel_count);
+		return -1;
+	}
+	
+	/* Load actual values into the cache. If there really are 0xFF analog
+	 * converters on a device, this could take a while 
+	 */
+	
+	for(size_t i = 0; i < device->analog_channel_count; i++){
+		
+		struct ecproto_analog_channel_t* channel = 
+			&device->analog_channels[i];
+		
+		uint8_t channel_id = channel->id;
+
+		if(ecp_send_message(device->id, ADC_GET2, &channel_id, 
+			sizeof(channel_id)) < 0){
+			println("Failed to request ecp analog channel %i from "
+				"dev %i!", ERROR);
+			return -1;
+		}
+
+	}
+
+	
+	
+	return 0;
+
+}
 #endif /* NOEC */

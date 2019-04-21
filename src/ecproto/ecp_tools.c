@@ -189,4 +189,27 @@ int ecp_pin_to_register(struct ecproto_port_register_t* regp, uint8_t reg){
 
 }
 
+int ecp_set_device_analog_channel_value(struct ecproto_device_t* dev, 
+	uint8_t channel, uint16_t value){
+	
+	if(dev == NULL){
+		return -1;
+	}
+	
+	for(size_t i = 0; i < dev->analog_channel_count; i++){
+		struct ecproto_analog_channel_t* channelp = 
+			&dev->analog_channels[i];
+		if(channelp->id == channel){
+			println("ecp analog update: dev %i channel"
+				" %i: %i --> %i", DEBUG_MOST, dev->id, channel,
+				channelp->value, value);
+			channelp->value = value;
+			return 0;
+		}
+	}
+	return -1;
+
+
+}
+
 #endif /* NOEC */

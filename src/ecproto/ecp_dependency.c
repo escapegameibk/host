@@ -59,6 +59,9 @@ int ecp_check_dependency(json_object* dependency, float* percentage){
 	}else if(strcasecmp(type_name, "analog") == 0){
 
 		ret = ecp_check_analog_dependency(dependency);
+	}else if(strcasecmp(type_name, "adc") == 0){
+
+		ret = ecp_check_new_analog_dependency(dependency);
 
 	}else if(strcasecmp(type_name, "mfrc522") == 0){
 
@@ -297,6 +300,106 @@ float ecp_check_mfrc522_dependency(json_object* dependency){
 	return 0;
 }
 
+float ecp_check_new_analog_dependency(json_object* dependency){
+
+	json_object* dev = json_object_object_get(dependency, "device");
+	if(dev == NULL){
+		println("Device not defined in ECP dependency! Dumping root: ",
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency,
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+	}
+
+	size_t device_id = json_object_get_int(dev);
+	
+
+	struct ecproto_device_t * device = ecp_get_dev_from_id(device_id);
+
+	if(device == NULL){
+		println("BUG: UNREGISTERED DEVICE IN DEPENDENCY CHECK!",
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency,
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+	}
+
+	json_object* val = json_object_object_get(dependency, "value");
+	if(val == NULL){
+		println("Value not defined in ECP dependency! Dumping root: ",
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency,
+			JSON_C_TO_STRING_PRETTY);
+		return -2;
+	}
+
+	uint8_t value = json_object_get_int(val);
+	
+	json_object* chan = json_object_object_get(dependency, "channel");
+	if(chan == NULL){
+		println("channel not defined in ECP dependency! Dumping root: ",
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency,
+			JSON_C_TO_STRING_PRETTY);
+		return -2;
+	}
+
+	uint8_t channel_id = json_object_get_int(chan);
+
+	struct ecproto_analog_channel_t* channel = NULL;
+	for(size_t i = 0; i < device->analog_channel_count; i++){
+		if(device->analog_channels[i].id == channel_id){
+			channel = &device->analog_channels[i];
+		}
+	}
+
+	if(channel == NULL){
+		println("BUG: UNREGISTERED CHANNEL IN DEPENDENCY CHECK!",
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency,
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+	}
+
+
+	json_object* threshold = json_object_object_get(dependency,"threshold");
+	const char* th;
+
+	if(threshold == NULL){
+		th = "above";
+	}else{
+		th = json_object_get_string(threshold);
+	}
+
+	if(strcasecmp(th, "above") == 0){
+		if(value < channel->value){
+			return true;
+		}else{
+			return channel->value /
+			(float)value;
+		}
+	}else if(strcasecmp(th, "below") == 0){
+		if(value > channel->value){
+			return true;
+		}else{
+			return (255 -
+			channel->value) /
+			(255 - (float)value);
+		}
+	}else if(strcasecmp(th, "is") == 0){
+		return value == channel->value;
+	}
+	else{
+		println("Unknown ECP analog threshold specified! Dumping root:",
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency,
+			JSON_C_TO_STRING_PRETTY);
+		return -3;
+	}
+
+	return 0;
+}
+
 int ecp_init_dependency(json_object* dependency){
 
 	json_object* type = json_object_object_get(dependency, "type");
@@ -311,8 +414,9 @@ int ecp_init_dependency(json_object* dependency){
 
 		return ecp_init_port_dependency(dependency);
 	}else if(strcasecmp(type_name, "analog") == 0){
-
 		return ecp_init_analog_dependency(dependency);
+	}else if(strcasecmp(type_name, "adc") == 0){
+		return ecp_init_new_analog_dependency(dependency);
 
 	}else if(strcasecmp(type_name, "mfrc522") == 0){
 		/* Nothing to do here. */
@@ -399,7 +503,7 @@ int ecp_init_port_dependency(json_object* dependency){
 
 }
 
-
+/* DEPRECATED */
 int ecp_init_analog_dependency(json_object* dependency){
 
 	json_object* dev = json_object_object_get(dependency, "device");
@@ -423,6 +527,67 @@ int ecp_init_analog_dependency(json_object* dependency){
 
 	ecp_get_dev_from_id(device_id)->analog->used = true;
 	println("Enabling ananlog pin on ECP dev id %i", DEBUG, device_id);
+
+	return 0;
+}
+
+/* New analog subsystem */
+int ecp_init_new_analog_dependency(json_object* dependency){
+
+	json_object* dev = json_object_object_get(dependency, "device");
+	if(dev == NULL){
+		println("Device not defined in ECP dependency! Dumping root: ",
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency,
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+	}
+
+	size_t device_id = json_object_get_int(dev);
+
+	json_object* chan = json_object_object_get(dependency, "channel");
+	if(chan == NULL){
+		println("Channel not defined in ECP dependency! Dumping root: ",
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency,
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+	}
+
+	size_t channel_id = json_object_get_int(chan);
+	
+	if(ecp_register_device(device_id) < 0){
+		println("Failed to register device for ECP analog dep! dumping:"
+			, ERROR);
+		json_object_to_fd(STDOUT_FILENO, dependency,
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+
+	}
+	struct ecproto_device_t* device = ecp_get_dev_from_id(device_id);
+	
+	struct ecproto_analog_channel_t* channel = NULL;
+
+	for(size_t i = 0; i < device->analog_channel_count; i++){
+		if(device->analog_channels[i].id == channel_id){
+			channel = &device->analog_channels[i];
+		}
+	}
+
+	if(channel == NULL){
+		device->analog_channels = realloc(device->analog_channels, 
+			sizeof(struct ecproto_analog_channel_t) * 
+			++device->analog_channel_count);
+		channel = &device->analog_channels[
+			device->analog_channel_count - 1];
+		
+		channel->id = channel_id;
+		channel->value = 0;
+
+	}
+
+	println("Enabling ananlog channel %i on ECP dev %i", DEBUG, channel_id,
+		device_id);
 
 	return 0;
 }

@@ -89,6 +89,7 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			}
 			break;
 
+		case ADC_REG:
 		case SET_GPIO_REGS:
 		case SET_PWM:
 		case WRITE_PORT_ACTION:
@@ -262,7 +263,31 @@ int parse_ecp_input(uint8_t* recv_frm, size_t recv_len, uint8_t* snd_frm, size_t
 			ecp_get_dev_from_id(recv_frm[ECP_ADDR_IDX])
 				->analog->value = recv_frm[ECP_PAYLOAD_IDX];
 			break;
+		
+		case ADC_GET2:
+			if(recv_payload_len < 2){
+				println("Received ecp frame 13 with <2 params",
+					ERROR);
+				return -1;
+			}
+			if(ecp_set_device_analog_channel_value(
+				ecp_get_dev_from_id(recv_frm[ECP_ADDR_IDX]),
+				recv_frm[ECP_PAYLOAD_IDX],
+				be16toh(*(uint16_t*)
+					&recv_frm[ECP_PAYLOAD_IDX+1])) < 0){
+				
+				println("ecp analog update failed: dev %i "
+					"channel %i: %i", ERROR,
+					recv_frm[ECP_ADDR_IDX],
+					recv_frm[ECP_PAYLOAD_IDX],
+					recv_frm[ECP_PAYLOAD_IDX+1]
+					);
+			}
 
+			
+			
+
+			break;
 		case GET_PURPOSE:
 		{
 			println("Device %i notified us of it's %i "
@@ -372,6 +397,10 @@ int ecp_enable_purpose(struct ecproto_device_t* const dev, uint8_t purpose){
 			println("Device %i: Capable of old analog!", DEBUG_MORE, 
 				dev->id);
 			break;
+		case SPECIALDEV_NEW_ANALOG:
+			println("Device %i: Capable of new analog!", DEBUG_MORE, 
+				dev->id);
+			break;
 
 		default:
 			println("Unknown ecp purpose received from dev %i: %i",
@@ -393,6 +422,7 @@ int ecp_handle_special_interact(uint8_t* recv_frm){
 			break;
 		case SPECIALDEV_PWM:
 		case SPECIALDEV_GPIO:
+		case SPECIALDEV_NEW_ANALOG:
 		case SPECIALDEV_OLD_ANALOG:
 			println("Special device interact for non-specified id!",
 				WARNING);

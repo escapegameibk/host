@@ -119,14 +119,19 @@ int ecp_register_device(size_t id){
 		device->analog = malloc(sizeof(struct ecproto_analog_t));
 		device->analog->used = false;
 		device->analog->value = 0;
+		
 		/* A device is assumed GPIO-capable, in case it has responded
-		 * to be in it's device purpose, or it has errored, while
-		 * attempting to receive this.
+		 * to be in it's device purpose. On error it is possible that
+		 * this is assumed.
 		 */
 		device->gpio_capable = false;
+		
 		device->mfrc522_capable = false;
 		device->mfrc522_devcnt = 0;
 		device->mfrc522_devs = NULL;
+
+		device->analog_channels = NULL;
+		device->analog_channel_count = 0;
 
 	}
 
