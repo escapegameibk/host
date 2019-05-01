@@ -60,7 +60,6 @@ int init_ecp(){
 		println("Failed to open ECP device at %s!", ERROR, device);
 		return -1;
 	}
-	sleep(1);
 	/* Set the timeout for the mtsp devices to reply*/
         struct termios termios;
         tcgetattr(ecp_fd, &termios);
