@@ -96,7 +96,7 @@ end_langs:
 }
 
 /* Can get passed an array, which will be indexed and returned, an object of
- * any  */
+ * any kind */
 
 const char* get_name_from_object(json_object* obj){
 
@@ -120,7 +120,7 @@ const char* get_name_from_object(json_object* obj){
 	}
 
 	if(json_object_is_type(name_obj, json_type_string)){
-		/* It was a single-language name */
+		/* It is a single-language name */
 		return json_object_get_string(name_obj);
 	}
 

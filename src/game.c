@@ -464,10 +464,22 @@ json_object** get_root_triggers(size_t* trigcnt, size_t** event_idsp){
 		
 		json_object* event = json_object_array_get_idx(
 			json_object_object_get(config_glob, "events"),event_i);
+	
+		json_object* triggers = 
+			json_object_object_get(event,"triggers");
 		
+		if(json_object_get_type(triggers) != json_type_array){
+			println("Triggers returned non-array! Probably "
+				"undefined triggers in event. Dumping:", ERROR);
+		
+			json_object_to_fd(STDOUT_FILENO,event, 
+				JSON_C_TO_STRING_PRETTY);
+			return NULL;
+			
+		}
+
 		for(size_t trig_i = 0; trig_i < json_object_array_length(
-			json_object_object_get(event,"triggers")); 
-			trig_i++){
+			triggers); trig_i++){
 			
 			trigs = realloc(trigs, ++*trigcnt * 
 				sizeof(json_object*));
@@ -475,7 +487,7 @@ json_object** get_root_triggers(size_t* trigcnt, size_t** event_idsp){
 				sizeof(size_t));
 			
 			trigs[*trigcnt - 1] = json_object_array_get_idx(
-				json_object_object_get(event,"triggers"), 
+				triggers, 
 				trig_i);
 			event_ids[*trigcnt - 1] = event_i;
 

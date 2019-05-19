@@ -80,7 +80,7 @@ size_t module_count = (sizeof(modules) /  sizeof(struct module_t));
 /*
  * FUNCTIONS TO LOAD AND INITIALIZE MODULES
  *
- * All modules may be initialized, stated, and reset in here. Please add your
+ * All modules may be initialized, started, and reset in here. Please add your
  * module to the desired functions and add a #IFNDEF entry to be able to disable
  * it in case there is would be a reason to do so.
  *
@@ -165,6 +165,9 @@ int init_modules(){
 			println("Core module is NOT enabled!!!", WARNING);
 			println("This is probably NOT what you want!!",
 				WARNING);
+			/* I will still continue just in case the core module
+			 * is really not needed
+			 */
 		}
 	}
 
@@ -258,6 +261,10 @@ int test_modules(){
 	}
 	size_t len = 0;
 	json_object** trigs = get_root_triggers(&len, NULL);
+	if(trigs == NULL){
+		println("Failed to ge root triggers!! Aborting module tests!",
+			ERROR);
+	}
 	println("Attempting dry run for %i triggers", DEBUG, len);
 
 	for(size_t i = 0; i < len; i++){
