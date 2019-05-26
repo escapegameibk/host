@@ -371,7 +371,7 @@ int core_check_dependency(json_object* dependency,float* percentage){
 			}
 
 			/* Return ">=0 == true" compliant */
-			for(ssize_t i = seq->sequence_length; i >= 0; i--){
+			for(ssize_t i = seq->sequence_length - 1; i >= 0; i--){
 				if(seq->target_sequence[i] !=
 					seq->sequence_so_far[i]){
 					/* This may never evaluate to true */

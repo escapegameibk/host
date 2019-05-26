@@ -42,12 +42,13 @@ int init_game(){
 	pthread_mutex_init(&game_trigger_lock, NULL);
 
         const char* name = get_name_from_object(config_glob);
-	dependency_list = malloc(0);
+	dependency_list = NULL;
 	dependency_count = 0;
 
         if(name == NULL){
                 
-                println("Initializing game: %s",DEBUG, "UNSPECIFIED!");
+                println("Initializing game: WTF?",DEBUG);
+
         }else{
 
                 println("Initializing game: %s",DEBUG , name);
@@ -56,9 +57,23 @@ int init_game(){
         memset(&game_thread, 0, sizeof(game_thread));
         
         /* Allocate space for states */
-        event_cnt = json_object_array_length(json_object_object_get(
-                config_glob,"events"));
+	json_object* events = json_object_object_get(config_glob, "events");
+	if(!json_object_is_type(events, json_type_array)){
+		println("Global events object is NOT an array! Dumping root:",
+			ERROR);
+		json_object_to_fd(STDIN_FILENO, events,
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+	}
+        
+	event_cnt = json_object_array_length(events);
         event_trigger_status = malloc(event_cnt * sizeof(uint8_t));
+	
+	if(event_trigger_status == NULL){
+		println("Failed to allocate space for event trigger states!",
+			ERROR);
+		return -1;
+	}
         memset(event_trigger_status, EVENT_RESET, event_cnt * sizeof(uint8_t));
         
         println("a total of %i events has been loaded", DEBUG, event_cnt);
@@ -83,6 +98,10 @@ int init_game(){
 
 	/* Allocate the nescessary memory for the reset jobs and null it. */
 	reset_jobs = malloc(event_cnt * sizeof(bool*));
+	if(reset_jobs == NULL){
+		println("Failed to allocate memory for reset_jobs!!", ERROR);
+		return -1;
+	}
 	memset(reset_jobs, 0, event_cnt * sizeof(bool*));
 
 	free(dependencies);
@@ -146,7 +165,7 @@ int patrol(){
 		 * if nescessary.
 		 */
 
-		if(event_trigger_status[i] && !reset_jobs[i]){
+		if(event_trigger_status[i] != EVENT_RESET && !reset_jobs[i]){
 			/* Ommit already triggered events which dont have a
 			 * reset job 
 			 */
@@ -227,19 +246,47 @@ void* loop_game(){
 
 int trigger_event(size_t event_id){
         
-        if((event_cnt <= event_id) | (event_trigger_status[event_id] != EVENT_RESET)){
-                println("Tried to trigger invalid event %i", WARNING, event_id);
-                return -1;
-        }
+        if(event_cnt <= event_id){
 
-	pthread_mutex_lock(&game_trigger_lock);
+                println("Tried to trigger invalid event %i", WARNING, 
+			event_id);
+                return -1;
+
+	}else if(event_trigger_status[event_id] > 
+			EVENT_IN_PREPARATION){
+                
+		println("Tried to trigger already triggered event %i", WARNING, 
+			event_id);
+                return -1;
+
+        }
+	
+	json_object* event = json_object_array_get_idx(json_object_object_get(
+		config_glob,"events"), event_id);
+	
+	json_object* async_o = json_object_object_get(event, "async");
+	bool async = false;
+	if(async_o != NULL){
+		/* true and 1 are bot okay in my mind... */
+		if(!json_object_is_type(async_o, json_type_boolean) &&
+			!json_object_is_type(async_o, json_type_int)){
+			
+			println("Async field is of non-boolean type!", ERROR);
+			return -1;
+		}
+	}
+	/* Asyncroneous events should be completely independent from regular
+	 * execution
+	 */
+	if(!async){
+		pthread_mutex_lock(&game_trigger_lock);
+
+	}
 	/* Sleep 1 ms to prevent unintended collisions */
 	sleep_ms(1);
         
         event_trigger_status[event_id] = EVENT_TRIGGERED;
        
-	json_object* event = json_object_array_get_idx(json_object_object_get(
-		config_glob,"events"), event_id);
        
         /* Iterate through triggers */
 
@@ -264,9 +311,14 @@ int trigger_event(size_t event_id){
 			if(execute_trigger(trigger, false) < 0){
 				println("FAILED TO EXECUTE TRIGGER! RESETTING!", 
 					ERROR);
-				event_trigger_status[event_id] = 0;
+				event_trigger_status[event_id] = EVENT_RESET;
 				/* untrigger event */
-				pthread_mutex_unlock(&game_trigger_lock);
+				
+				if(!async){
+
+					pthread_mutex_unlock(
+						&game_trigger_lock);
+				}
 				return -1;
 			}
 
@@ -285,7 +337,10 @@ int trigger_event(size_t event_id){
 	}
 
 	println("Done triggering event!", DEBUG);
-	pthread_mutex_unlock(&game_trigger_lock);
+	
+	if(!async){
+		pthread_mutex_unlock(&game_trigger_lock);
+	}
 
         return 0;
 }
@@ -322,8 +377,27 @@ void async_trigger_event(size_t event_id){
 		/* Shit happens */
 		return;
 	}
+	
+	if(event_id >= event_cnt){
+		println("Tried to asynchroneously trigger a too high event %i!",
+			ERROR, event_id);
+		return;
+	}
+
+	/* Mark the event as currently beeing triggered to avoid a race 
+	 * condition with the loop thread where the new thread would spawn too
+	 * late and the main thread would re-trigger the same event.
+	 */
+	event_trigger_status[event_id] = EVENT_IN_PREPARATION;
 
 	size_t *event_idp = malloc(sizeof(size_t));
+	if(event_idp == NULL){
+		println("Failed to allocate memory for async event_id buffer!",
+			ERROR);
+		println("WOW, I can't even allocate 8 byte of ram... da fuck?",
+			ERROR);
+		return;
+	}
 	*event_idp = event_id;
 
 	pthread_t executing_thread;
@@ -349,7 +423,7 @@ int trigger_event_maybe_blocking(size_t event_id){
 		json_object_array_get_idx(json_object_object_get(
 		config_glob, "events"), event_id);
 
-	if(event == 0){
+	if(event == NULL){
 		println("Failed to get event by id [%i]. got NULL", 
 		ERROR, event_id);
 		return -1;

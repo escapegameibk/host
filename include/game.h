@@ -28,9 +28,10 @@
 #define DEFAULT_GAME_TIME 3600
 
 /* Execution states of events */
-#define EVENT_RESET        0
-#define EVENT_IN_EXECUTION 1
-#define EVENT_TRIGGERED    2
+#define EVENT_RESET            0
+#define EVENT_IN_PREPARATION   1 /* Needed for async event triggers */
+#define EVENT_IN_EXECUTION     2
+#define EVENT_TRIGGERED        3
 
 int init_game();
 int init_dependency(json_object* dependency, int event_id);

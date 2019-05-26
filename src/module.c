@@ -264,6 +264,7 @@ int test_modules(){
 	if(trigs == NULL){
 		println("Failed to ge root triggers!! Aborting module tests!",
 			ERROR);
+		return -1;
 	}
 	println("Attempting dry run for %i triggers", DEBUG, len);
 
