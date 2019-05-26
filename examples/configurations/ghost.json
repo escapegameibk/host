@@ -1,0 +1,2249 @@
+{
+	"mtsp_baud" : 57600,
+	"mtsp_device" : "/dev/ttyUSB0",
+	"ecp_device" : "/dev/ttyUSB1",
+	"name" : 
+	[
+		"Ghost House",
+		"Das Geisterhaus"
+	],
+	"duration" : 3600,
+	"color" : 
+	{
+		"nav" : "#1A237E",
+		"footer" : "#1A237E",
+		"body" : "#9FA8DA",
+		"logo" : "https://stillnotaserver.org/shittylogo.png"
+	},
+	"init_event" : 10,
+	"langs" : [
+		"en",
+		"de"
+	],
+	"modules":
+	[
+		"interface",
+		"ecp",
+		"core",
+		"snd",
+		"hint"
+	],
+	"default_lang" : 1,
+	"events" :
+	[
+		{
+			"name" : 
+			[
+				"Start",
+				"Start"
+			],
+			"dependencies":
+			[
+				{
+					"module" : "core",
+					"name" :
+					[
+						"Prevented by cleanup",
+						"Verhindert durch Aufräumen"
+					],
+					"type" : "event",
+					"event" : 10,
+					"target" : 0
+				},
+				{
+					"module" : "mtsp",
+					"name" :
+					[
+						"Start input",
+						"Start eingang"
+					],
+					"device" : 65,
+					"register" : 1,
+					"target" : 0
+			}
+			],
+			"triggers" :
+			[
+				{
+					"name" :
+					[
+						"Close dollhouse",
+						"Schliesse Puppenhaus"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 1,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Close cupboard",
+						"Schliesse Schrank"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 2,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Close door to second room",
+						"Schliesse Tür zum zweiten  Raum"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 3,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Close drawer in second room",
+						"Schliesse Schublade im zweiten Raum"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 5,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Close voodoo puppet box",
+						"Schliesse Box mit der Voodoopuppe"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 6,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Close chest in third room",
+						"Schliesse Kiste im dritten Raum"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 7,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Close furnace",
+						"Schliesse Kamintüre"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 8,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Turning off UV light",
+						"Schalte UC-Licht aus"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 1,
+					"target" : 0
+				},
+				{
+					"name" :
+					[
+						"Turning on Desk Lamp",
+						"Schalte Tischlampe an"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 2,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Turning on walllamp",
+						"Schalte Wandlampe an"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 3,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Turning on room 2 light",
+						"Schalte Licht in Raum 2 an"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 4,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Closing hideout beneath chess",
+						"Schliesse Versteck unterm Schachbrett"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 5,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Closing exit",
+						"Schliesse Ausgang"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 6,
+					"target" : 1
+				},
+				{
+					"name" : "Playing start music",
+					"module" : "snd",
+					"action" : "play",
+					"resource" :
+					[ 
+						"file:///home/tyrolyean/intro_en.ogg",
+						"file:///home/tyrolyean/intro_de.ogg"
+
+					]
+				},
+				{
+					"name" :
+					[
+						"Starting timer",
+						"Starte Zeitnehmer"
+					],
+					"module" : "core",
+					"action" : "timer_start"
+				}
+			]
+		},
+		{
+			"name" : 
+			[
+				"Photos",
+				"Photos"
+			],
+			"dependencies":
+			[
+				{
+					"module" : "core",
+					"name" :
+					[
+						"Prevented by previous state",
+						"Verhindert durch vorhergehenden Zustand"
+					],
+					"type" : "event",
+					"event" : 0
+				},
+				{
+					"module" : "mtsp",
+					"name" :
+					[
+						"Chess figures",
+						"Schachfiguren"
+					],
+					"device" : 65,
+					"register" : 2,
+					"target" : 0
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" : "Playing something",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : "http://sound/sounds/ghost/chess.ogg"
+				},
+				{
+					"name" :
+					[
+						"Opening drawer first room",
+						"Öffne Schublade im ersten Raum"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 5,
+					"target" : 0
+				}
+			]
+		},
+		{
+			"name" : 
+			[
+				"Cupboard",
+				"Schrank"
+			],
+			"dependencies":
+			[
+				{
+					"module" : "core",
+					"name" :
+					[
+						"Prevented by previous state",
+						"Verhindert durch vorhergehenden Zustand"
+					],
+					"type" : "event",
+					"event" : 1
+				},
+				{
+					"module" : "mtsp",
+					"name" :
+					[
+						"Clock",
+						"Uhr"
+					],
+					"device" : 65,
+					"register" : 3,
+					"target" : 0
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" : "Playing something",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : "http://sound/sounds/ghost/cupboard.ogg"
+				},
+				{
+					"name" :
+					[
+						"Opening cupboard",
+						"Öffne Schrank"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 2,
+					"target" : 0
+				}
+			]
+		},
+		{
+			"name" : 
+			[
+				"Second Room",
+				"Zweiter Raum"
+			],
+			"dependencies":
+			[
+				{
+					"module" : "core",
+					"name" :
+					[
+						"Prevented by previous state",
+						"Verhindert durch vorhergehenden Zustand"
+					],
+					"type" : "event",
+					"event" : 2
+				},
+				{
+					"module" : "core",
+					"type" : "flank",
+					"low" : false,
+					"high" : true,
+					"name" :
+					[
+						"Flank dependency",
+						"Flankensteuerung"
+					],
+					"dependency" :
+					{
+						"module" : "mtsp",
+						"name" :
+						[
+							"Vase",
+							"Vase"
+						],
+						"device" : 65,
+						"register" : 4,
+						"target" : 1
+					}
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" : "Playing something",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : "http://sound/sounds/ghost/vase.ogg"
+				},
+				{
+					"name" :
+					[
+						"Opening second room",
+						"Öffne Zweiten Raum"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 3,
+					"target" : 0
+				}
+			]
+		},
+		{
+			"name" : 
+			[
+				"Puppet house",
+				"Puppenhaus"
+			],
+			"dependencies":
+			[
+				{
+					"module" : "core",
+					"name" :
+					[
+						"Prevented by previous state",
+						"Verhindert durch vorhergehenden Zustand"
+					],
+					"type" : "event",
+					"event" : 3
+				},
+				{
+					"module" : "mtsp",
+					"name" :
+					[
+						"Sand Clock",
+						"Sanduhr"
+					],
+					"device" : 65,
+					"register" : 6,
+					"target" : 0
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" : "Playing something",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : "http://sound/sounds/ghost/toy.ogg"
+				},
+				{
+					"name" :
+					[
+						"Opening puppet house",
+						"Öffne Puppenhaus"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 1,
+					"target" : 0
+				},
+				{
+					"name" :
+					[
+						"Opening drawer",
+						"Öffne Schublade"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 5,
+					"target" : 0
+				}
+			]
+		},
+		{
+			"name" : 
+			[
+				"Voodoo doll",
+				"Voodoo Puppe"
+			],
+			"dependencies":
+			[
+				{
+					"module" : "core",
+					"name" :
+					[
+						"Prevented by previous state",
+						"Verhindert durch vorhergehenden Zustand"
+					],
+					"type" : "event",
+					"event" : 4
+				},
+				{
+					"module" : "ecp",
+					"type" : "mfrc522",
+					"device" : 0,
+					"tag" : 3,
+					"tag_id" : 3063953671,
+					"name" : "Martin"
+				},
+				{
+					"module" : "ecp",
+					"type" : "mfrc522",
+					"device" : 0,
+					"tag" : 2,
+					"tag_id" : 114613035,
+					"name" : "Susanne"
+				},
+				{
+					"module" : "ecp",
+					"type" : "mfrc522",
+					"device" : 0,
+					"tag" : 6,
+					"tag_id" : 4036040747,
+					"name" : "Ich"
+				},
+				{
+					"module" : "ecp",
+					"type" : "mfrc522",
+					"device" : 0,
+					"tag" : 4,
+					"tag_id" : 2320752171,
+					"name" : "Maria"
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" : "Playing something",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : "http://sound/sounds/ghost/toys.ogg"
+				},
+				{
+					"name" :
+					[
+						"Opening voodoo doll",
+						"Öffne Voodoo Puppe"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 6,
+					"target" : 0
+				}
+			]
+		},
+		{
+			"name" : 
+			[
+				"Third room",
+				"Dritter Raum"
+			],
+			"dependencies":
+			[
+				{
+					"module" : "core",
+					"name" :
+					[
+						"Prevented by previous state",
+						"Verhindert durch vorhergehenden Zustand"
+					],
+					"type" : "event",
+					"event" : 5
+				},
+				{
+					"module" : "mtsp",
+					"name" :
+					[
+						"Beds",
+						"Betten"
+					],
+					"device" : 65,
+					"register" : 7,
+					"target" : 0
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" : "Playing something",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : "http://sound/sounds/ghost/beds.ogg"
+				},
+				{
+					"name" :
+					[
+						"Opening furnace",
+						"Öffne Kamin"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 8,
+					"target" : 0
+				}
+			]
+		},
+		{
+			"name" : 
+			[
+				"Chest",
+				"Truhe"
+			],
+			"dependencies":
+			[
+				{
+					"module" : "core",
+					"name" :
+					[
+						"Prevented by previous state",
+						"Verhindert durch vorhergehenden Zustand"
+					],
+					"type" : "event",
+					"event" : 6
+				},
+				{
+					"module" : "mtsp",
+					"name" :
+					[
+						"Medaillion",
+						"Medaillon"
+					],
+					"device" : 65,
+					"register" : 8,
+					"target" : 0
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" : "Playing something",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : "http://sound/sounds/ghost/chest.ogg"
+				},
+				{
+					"name" :
+					[
+						"Opening chest",
+						"Öffne Truhe"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 7,
+					"target" : 0
+				}
+			]
+		},
+		{
+			"name" : 
+			[
+				"Ultraviolett light",
+				"Ultraviolettes Licht"
+			],
+			"dependencies":
+			[
+				{
+					"module" : "core",
+					"name" :
+					[
+						"Prevented by previous state",
+						"Verhindert durch vorhergehenden Zustand"
+					],
+					"type" : "event",
+					"event" : 7
+				},
+				{
+					"module" : "core",
+					"name" :
+					[
+						"TOD sequence",
+						"TOD Sequenz"
+					],
+					"type" : "sequence",
+					"sequence" : [2, 1, 0],
+					"update_trigger" :
+					[
+						{
+							"name" : "Playing something",
+							"module" : "snd",
+							"action" : "effect",
+							"resource" : "http://sound/sounds/ghost/uidgiLetter.ogg"
+						}
+					],
+					"dependencies" : 
+					[
+						{
+							"module" : "mtsp",
+							"name" :
+							[
+								"Ouija T",
+								"Ouija T"
+							],
+							"device" : 66,
+							"register" : 1,
+							"target" : 0
+						},
+						{
+							"module" : "mtsp",
+							"name" :
+							[
+								"Ouija O",
+								"Ouija O"
+							],
+							"device" : 66,
+							"register" : 2,
+							"target" : 0
+						},
+						{
+							"module" : "mtsp",
+							"name" :
+							[
+								"Ouija D",
+								"Ouija D"
+							],
+							"device" : 66,
+							"register" : 3,
+							"target" : 0
+						},
+						{
+							"module" : "mtsp",
+							"name" :
+							[
+								"Ouija fake",
+								"Ouija falsch"
+							],
+							"device" : 66,
+							"register" : 4,
+							"target" : 0
+						}
+
+					
+					]
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" : "Playing something",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : "http://sound/sounds/ghost/rightUidgi.ogg"
+				},
+				{
+					"name" :
+					[
+						"Turning on UV light",
+						"Schalte UV Licht an"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 1,
+					"target" : 1
+				}
+			]
+		},
+		{
+			"name" : 
+			[
+				"Exit",
+				"Ausgang"
+			],
+			"dependencies":
+			[
+				{
+					"module" : "core",
+					"name" :
+					[
+						"Prevented by previous state",
+						"Verhindert durch vorhergehenden Zustand"
+					],
+					"type" : "event",
+					"event" : 8
+				},
+				{
+					"module" : "mtsp",
+					"name" :
+					[
+						"Exit brick",
+						"Ausgangs Backstein"
+					],
+					"device" : 66,
+					"register" : 5,
+					"target" : 0
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" : "Playing something",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : "http://sound/sounds/ghost/brick.ogg"
+				},
+				{
+					"module" : "core",
+					"name" : 
+					[
+						"Triggering Alarm",
+						"Löse Alarm aus"
+					],
+					"action" : "alarm"
+				},
+				{
+					"name" :
+					[
+						"Waiting on sound",
+						"Warte auf musik"
+					],
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 10000
+				},
+				{
+					"name" :
+					[
+						"Opening Exit",
+						"Öffne Ausgang"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 6,
+					"target" : 0
+				},
+				{
+					"name" :
+					[
+						"Stopping timer",
+						"Halte Zeitnehmer an"
+					],
+					"module" : "core",
+					"action" : "timer_stop"
+				}
+			]
+		},
+		{
+			"name" : 
+			[
+				"Cleanup",
+				"Aufräumen"
+			],
+			"dependencies":
+			[
+				{
+					"module" : "core",
+					"name" :
+					[
+						"Prevented by previous state",
+						"Verhindert durch vorhergehenden Zustand"
+					],
+					"type" : "event",
+					"event" : 9
+				},
+				{
+					"module" : "mtsp",
+					"name" :
+					[
+						"Start input",
+						"Start eingang"
+					],
+					"device" : 65,
+					"register" : 1,
+					"target" : 0
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" :
+					[
+						"Resetting music",
+						"Setze Musik zurück"
+					],
+					"module" : "snd",
+					"action" : "reset"
+				},
+				{
+					"name" : "Playing Cleanup music",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : "http://sound/sounds/ghost2/english/clean.ogg"
+				},
+				{
+					"name" :
+					[
+						"Close dollhouse",
+						"Schliesse Puppenhaus"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 1,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Close cupboard",
+						"Schliesse Schrank"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 2,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Close door to second room",
+						"Schliesse Tür zum zweiten  Raum"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 3,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Close drawer in second room",
+						"Schliesse Schublade im zweiten Raum"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 5,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Close voodoo puppet box",
+						"Schliesse Box mit der Voodoopuppe"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 6,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Close chest in third room",
+						"Schliesse Kiste im dritten Raum"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 7,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Close furnace",
+						"Schliesse Kamintüre"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 8,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Turning on UV light",
+						"Schalte UC-Licht an"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 1,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Turning on Desk Lamp",
+						"Schalte Tischlampe an"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 2,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Turning on walllamp",
+						"Schalte Wandlampe an"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 3,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Turning on room 2 light",
+						"Schalte Licht in Raum 2 an"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 4,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Closing hideout beneath chess",
+						"Schliesse Versteck unterm Schachbrett"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 5,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Closing exit",
+						"Schliesse Ausgang"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 6,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Waiting on input to fade",
+						"Warte auf eingang"
+					],
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 4000
+				}
+			]
+		},
+		{
+			"name" : 
+			[
+				"Reset",
+				"Zurücksetzen"
+			],
+			"dependencies":
+			[
+				{
+					"module" : "core",
+					"name" :
+					[
+						"Prevented by previous state",
+						"Verhindert durch vorhergehenden Zustand"
+					],
+					"type" : "event",
+					"event" : 10
+				},
+				{
+					"module" : "mtsp",
+					"name" :
+					[
+						"Start input",
+						"Start eingang"
+					],
+					"device" : 65,
+					"register" : 1,
+					"target" : 0
+				}
+			],
+			"triggers" :
+			[
+				{
+					"module" : "core",
+					"name" : 
+					[
+						"Removing alarm",
+						"Lösche alarm"
+					],
+					"action" : "alarm_release"
+				},
+				{
+					"name" :
+					[
+						"Close dollhouse",
+						"Schliesse Puppenhaus"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 1,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Close cupboard",
+						"Schliesse Schrank"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 2,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Close door to second room",
+						"Schliesse Tür zum zweiten  Raum"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 3,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Close drawer in second room",
+						"Schliesse Schublade im zweiten Raum"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 5,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Close voodoo puppet box",
+						"Schliesse Box mit der Voodoopuppe"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 6,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Close chest in third room",
+						"Schliesse Kiste im dritten Raum"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 7,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Close furnace",
+						"Schliesse Kamintüre"
+					],
+					"module" : "mtsp",
+					"device" : 33,
+					"register" : 8,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Turning off UV light",
+						"Schalte UC-Licht aus"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 1,
+					"target" : 0
+				},
+				{
+					"name" :
+					[
+						"Turning on Desk Lamp",
+						"Schalte Tischlampe an"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 2,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Turning on walllamp",
+						"Schalte Wandlampe an"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 3,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Turning on room 2 light",
+						"Schalte Licht in Raum 2 an"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 4,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Closing hideout beneath chess",
+						"Schliesse Versteck unterm Schachbrett"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 5,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Closing exit",
+						"Schliesse Ausgang"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 6,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Resetting timer",
+						"Setze Zeitnehmer zurück"
+					],
+					"module" : "core",
+					"action" : "timer_reset"
+				},
+				{
+					"name" :
+					[
+						"Waiting on input to fade",
+						"Warte auf eingang"
+					],
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 4000
+				},
+				{
+					"name" :
+					[
+						"Resetting music",
+						"Setze Musik zurück"
+					],
+					"module" : "snd",
+					"action" : "reset"
+				},
+				{
+					"name" :
+					[
+						"Resetting events",
+						"Setze Ereignisse zurück"
+					],
+					"module" : "core",
+					"action" : "reset"
+				}
+			]
+		},
+		{
+			"name" : 
+			[
+				"Call",
+				"Rufen"
+			],
+			"hidden" : true,
+			"autoreset" : true,
+			"dependencies" :
+			[
+				{
+					"module" : "mtsp",
+					"name" : 
+					[
+						"Call button",
+						"Ruf-Knopf"
+					],
+					"device" : 66,
+					"register" : 6,
+					"target" : 0
+				}
+			],
+			"triggers" :
+			[
+				{
+					"module" : "core",
+					"name" : 
+					[
+						"Triggering Alarm",
+						"Löse Alarm aus"
+					],
+					"action" : "alarm"
+				}
+			]
+		},
+		{
+			"name" : 
+			[
+				"Scream in brick",
+				"Schrei im Backstein"
+			],
+			"autoreset" : true,
+			"dependencies" :
+			[
+				{
+					"module" : "mtsp",
+					"name" : 
+					[
+						"Puppet",
+						"Puppe"
+					],
+					"device" : 65,
+					"register" : 5,
+					"target" : 0
+				}
+			],
+			"triggers" :
+			[
+				{
+					"module" : "mtsp",
+					"name" : 
+					[
+						"Triggering puppet scream",
+						"Spiele Puppenschrei"
+					],
+					"type" : "burst",
+					"duration" : 5000,
+					"device" : 34,
+					"register" : 8,
+					"target" : 1
+				}
+			]
+		},
+		{
+			"name" : 
+			[
+				"Shortly open exit",
+				"Ausgang kurz öffnen"
+			],
+			"autoreset" : true,
+			"dependencies" :
+			[
+				{
+					"module" : "core",
+					"type" : "never",
+					"name" : "Nope"
+				}
+			],
+			"triggers" :
+			[
+				{
+					"module" : "mtsp",
+					"name" : 
+					[
+						"Opening exit",
+						"Öffne Ausgang"
+					],
+					"type" : "burst",
+					"duration" : 1000,
+					"device" : 34,
+					"register" : 6,
+					"target" : 0
+				}
+			]
+		},
+		{
+			"name" : 
+			[
+				"Flickering Light",
+				"Licht flackern"
+			],
+			"autoreset" : true,
+			"dependencies" :
+			[
+				{
+					"module" : "core",
+					"type" : "or",
+					"dependencies" :
+					[
+						{
+							"module" : "core",
+							"type" : "flank",
+							"low" : false,
+							"name" :
+							[
+								"Flank dependency",
+								"Flankensteuerung"
+							],
+							"dependency" :
+							{
+								"module" : "core",
+								"name" : 
+								[
+									"Event 1",
+									"Ereignis 1"
+								],
+								"type" : "event",
+								"event" : 0
+							}
+						},
+						{
+							"module" : "core",
+							"type" : "flank",
+							"low" : false,
+							"name" :
+							[
+								"Flank dependency",
+								"Flankensteuerung"
+							],
+							"dependency" :
+							{
+								"module" : "core",
+								"name" : 
+								[
+									"Event 2",
+									"Ereignis 2"
+								],
+								"type" : "event",
+								"event" : 2
+							}
+						},
+						{
+							"module" : "core",
+							"type" : "flank",
+							"low" : false,
+							"name" :
+							[
+								"Flank dependency",
+								"Flankensteuerung"
+							],
+							"dependency" :
+							{
+								"module" : "core",
+								"name" : 
+								[
+									"Event 3",
+									"Ereignis 3"
+								],
+								"type" : "event",
+								"event" : 2
+							}
+						},
+						{
+							"module" : "core",
+							"type" : "flank",
+							"low" : false,
+							"name" :
+							[
+								"Flank dependency",
+								"Flankensteuerung"
+							],
+							"dependency" :
+							{
+								"module" : "core",
+								"name" : 
+								[
+									"Event 3",
+									"Ereignis 3"
+								],
+								"type" : "event",
+								"event" : 2
+							}
+						},
+						{
+							"module" : "core",
+							"type" : "flank",
+							"low" : false,
+							"name" :
+							[
+								"Flank dependency",
+								"Flankensteuerung"
+							],
+							"dependency" :
+							{
+								"module" : "core",
+								"name" : 
+								[
+									"Event 7",
+									"Ereignis 7"
+								],
+								"type" : "event",
+								"event" : 6
+							}
+						}
+					]
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" :
+					[
+						"Turning off bedlight room 1",
+						"Schalte Bettlicht in Raum 1 aus"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 3,
+					"target" : 0
+				},
+				{
+					"name" :
+					[
+						"Turning off writing machine light",
+						"Schalte Schreibmaschinenlicht aus"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 2,
+					"target" : 0
+				},
+				{
+					"name" :
+					[
+						"Turning off room 2 light",
+						"Schalte Licht in raum 2 aus"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 4,
+					"target" : 0
+				},
+				{
+					"name" :
+					[
+						"Delay",
+						"Verzögerung"
+					],
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :
+					[
+						"Turning on bedlight room 1",
+						"Schalte Bettlicht in Raum 1 an"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 3,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Turning on writing machine light",
+						"Schalte Schreibmaschinenlicht an"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 2,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Turning on room 2 light",
+						"Schalte Licht in raum 2 an"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 4,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Delay",
+						"Verzögerung"
+					],
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 400
+				},
+				{
+					"name" :
+					[
+						"Turning off bedlight room 1",
+						"Schalte Bettlicht in Raum 1 aus"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 3,
+					"target" : 0
+				},
+				{
+					"name" :
+					[
+						"Turning off writing machine light",
+						"Schalte Schreibmaschinenlicht aus"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 2,
+					"target" : 0
+				},
+				{
+					"name" :
+					[
+						"Turning off room 2 light",
+						"Schalte Licht in raum 2 aus"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 4,
+					"target" : 0
+				},
+				{
+					"name" :
+					[
+						"Delay",
+						"Verzögerung"
+					],
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 400
+				},
+				{
+					"name" :
+					[
+						"Turning on bedlight room 1",
+						"Schalte Bettlicht in Raum 1 an"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 3,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Turning on writing machine light",
+						"Schalte Schreibmaschinenlicht an"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 2,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Turning on room 2 light",
+						"Schalte Licht in raum 2 an"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 4,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Delay",
+						"Verzögerung"
+					],
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 400
+				},
+				{
+					"name" :
+					[
+						"Turning off bedlight room 1",
+						"Schalte Bettlicht in Raum 1 aus"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 3,
+					"target" : 0
+				},
+				{
+					"name" :
+					[
+						"Turning off writing machine light",
+						"Schalte Schreibmaschinenlicht aus"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 2,
+					"target" : 0
+				},
+				{
+					"name" :
+					[
+						"Turning off room 2 light",
+						"Schalte Licht in raum 2 aus"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 4,
+					"target" : 0
+				},
+				{
+					"name" :
+					[
+						"Delay",
+						"Verzögerung"
+					],
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :
+					[
+						"Turning on bedlight room 1",
+						"Schalte Bettlicht in Raum 1 an"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 3,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Turning on writing machine light",
+						"Schalte Schreibmaschinenlicht an"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 2,
+					"target" : 1
+				},
+				{
+					"name" :
+					[
+						"Turning on room 2 light",
+						"Schalte Licht in raum 2 an"
+					],
+					"module" : "mtsp",
+					"device" : 34,
+					"register" : 4,
+					"target" : 1
+				}
+			]
+		}
+	],
+	"hint_dependencies" :
+	[
+		[	
+			{
+				"module" : "core",
+				"name" :
+				[
+					"Prevented by cleanup",
+					"Verhindert durch Aufräumen"
+				],
+				"type" : "event",
+				"event" : 10,
+				"target" : 0
+			},
+			{
+				"module" : "mtsp",
+				"name" : 
+				[
+					"Help",
+					"Hilfe"
+				],
+				"device" : 66,
+				"register" : 8,
+				"target" : 0
+			}
+		],
+		[
+			{
+				"module" : "core",
+				"name" :
+				[
+					"Prevented by cleanup",
+					"Verhindert durch Aufräumen"
+				],
+				"type" : "event",
+				"event" : 10,
+				"target" : 0
+			},
+			{
+				"module" : "mtsp",
+				"name" : 
+				[
+					"Extra help",
+					"Erweiterte Hilfe"
+				],
+				"device" : 66,
+				"register" : 7,
+				"target" : 0
+			}
+		]
+	],
+	"hints" :
+	[
+		[],
+		[
+			{
+				"name" : 
+				[
+					"Cupboard!",
+					"Schrank!"
+				],
+				"content":
+				[
+					"Look on top of the wardrobe!",
+					"Schaut auf den Schrank!"
+				],
+				"triggers" :
+				[
+					{
+						"name" : "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://sound/sounds/ghost2/english/hints/01.01.ogg",
+							"http://sound/sounds/ghost2/german/hints/01.01.ogg"
+						]
+					}
+				]
+			},
+			{
+				"name" : 
+				[
+					"Chess!",
+					"Schach!"
+				],
+				"content":
+				[
+					"Do you like chess?",
+					"Mögt ihr Schach?"
+				],
+				"triggers" :
+				[
+					{
+						"name" : "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://sound/sounds/ghost2/english/hints/01.02.ogg",
+							"http://sound/sounds/ghost2/german/hints/01.02.ogg"
+						]
+					}
+				]
+			}
+		],
+		[
+			{
+				"name" : 
+				[
+					"Photos?",
+					"Photos?"
+				],
+				"content":
+				[
+					"The box! Isn't there a duplicate of the picture from the desk? What's there on the back?",
+					"Ist in der Box nicht ein Duplikat des Photos vom Schreibtisch? Was ist da auf der Rückseite?"
+				],
+				"triggers" :
+				[
+					{
+						"name" : "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://sound/sounds/ghost2/english/hints/02.01.ogg",
+							"http://sound/sounds/ghost2/german/hints/02.01.ogg"
+						]
+					}
+				]
+			},
+			{
+				"name" : 
+				[
+					"Typewriter!",
+					"Schreibmaschiene!"
+				],
+				"content":
+				[
+					"Interesting Formula. Did you try to use the typewriter?",
+					"Interressante Formel? Habt ihr schon dir Schreibmaschiene verwendet? Vielleicht findet ihr Nummern auf diesen Dingern."
+				],
+				"triggers" :
+				[
+					{
+						"name" : "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://sound/sounds/ghost2/english/hints/02.02.ogg",
+							"http://sound/sounds/ghost2/german/hints/02.02.ogg"
+						]
+					}
+				]
+			}
+		],
+		[
+			{
+				"name" : 
+				[
+					"Walking Stick?",
+					"Geehstock?"
+				],
+				"content":
+				[
+					"The walking stick seems to be useful too for you.",
+					"Der Stock ist wohl ein Nützlicher Gegenstand."
+				],
+				"triggers" :
+				[
+					{
+						"name" : "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://sound/sounds/ghost2/english/hints/03.01.ogg",
+							"http://sound/sounds/ghost2/german/hints/03.01.ogg"
+						]
+					}
+				]
+			},
+			{
+				"name" : 
+				[
+					"Put inside!",
+					"Wo rein stecken!"
+				],
+				"content":
+				[
+					"Maybe it fits somewhere.",
+					"Vielleicht passt der Stock wo rein!"
+				],
+				"triggers" :
+				[
+					{
+						"name" : "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://sound/sounds/ghost2/english/hints/03.02.ogg",
+							"http://sound/sounds/ghost2/german/hints/03.02.ogg"
+						]
+					}
+				]
+			}
+		],
+		[
+			{
+				"name" : 
+				[
+					"Wardrobe?",
+					"Garderobe?"
+				],
+				"content":
+				[
+					"Check the white wardrobe.",
+					"Seht euch den weissen Schrank genauer an."
+				],
+				"triggers" :
+				[
+					{
+						"name" : "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://sound/sounds/ghost2/english/hints/04.01.ogg",
+							"http://sound/sounds/ghost2/german/hints/04.01.ogg"
+						]
+					}
+				]
+			},
+			{
+				"name" : 
+				[
+					"Symbol!",
+					"Symbol!"
+				],
+				"content":
+				[
+					"Did you see the symbol in the first room? There should be something else with the same symbol!",
+					"Habt ihr das Symbol schon im ersten Raum gesehen? Seht euch nach etwas anderem mit diesem Symbol um!"
+				],
+				"triggers" :
+				[
+					{
+						"name" : "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://sound/sounds/ghost2/english/hints/04.02.ogg",
+							"http://sound/sounds/ghost2/german/hints/04.02.ogg"
+						]
+					}
+				]
+			}
+		],
+		[
+			{
+				"name" : 
+				[
+					"Something opened?",
+					"Etwas öffnete?"
+				],
+				"content":
+				[
+					"Something opened. Look around!",
+					"Etwas öffnete sich! Schaut euch um!"
+				],
+				"triggers" :
+				[
+					{
+						"name" : "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://sound/sounds/ghost2/english/hints/05.01.ogg",
+							"http://sound/sounds/ghost2/german/hints/05.01.ogg"
+						]
+					}
+				]
+			},
+			{
+				"name" : 
+				[
+					"Dolls!",
+					"Puppen!"
+				],
+				"content":
+				[
+					"Place the dolls on the chairs in the right order!",
+					"Die Puppen müssen in der richtigen Reihenfolge auf die Stühle hingesetzt werden."
+				],
+				"triggers" :
+				[
+					{
+						"name" : "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://sound/sounds/ghost2/english/hints/05.02.ogg",
+							"http://sound/sounds/ghost2/german/hints/05.02.ogg"
+						]
+					}
+				]
+			}
+		],
+		[
+			{
+				"name" : 
+				[
+					"Cuddle me!",
+					"Drück mich!"
+				],
+				"content":
+				[
+					"The vodoo doll likes to cuddle! Where is that noise coming from?",
+					"Die Vodoo Puppe mag gedrückt werden. Wo kommt das Geräusch her?"
+				],
+				"triggers" :
+				[
+					{
+						"name" : "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://sound/sounds/ghost2/english/hints/06.01.ogg",
+							"http://sound/sounds/ghost2/german/hints/06.01.ogg"
+						]
+					}
+				]
+			},
+			{
+				"name" : 
+				[
+					"Dairy!",
+					"Tagebuch!"
+				],
+				"content":
+				[
+					"After you have found the train turned the switch on, and received the key from the kascade, put yourselves into the last dairy entry.",
+					"Nachdem ihr den Zug gefunden habt, den Schalter am Zug eingeschaltet, und den Schlüssen von der Schatulle bekommen habt, versetzt euch in den letzten Tagebucheintrag"
+				],
+				"triggers" :
+				[
+					{
+						"name" : "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://sound/sounds/ghost2/english/hints/06.02.ogg",
+							"http://sound/sounds/ghost2/german/hints/06.02.ogg"
+						]
+					}
+				]
+			}
+		],
+		[
+			{
+				"name" : 
+				[
+					"Hole?",
+					"Loch?"
+				],
+				"content":
+				[
+					"Do you see the hole in the Chest? What could fit inside?",
+					"Seht ihr dieses Loch in der Kiste? Was könnte da rein passen."
+				],
+				"triggers" :
+				[
+					{
+						"name" : "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://sound/sounds/ghost2/english/hints/07.01.ogg",
+							"http://sound/sounds/ghost2/german/hints/07.01.ogg"
+						]
+					}
+				]
+			},
+			{
+				"name" : 
+				[
+					"Fit inside!",
+					"Reinpassen!"
+				],
+				"content":
+				[
+					"Can you find something that will fit inside?",
+					"Findet ihr vielleicht etwas das in dieses runde Loch passt? Schaut euch den Gehstock nochmal an."
+				],
+				"triggers" :
+				[
+					{
+						"name" : "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://sound/sounds/ghost2/english/hints/07.02.ogg",
+							"http://sound/sounds/ghost2/german/hints/07.02.ogg"
+						]
+					}
+				]
+			}
+		],
+		[
+			{
+				"name" : 
+				[
+					"Feel inside",
+					"Fühlt darin"
+				],
+				"content":
+				[
+					"Try to feel what is in there. Use your hands!",
+					"Versucht zu erfühlen was drin steckt. Steckt mal eure Hände rein."
+				],
+				"triggers" :
+				[
+					{
+						"name" : "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://sound/sounds/ghost2/english/hints/08.01.ogg",
+							"http://sound/sounds/ghost2/german/hints/08.01.ogg"
+						]
+					}
+				]
+			},
+			{
+				"name" : 
+				[
+					"Fit inside!",
+					"Reinpassen!"
+				],
+				"content":
+				[
+					"Retrace the letters on the ouija board.",
+					"Macht die Buchstaben im Witchboard nach."
+				],
+				"triggers" :
+				[
+					{
+						"name" : "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://sound/sounds/ghost2/english/hints/08.02.ogg",
+							"http://sound/sounds/ghost2/german/hints/08.02.ogg"
+						]
+					}
+				]
+			}
+		],
+		[
+			{
+				"name" : 
+				[
+					"Look around",
+					"Schaut euch um"
+				],
+				"content":
+				[
+					"Look around, a light went on. 11 down, 4 right.",
+					"Schaut euch um, es ist euch ein Lichtlein aufgegangen. 11 runter 4 nach rechts."
+				],
+				"triggers" :
+				[
+					{
+						"name" : "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://sound/sounds/ghost2/english/hints/09.01.ogg",
+							"http://sound/sounds/ghost2/german/hints/09.01.ogg"
+						]
+					}
+				]
+			},
+			{
+				"name" : 
+				[
+					"Bricks?",
+					"Ziegel?"
+				],
+				"content":
+				[
+					"Is that for the bricks? Press the brick!",
+					"Gilt das für die Ziegel? Drückt es hinein!"
+				],
+				"triggers" :
+				[
+					{
+						"name" : "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://sound/sounds/ghost2/english/hints/09.02.ogg",
+							"http://sound/sounds/ghost2/german/hints/09.02.ogg"
+						]
+					}
+				]
+			}
+		]
+	]
+
+}

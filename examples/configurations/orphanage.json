@@ -1,0 +1,6300 @@
+{
+	"langs" :
+	[
+		"en",
+		"de"
+	],
+	"default_lang" : 1,
+	"name" :
+	[
+		"The lost orphanage",
+		"Das verlassene Waisenhaus"
+	],
+	"color" :
+	{
+		"logo" : "https://myserver.game.com/logo.svg",
+		"nav" : "#3E2723",
+		"footer" : "#3E2723",
+		"body" : "#A1887F"
+	},
+	"init_event" : 14,
+	"duration" : 3600,
+	"ecp_device" : "/dev/ttyUSB0",
+	"log_level" : "DEBUG_MORE",
+	"hint_dependencies" :
+	[
+		[	
+			{
+				"module" : "core",
+				"name" :
+				[
+					"Prevented by cleanup",
+					"Verhindert durch Aufräumen"
+				],
+				"type" : "event",
+				"event" : 14,
+				"target" : false
+			},
+			{
+				"name" : 
+				[
+					"Help",
+					"Hilfe"
+				],
+				"module" : "ecp",
+				"device" : 0,
+				"register" : "L",
+				"bit" : 6,
+				"target" : false
+			}
+		],
+		[
+			{
+				"module" : "core",
+				"name" :
+				[
+					"Prevented by cleanup",
+					"Verhindert durch Aufräumen"
+				],
+				"type" : "event",
+				"event" : 14,
+				"target" : false
+			},
+			{
+				"name" : 
+				[
+					"More Help",
+					"Erweiterte Hilfe"
+				],
+				"module" : "ecp",
+				"device" : 0,
+				"register" : "L",
+				"bit" : 5,
+				"target" : false
+			}
+		]
+	],
+	"events" :
+	[
+		{
+			"name" :
+			[
+				"Start",
+				"Start"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Start input",
+						"Start eingang"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "L",
+					"bit" : 7,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Prevented by cleanup event",
+						"Verhindert durch vaufräum Ereignis"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 14,
+					"target" : false
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Light behind fake door on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "B",
+					"bit" : 4,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on entrance light",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "B",
+					"bit" : 7,
+					"target" : false
+				},
+				{
+					"name" :  "Start timer",
+					"module" : "core",
+					"action" : "timer_start"
+				},
+				{
+					"name" :  "Playing intro",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : 
+					[
+						"http://127.0.0.1/storage/english/intro.ogg",
+						"http://127.0.0.1/storage/deutsch/intro.ogg"
+					]
+				}
+			]
+		},
+		{
+			"name" :
+			[
+				"Horse",
+				"Pferd"
+			],
+			"dependencies" : 
+			[
+				{
+					"module" : "core",
+					"name" :
+					[
+						"Delay",
+						"Zeitverzögerung"
+					],
+					"type" : "length",
+					"length" : 5,
+					"dependency" :
+					{
+
+						"name" : 
+						[
+							"Photoresistor",
+							"Photowiderstand"
+						],
+						"module" : "ecp",
+						"device" : 0,
+						"type" : "analog",
+						"value" : 236,
+						"threshold" : "below"
+					}
+
+				},
+				{
+					"name" :
+					[
+						"Prevented by previous event",
+						"Verhindert durch vorhergehendes Ereignis"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 0
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 13000
+				},
+				{
+					"name" :  "Shut fake door 1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "B",
+					"bit" : 6,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 2000
+				},
+				{
+					"name" :  "Stop shutting fake door 1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "B",
+					"bit" : 6,
+					"target" : true
+				},
+				{
+					"name" :  "Shut fake door 2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "B",
+					"bit" : 5,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 2000
+				},
+				{
+					"name" :  "Stop shutting fake door 2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "B",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light behind fake door",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "B",
+					"bit" : 4,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 2500
+				},
+				{
+					"name" :  "Let horse ",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 6,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 10000
+				},
+				{
+					"name" :  "Turn on light r1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 4,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light l1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 3,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light r2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light r3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light l2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 5,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light l3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 5,
+					"target" : false
+				},
+				{
+					"name" :  "Turn off entrance light",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "B",
+					"bit" : 7,
+					"target" : true
+				},
+				{
+					"name" :  "Turn on light in corridor picture",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 5,
+					"target" : false
+				}
+				
+			]
+		},
+		{
+			"name" :
+			[
+				"Lamps",
+				"Lampen"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Lamp right 1",
+						"Lampe Rechts 1"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 4,
+					"isinput" : false,
+					"pulled" : false,
+					"target" : true
+				},
+				{
+					"name" : 
+					[
+						"Lamp right 2",
+						"Lampe Rechts 2"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 1,
+					"isinput" : false,
+					"pulled" : false,
+					"target" : true
+				},
+				{
+					"name" : 
+					[
+						"Lamp right 3",
+						"Lampe Rechts 3"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 0,
+					"isinput" : false,
+					"pulled" : false,
+					"target" : false
+				},
+				{
+					"name" : 
+					[
+						"Lamp left 1",
+						"Lampe Links 1"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 3,
+					"isinput" : false,
+					"pulled" : false,
+					"target" : false
+				},
+				{
+					"name" : 
+					[
+						"Lamp left 2",
+						"Lampe Links 2"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 5,
+					"isinput" : false,
+					"pulled" : false,
+					"target" : true
+				},
+				{
+					"name" : 
+					[
+						"Lamp left 3",
+						"Lampe links 3"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 5,
+					"isinput" : false,
+					"pulled" : false,
+					"target" : true
+				},
+				{
+					"name" :
+					[
+						"Prevented by previous event",
+						"Verhindert durch vorhergehendes Ereignis"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 1
+				}
+				
+			],
+			"triggers" :
+			[],
+			"autoreset" : true
+		},
+		{
+			"name" :
+			[
+				"Door to children's room",
+				"Tür ins Kinderzimmer"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Button in picture",
+						"Knopf im Bild"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "L",
+					"bit" : 3,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Prevented by previous event",
+						"Verhindert durch vorhergehendes Ereignis"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 2
+				}
+				
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Playing intro",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : "http://127.0.0.1/storage/general/picture_button.ogg"
+				},
+				{
+					"name" :  "Start players",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 4,
+					"target" : false
+				},
+				{
+					"name" :  " Open Children's door",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 4,
+					"target" : true
+				},
+				{
+					"name" :  "Turn on child light",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" :  "Turn off light in corridor picture",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light in childroom picture",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 3,
+					"target" : true
+				}
+			]
+		},
+		{
+			"name" :
+			[
+				"Drawer with sheet",
+				"Schublade mit Fetzen"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Puzzle",
+						"Puzzle"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "K",
+					"bit" : 7,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Prevented by previous event",
+						"Verhindert durch vorhergehendes Ereignis"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 3
+				}
+				
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Open drawer childroom",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 0,
+					"target" : true
+				}
+				
+			]
+		},
+		{
+			"name" :
+			[
+				"Key for director's room",
+				"Schlüssel für Direktorium"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Knife in bed",
+						"Messer im Bett"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "K",
+					"bit" : 6,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Prevented by previous event",
+						"Verhindert durch vorhergehendes Ereignis"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 3
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Playing intro",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : "http://127.0.0.1/storage/general/knife.ogg"
+				},
+				{
+					"name" :  "Turn off light in children's room",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light r1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 4,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light l1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 3,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light r2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light r3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 0,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light l2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light l3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 5,
+					"target" : true
+				},
+				
+				
+				
+				{
+					"name" :  "Footstep 1 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 1 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 2 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 2 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 0,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 3 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 3,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 3 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 3,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 4 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 2,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 4 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 2,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 5 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 5 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 0,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 6 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 7,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 6 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 7,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 7 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 2,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 7 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 2,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 8 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 8 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 9 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 9 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 0,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					
+					"name" :  "Footstep 10 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 7,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					
+					"name" :  "Footstep 10 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 7,
+					"target" : true
+				},
+				
+				
+				{
+					"name" :  "Drop key",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 0,
+					"target" : true
+				},
+
+
+
+
+
+
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					
+					"name" :  "Footstep 10 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 7,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					
+					"name" :  "Footstep 10 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 7,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 9 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 9 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 0,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 8 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 8 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 7 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 2,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 7 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 2,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 6 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 7,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 6 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 7,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 5 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 5 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 0,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 4 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 2,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 4 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 2,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 3 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 3,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 3 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 3,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 2 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 2 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 0,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 1 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 1 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+
+
+
+
+				{
+					"name" :  "Turn on light r1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 4,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light l1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 3,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light r2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light r3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light l2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 5,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light l3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 5,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light in children's room",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 1,
+					"target" : false
+				}
+				
+				
+			]
+		},
+		{
+			"name" :
+			[
+				"Director's room light change",
+				"Lichtänderung direktorium"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Door directors room",
+						"Tür zum Direktorium"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "K",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :
+					[
+						"Prevented by previous event",
+						"Verhindert durch vorhergehendes Ereignis"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 5
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Turn off light in children's room",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light r1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 4,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light r2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light r3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 0,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light l2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light l3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Playing intro",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : "http://127.0.0.1/storage/general/open_director_door.ogg"
+				},
+				{
+					"name" :  "Turn on director's light",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" :  "Let chair fall",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 2,
+					"target" : true
+				}
+			]
+		},
+		{
+			"name" :
+			[
+				"Goat",
+				"Ziege"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Round thingy",
+						"Drittes Auge"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "K",
+					"bit" : 4,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Prevented by previous event",
+						"Verhindert durch vorhergehendes Ereignis"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 6
+				}
+				
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Playing intro",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : "http://127.0.0.1/storage/general/goat.ogg"
+				},
+				{
+					"name" :  "Light Director off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Enable projector",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 5,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 1000
+				},
+				{
+					"name" :  "Projector button press",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 19000
+				},
+				{
+					"name" :  "Light Director on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 1,
+					"target" : false
+				}
+				
+			]
+		},
+		{
+			"name" :
+			[
+				"Key for desk",
+				"Schreibtischschlüssel"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Chimney statues",
+						"Kaminstatuen"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "K",
+					"bit" : 3,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Prevented by previous event",
+						"Verhindert durch vorhergehendes Ereignis"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 7
+				}
+				
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Playing intro",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : "http://127.0.0.1/storage/general/key_out.ogg"
+				},
+				{
+					"name" : "start video",
+					"module" : "video",
+					"action" : "reset"
+				},
+				{
+					"name" :  "Light Director off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off players",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 4,
+					"target" : true
+				},
+				{
+					"name" :  "Projector button press",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 5,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 1000
+				},
+				{
+					"name" :  "Projector button press",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 1000
+				},
+				{
+					"name" :  "Projector button press",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 5,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 1000
+				},
+				{
+					"name" :  "Projector button press",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 1000
+				},
+				{
+					"name" :  "Projector button press",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 5,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 1000
+				},
+				{
+					"name" :  "Projector button press",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 1000
+				},
+				{
+					"name" :  "Push out -",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 6,
+					"target" : true
+				},
+				{
+					"name" :  "Push out +",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 7,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 750
+				},
+				{
+					"name" :  "Push out stop +",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 7,
+					"target" : true
+				},
+				{
+					"name" :  "Light Director on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 1,
+					"target" : false
+				}
+				
+			]
+		},
+		{
+			"name" :
+			[
+				"Hell gate",
+				"Höllentor"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Key in desk",
+						"Schlüssel im Tisch"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "K",
+					"bit" : 2,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Prevented by previous event",
+						"Verhindert durch vorhergehendes Ereignis"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 8
+				}
+				
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Playing intro",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : "http://127.0.0.1/storage/general/key_out.ogg"
+				},
+				{
+					"name" :  "Hell gate",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Light Hell",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 6,
+					"target" : false
+				},
+				{
+					"name" :  "Light Director off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 4 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 2,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 4 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 2,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 3 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 3,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 3 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 3,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 2 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 2 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 0,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 1 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 1 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				}
+
+			]
+		},
+		{
+			"name" :
+			[
+				"Floor Buttons Light",
+				"Licht der Bodenknöpfe"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"First stage sigils",
+						"Pyramidenförmige Siegel"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "F",
+					"bit" : 2,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Prevented by previous event",
+						"Verhindert durch vorhergehendes Ereignis"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 9
+				}
+				
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Playing intro",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : "http://127.0.0.1/storage/general/lightsout.ogg"
+				},
+				{
+					"name" :  "Floor button light on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 2,
+					"target" : false
+				},
+				{
+					"name" :  "Light Hell",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 6,
+					"target" : true
+				}
+				
+			]
+		},
+		{
+			"name" :
+			[
+				"Floor buttons",
+				"Bodenknöpfe"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Floor button 1",
+						"Bodenknopf 1"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "K",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" : 
+					[
+						"Floor button 2",
+						"Bodenknopf 2"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "K",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" : 
+					[
+						"Floor button 3",
+						"Bodenknopf 3"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "F",
+					"bit" : 7,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Prevented by previous event",
+						"Verhindert durch vorhergehendes Ereignis"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 10
+				}
+				
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Playing intro",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : "http://127.0.0.1/storage/general/lightson.ogg"
+				},
+				{
+					"name" :  "Floor button light off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 2,
+					"target" : true
+				},
+				{
+					"name" :  "Light Hell on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 6,
+					"target" : false
+				},
+				{
+					"name" :  "Light Hell Skulls",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 4,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 2000
+				},
+				{
+					"name" :  "Playing 12 o'clock",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : "http://127.0.0.1/storage/general/custom/12oclock.ogg"
+ 				}
+			]
+		},
+		{
+			"name" :
+			[
+				"Wall hideouts",
+				"Wandverstecke"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" :
+					[
+						"Targeted sequence",
+						"Abgezielte Sequenz"
+					],
+					"module" : "core",
+					"type" : "sequence",
+					"sequence" : [0, 1, 2, 2, 1, 0],
+					"trigger_wrong" :
+					[
+						{
+							"name" :  "Playing effect",
+							"module" : "snd",
+							"action" : "effect",
+							"resource" : "http://127.0.0.1/storage/general/wrong_wall.ogg"
+						},
+						{
+							"name" :  "Light Hell Skulls",
+							"module" : "ecp",
+							"device" : 0,
+							"register" : "C",
+							"bit" : 4,
+							"target" : true
+						},
+						{
+							"name" :  "Standby",
+							"module" : "core",
+							"action" : "delay",
+							"delay" : 500
+						},
+						{
+							"name" :  "Light Hell Skulls",
+							"module" : "ecp",
+							"device" : 0,
+							"register" : "C",
+							"bit" : 4,
+							"target" : false
+						},
+						{
+							"name" :  "Standby",
+							"module" : "core",
+							"action" : "delay",
+							"delay" : 500
+						},
+						{
+							"name" :  "Light Hell Skulls",
+							"module" : "ecp",
+							"device" : 0,
+							"register" : "C",
+							"bit" : 4,
+							"target" : true
+						},
+						{
+							"name" :  "Standby",
+							"module" : "core",
+							"action" : "delay",
+							"delay" : 500
+						},
+						{
+							"name" :  "Light Hell Skulls",
+							"module" : "ecp",
+							"device" : 0,
+							"register" : "C",
+							"bit" : 4,
+							"target" : false
+						},
+						{
+							"name" :  "Standby",
+							"module" : "core",
+							"action" : "delay",
+							"delay" : 500
+						},
+						{
+							"name" :  "Light Hell Skulls",
+							"module" : "ecp",
+							"device" : 0,
+							"register" : "C",
+							"bit" : 4,
+							"target" : true
+						},
+						{
+							"name" :  "Standby",
+							"module" : "core",
+							"action" : "delay",
+							"delay" : 500
+						},
+						{
+							"name" :  "Light Hell Skulls",
+							"module" : "ecp",
+							"device" : 0,
+							"register" : "C",
+							"bit" : 4,
+							"target" : false
+						}
+
+					],
+					"trigger_right" :
+					[
+						{
+							"name" :  "Playing effect",
+							"module" : "snd",
+							"action" : "effect",
+							"resource" : "http://127.0.0.1/storage/general/right_wall.ogg"
+						}
+
+					],
+					"dependencies" :
+					[
+						{
+							"name" : 
+							[
+								"Left rune right",
+								"Linke richtige Rune"
+							],
+							"module" : "ecp",
+							"device" : 0,
+							"register" : "F",
+							"bit" : 6,
+							"target" : false
+						},
+						{
+							"name" : 
+							[
+								"Bottom rune right",
+								"Untere richtige Rune"
+							],
+							"module" : "ecp",
+							"device" : 0,
+							"register" : "F",
+							"bit" : 5,
+							"target" : false
+						},
+						{
+							"name" : 
+							[
+								"Top rune right",
+								"Obere richtige Rune"
+							],
+							"module" : "ecp",
+							"device" : 0,
+							"register" : "F",
+							"bit" : 4,
+							"target" : false
+						},
+						{
+							"name" : 
+							[
+								"Wrong runes",
+								"Falsche Runen"
+							],
+							"module" : "ecp",
+							"device" : 0,
+							"register" : "F",
+							"bit" : 3,
+							"target" : false
+						}
+
+					]
+				},
+				{
+					"name" :
+					[
+						"Prevented by previous event",
+						"Verhindert durch vorhergehendes Ereignis"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 11
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Playing intro",
+					"module" : "snd",
+					"action" : "effect",
+					"resource" : "http://127.0.0.1/storage/general/wall_open.ogg"
+				},
+				{
+					"name" : "Open hell gates",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 3,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 4000
+				},
+				{
+					"name" : "Open hell gates finish",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 3,
+					"target" : true
+				}
+				
+			]
+		},
+		{
+			"name" :
+			[
+				"Exit",
+				"Ausgang"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"First stage chumps",
+						"Pyramiden Siegel"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "F",
+					"bit" : 2,
+					"target" : false
+				},
+				{
+					"name" : 
+					[
+						"Second stage chumps",
+						"Restliche Siegel"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "F",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Prevented by previous event",
+						"Verhindert durch vorhergehendes Ereignis"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 12
+				}
+				
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Alarm",
+					"module" : "core",
+					"action" : "alarm"
+				},
+				{
+					"name" :  "Stop timer",
+					"module" : "core",
+					"action" : "timer_stop"
+				},
+				{
+					"name" : "RESET SOUND",
+					"module" : "snd",
+					"action" : "reset"
+				},
+				{
+					"name" :  "Playing outro",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : 
+					[
+						"http://127.0.0.1/storage/english/win.ogg",
+						"http://127.0.0.1/storage/deutsch/win.ogg"
+					]
+				},
+				{
+					"name" :  "Turn off hell light",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 6,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Turn on hell light",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 6,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 500
+				},
+				{
+					"name" :  "Waiting for outro to finish",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 30000
+				},
+				{
+					"name" :  "Open exit",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Turn on light r1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 4,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light l1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 3,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light r2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light r3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light l2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 5,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light l3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 5,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light in children's room",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 1,
+					"target" : false
+				}
+				
+			]
+		},
+		{
+			"name" :
+			[
+				"Cleanup",
+				"Aufräumen"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Start input",
+						"Start eingang"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "L",
+					"bit" : 7,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Prevented by previous event",
+						"Verhindert durch vorhergehendes Ereignis"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 13
+				}
+				
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Turn on hell light",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 6,
+					"target" : false
+				},
+				{
+					"name" :  "Light behind fake door on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "B",
+					"bit" : 4,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on entrance light",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "B",
+					"bit" : 7,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light r1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 4,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light l1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 3,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light r2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light r3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light l2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 5,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light l3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 5,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light in children's room",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on director's light",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on hell light",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 6,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light in corridor picture",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 5,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light in childroom picture",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 3,
+					"target" : false
+				},
+				{
+					"name" :  "Floor button light on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 2,
+					"target" : false
+				},
+				{
+					
+					"name" :  "Footstep 10 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 7,
+					"target" : true
+				},
+				{
+					"name" :  "Footstep 9 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 0,
+					"target" : true
+				},
+				{
+					"name" :  "Footstep 8 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Footstep 7 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 2,
+					"target" : true
+				},
+				{
+					"name" :  "Footstep 6 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 7,
+					"target" : true
+				},
+				{
+					"name" :  "Footstep 5 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 0,
+					"target" : true
+				},
+				{
+					"name" :  "Footstep 4 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 2,
+					"target" : true
+				},
+				{
+					"name" :  "Footstep 3 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 3,
+					"target" : true
+				},
+				{
+					"name" :  "Footstep 2 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 0,
+					"target" : true
+				},
+				{
+					"name" :  "Footstep 1 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "stop opening hell hideouts",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 3,
+					"target" : true
+				},
+				{
+					"name" :  "Keep key on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Close exit",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" :  "Hell gate hold",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 5,
+					"target" : false
+				},
+				{
+					"name" :  "Fixate horse",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 6,
+					"target" : false
+				},
+				{
+					"name" :  "Stop fake door 1 pushing out",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "B",
+					"bit" : 6,
+					"target" : true
+				},
+				{
+					"name" :  "Stop fake door 2 pushing out",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "B",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Children's door",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 4,
+					"target" : false
+				},
+				{
+					"name" :  "Fix drawer with sheet",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Disable projector",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Fix chair",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 2,
+					"target" : false
+				},
+				{
+					"name" :  "Stop pushing key -",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 6,
+					"target" : true
+				},
+				{
+					"name" :  "Stop pushing key +",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 7,
+					"target" : true
+				},
+				{
+					"name" : "RESET SOUND",
+					"module" : "snd",
+					"action" : "reset"
+				},
+				{
+					"name" : "RESET SOUND EFFECT",
+					"module" : "snd",
+					"action" : "reset_effect"
+				},
+				{
+					"name" : "stop video",
+					"module" : "video",
+					"action" : "reset"
+				},
+				{
+					"name" :  "Playing cleanup music",
+					"module" : "snd",
+					"action" : "play",
+					"resource" : "http://127.0.0.1/storage/general/reset.ogg"
+				},
+				{
+					"name" :  "Waiting on input to fade",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 4000
+				}
+			],
+			"hintable" : false
+		},
+		{
+			"name" :
+			[
+				"Reset",
+				"Zurücksetzen"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Start input",
+						"Start eingang"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "L",
+					"bit" : 7,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Prevented by previous event",
+						"Verhindert durch vorhergehendes Ereignis"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 14
+				}
+				
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Turn off hell light",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 6,
+					"target" : true
+				},
+				{
+					"name" :  "Light behind fake door off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "B",
+					"bit" : 4,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off entrance light",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "B",
+					"bit" : 7,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light r1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 4,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light l1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 3,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light r2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light r3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 0,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light l2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light l3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light in children's room",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off director's light",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off hell light",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 6,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off hell skulls light",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 4,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light in corridor picture",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light in childroom picture",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 3,
+					"target" : true
+				},
+				{
+					"name" :  "Floor button light off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 2,
+					"target" : true
+				},
+				{
+					
+					"name" :  "Footstep 10 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 7,
+					"target" : true
+				},
+				{
+					"name" :  "Footstep 9 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 0,
+					"target" : true
+				},
+				{
+					"name" :  "Footstep 8 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Footstep 7 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 2,
+					"target" : true
+				},
+				{
+					"name" :  "Footstep 6 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 7,
+					"target" : true
+				},
+				{
+					"name" :  "Footstep 5 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 0,
+					"target" : true
+				},
+				{
+					"name" :  "Footstep 4 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 2,
+					"target" : true
+				},
+				{
+					"name" :  "Footstep 3 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 3,
+					"target" : true
+				},
+				{
+					"name" :  "Footstep 2 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 0,
+					"target" : true
+				},
+				{
+					"name" :  "Footstep 1 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "stop opening hell hideouts",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 3,
+					"target" : true
+				},
+				{
+					"name" :  "Keep key on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Close exit",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" :  "Hell gate hold",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 5,
+					"target" : false
+				},
+				{
+					"name" :  "Fixate horse",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 6,
+					"target" : false
+				},
+				{
+					"name" :  "Stop fake door 1 pushing out",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "B",
+					"bit" : 6,
+					"target" : true
+				},
+				{
+					"name" :  "Stop fake door 2 pushing out",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "B",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Children's door",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 4,
+					"target" : false
+				},
+				{
+					"name" :  "Fix drawer with sheet",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Disable projector",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Fix chair",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 2,
+					"target" : false
+				},
+				{
+					"name" :  "Stop pushing key -",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 6,
+					"target" : true
+				},
+				{
+					"name" :  "Stop pushing key +",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 7,
+					"target" : true
+				},
+				{
+					"name" : "RESET",
+					"module" : "core",
+					"action" : "reset"
+				},
+				{
+					"name" : "Timer reset",
+					"module" : "core",
+					"action" : "timer_reset"
+				},
+				{
+					"name" :  "Alarm reset",
+					"module" : "core",
+					"action" : "alarm_release"
+				},
+				{
+					"name" : "RESET SOUND",
+					"module" : "snd",
+					"action" : "reset"
+				},
+				{
+					"name" : "RESET SOUND",
+					"module" : "snd",
+					"action" : "reset_effect"
+				},
+				{
+					"name" : "stop video",
+					"module" : "video",
+					"action" : "reset"
+				},
+				{
+					"name" :  "Waiting for input to fade",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 4000
+				}
+				
+			],
+			"hintable" : false
+		},
+		{
+			"name" :
+			[
+				"Pull in key",
+				"Sclüssel einziehen"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Reset input",
+						"Zurücksetz eingang"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "L",
+					"bit" : 2,
+					"target" : false
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Pull in -",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 6,
+					"target" : false
+				},
+				{
+					"name" :  "Pull in +",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 7,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 750
+				},
+				{
+					"name" :  "Pull in end -",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 6,
+					"target" : true
+				},
+				{
+					"name" :  "Pull in end +",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 7,
+					"target" : true
+				}
+				
+			],
+			"hintable" : false,
+			"autoreset" : true
+		},
+		{
+			"name" :
+			[
+				"Light flickering hallway",
+				"Licht flackern Gang"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Or?",
+						"Oder?"
+					],
+					"module" : "core",
+					"type" : "or",
+					"dependencies" :
+					[
+						{
+							"module" : "core",
+							"name" : "Flanking",
+							"type" : "flank",
+							"low" : false,
+							"high" : true,
+							"dependency":
+							{
+								"module" : "core",
+								"type" : "event",
+								"event" : 3
+							}
+						}
+					]
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Turn off light r1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 4,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light l1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 3,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light r2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light r3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 0,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light l2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light l3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 1000
+				},
+				{
+					"name" :  "Turn on light r1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 4,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light l1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 3,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light r2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light r3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light l2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 5,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light l3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 5,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 1000
+				},
+				{
+					"name" :  "Turn off light r1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 4,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light l1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 3,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light r2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light r3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 0,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light l2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light l3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 1000
+				},
+				{
+					"name" :  "Turn on light r1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 4,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light l1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 3,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light r2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light r3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light l2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 5,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light l3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 5,
+					"target" : false
+				}
+
+			],
+			"autoreset" : true,
+			"hintable" : false,
+			"hidden" : false
+		},
+		
+		{
+			"name" :
+			[
+				"Turn hallway light off",
+				"Schalte Ganglicht aus"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Or?",
+						"Oder?"
+					],
+					"module" : "core",
+					"type" : "or",
+					"dependencies" :
+					[
+						{
+							"module" : "core",
+							"name" : "Flanking",
+							"type" : "flank",
+							"low" : false,
+							"high" : true,
+							"dependency":
+							{
+								"module" : "core",
+								"type" : "event",
+								"event" : 6
+							}
+						}
+					]
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Turn on light l1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 3,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light r1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 4,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light r2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Turn on light r3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Turn off light l2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 5,
+					"target" : true
+				},
+				{
+					"name" :  "Turn off light l3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 5,
+					"target" : true
+				}
+			],
+			"autoreset" : true,
+			"hintable" : false,
+			"hidden" : false
+		},
+		
+		{
+			"name" :
+			[
+				"Turn hallway light on",
+				"Schalte Ganglicht an"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Nope",
+						"NEIN"
+					],
+					"module" : "core",
+					"type" : "never"
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Turn on light r1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 4,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light l1",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 3,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light r2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light r3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light l2",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 5,
+					"target" : false
+				},
+				{
+					"name" :  "Turn on light l3",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 5,
+					"target" : false
+				}
+			],
+			"autoreset" : true,
+			"hintable" : false,
+			"hidden" : false
+		},
+		{
+			"name" :
+			[
+				"Turn on director's light",
+				"Schalte Licht im Direktorium an"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Nope",
+						"NEIN"
+					],
+					"module" : "core",
+					"type" : "never"
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Turn on directors light",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 1,
+					"target" : false
+				}
+			],
+			"autoreset" : true,
+			"hintable" : false,
+			"hidden" : false
+		},
+		{
+			"name" :
+			[
+				"Turn off director's light",
+				"Schalte Licht im Direktorium aus"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Nope",
+						"NEIN"
+					],
+					"module" : "core",
+					"type" : "never"
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Turn off directors light",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "A",
+					"bit" : 1,
+					"target" : true
+				}
+			],
+			"autoreset" : true,
+			"hintable" : false,
+			"hidden" : false
+		},
+		{
+			"name" :
+			[
+				"Turn on children's light",
+				"Schalte Licht im Kinderzimmer an"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Nope",
+						"NEIN"
+					],
+					"module" : "core",
+					"type" : "never"
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Turn on childrens light",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 1,
+					"target" : false
+				}
+			],
+			"autoreset" : true,
+			"hintable" : false,
+			"hidden" : false
+		},
+		{
+			"name" :
+			[
+				"Turn off children's light",
+				"Schalte Licht im Kinderzimmer aus"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Nope",
+						"NEIN"
+					],
+					"module" : "core",
+					"type" : "never"
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Turn off children light",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 1,
+					"target" : true
+				}
+			],
+			"autoreset" : true,
+			"hintable" : false,
+			"hidden" : false
+		},
+		{
+			"name" :
+			[
+				"Turn on hell light",
+				"Schalte Licht in der Hölle an"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Nope",
+						"NEIN"
+					],
+					"module" : "core",
+					"type" : "never"
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Turn on hell light",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 6,
+					"target" : false
+				}
+				
+			],
+			"autoreset" : true,
+			"hintable" : false,
+			"hidden" : false
+		},
+		{
+			"name" :
+			[
+				"Turn off hell light",
+				"Schalte Licht in der Hölle aus"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Nope",
+						"NEIN"
+					],
+					"module" : "core",
+					"type" : "never"
+				}
+			],
+			"triggers" :
+			[
+				{
+					"name" :  "Turn off hell light",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 6,
+					"target" : true
+				}
+			],
+			"autoreset" : true,
+			"hintable" : false,
+			"hidden" : false
+		},
+
+
+
+		{
+			"name" :
+			[
+				"Kill light r1",
+				"Deaktiviere Licht r1"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Wait for falling flank",
+						"Warte auf fallende Flanke"
+					],
+					"module" : "core",
+					"type" : "flank",
+					"high" : false,
+					"low" : true,
+					"dependency" :
+					{
+						"name" : 
+						[
+							"Light switch",
+							"Lichtschalter"
+						],
+						"module" : "ecp",
+						"device" : 0,
+						"register" : "B",
+						"bit" : 2
+					}
+				},
+				{
+					"name" :
+					[
+						"Too late!",
+						"Zu spät"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 3,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Too early!",
+						"Zu früh!"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 1,
+					"target" : true
+				}
+			],
+			"hintable" : false,
+			"hidden" : true,
+			"autoreset" : true,
+			"triggers" :
+			[
+				{
+					"name" : 
+					[
+						"Turning off light",
+						"Schalte Licht aus"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 4,
+					"target" : false
+				}
+				
+			]
+		},
+		{
+			"name" :
+			[
+				"Enable light r1",
+				"Schalte an Licht r1"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Wait for rising flank",
+						"Warte auf steigende Flanke"
+					],
+					"module" : "core",
+					"type" : "flank",
+					"high" : true,
+					"low" : false,
+					"dependency" :
+					{
+						"name" : 
+						[
+							"Light switch",
+							"Lichtschalter"
+						],
+						"module" : "ecp",
+						"device" : 0,
+						"register" : "B",
+						"bit" : 2
+					}
+				},
+				{
+					"name" :
+					[
+						"Too late!",
+						"Zu spät"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 3,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Too early!",
+						"Zu früh!"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 1,
+					"target" : true
+				}
+			],
+			"hintable" : false,
+			"hidden" : true,
+			"autoreset" : true,
+			"triggers" :
+			[
+				{
+					"name" : 
+					[
+						"Turning off light",
+						"Schalte Licht aus"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 4,
+					"target" : true
+				}
+				
+			]
+		},
+		{
+			"name" :
+			[
+				"Kill light r2",
+				"Deaktiviere Licht r2"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Wait for falling flank",
+						"Warte auf fallende Flanke"
+					],
+					"module" : "core",
+					"type" : "flank",
+					"high" : false,
+					"low" : true,
+					"dependency" :
+					{
+						"name" : 
+						[
+							"Light switch",
+							"Lichtschalter"
+						],
+						"module" : "ecp",
+						"device" : 0,
+						"register" : "B",
+						"bit" : 1
+					}
+				},
+				{
+					"name" :
+					[
+						"Too late!",
+						"Zu spät"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 3,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Too early!",
+						"Zu früh!"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 1,
+					"target" : true
+				}
+			],
+			"hintable" : false,
+			"hidden" : true,
+			"autoreset" : true,
+			"triggers" :
+			[
+				{
+					"name" : 
+					[
+						"Turning off light",
+						"Schalte Licht aus"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 1,
+					"target" : false
+				}
+				
+			]
+		},
+		{
+			"name" :
+			[
+				"Enable light r2",
+				"Schalte an Licht r2"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Wait for rising flank",
+						"Warte auf steigende Flanke"
+					],
+					"module" : "core",
+					"type" : "flank",
+					"high" : true,
+					"low" : false,
+					"dependency" :
+					{
+						"name" : 
+						[
+							"Light switch",
+							"Lichtschalter"
+						],
+						"module" : "ecp",
+						"device" : 0,
+						"register" : "B",
+						"bit" : 1
+					}
+				},
+				{
+					"name" :
+					[
+						"Too late!",
+						"Zu spät"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 3,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Too early!",
+						"Zu früh!"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 1,
+					"target" : true
+				}
+			],
+			"hintable" : false,
+			"hidden" : true,
+			"autoreset" : true,
+			"triggers" :
+			[
+				{
+					"name" : 
+					[
+						"Turning off light",
+						"Schalte Licht aus"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 1,
+					"target" : true
+				}
+				
+			]
+		},
+
+
+		{
+			"name" :
+			[
+				"Kill light r3",
+				"Deaktiviere Licht r3"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Wait for falling flank",
+						"Warte auf fallende Flanke"
+					],
+					"module" : "core",
+					"type" : "flank",
+					"high" : false,
+					"low" : true,
+					"dependency" :
+					{
+						"name" : 
+						[
+							"Light switch",
+							"Lichtschalter"
+						],
+						"module" : "ecp",
+						"device" : 0,
+						"register" : "B",
+						"bit" : 0
+					}
+				},
+				{
+					"name" :
+					[
+						"Too late!",
+						"Zu spät"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 3,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Too early!",
+						"Zu früh!"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 1,
+					"target" : true
+				}
+			],
+			"hintable" : false,
+			"hidden" : true,
+			"autoreset" : true,
+			"triggers" :
+			[
+				{
+					"name" : 
+					[
+						"Turning off light",
+						"Schalte Licht aus"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 0,
+					"target" : false
+				}
+				
+			]
+		},
+		{
+			"name" :
+			[
+				"Enable light r3",
+				"Schalte an Licht r3"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Wait for rising flank",
+						"Warte auf steigende Flanke"
+					],
+					"module" : "core",
+					"type" : "flank",
+					"high" : true,
+					"low" : false,
+					"dependency" :
+					{
+						"name" : 
+						[
+							"Light switch",
+							"Lichtschalter"
+						],
+						"module" : "ecp",
+						"device" : 0,
+						"register" : "B",
+						"bit" : 0
+					}
+				},
+				{
+					"name" :
+					[
+						"Too late!",
+						"Zu spät"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 3,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Too early!",
+						"Zu früh!"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 1,
+					"target" : true
+				}
+			],
+			"hintable" : false,
+			"hidden" : true,
+			"autoreset" : true,
+			"triggers" :
+			[
+				{
+					"name" : 
+					[
+						"Turning off light",
+						"Schalte Licht aus"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "J",
+					"bit" : 0,
+					"target" : true
+				}
+				
+			]
+		},
+
+
+		{
+			"name" :
+			[
+				"Kill light l1",
+				"Deaktiviere Licht l1"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Wait for falling flank",
+						"Warte auf fallende Flanke"
+					],
+					"module" : "core",
+					"type" : "flank",
+					"high" : false,
+					"low" : true,
+					"dependency" :
+					{
+						"name" : 
+						[
+							"Light switch",
+							"Lichtschalter"
+						],
+						"module" : "ecp",
+						"device" : 0,
+						"register" : "L",
+						"bit" : 1
+					}
+				},
+				{
+					"name" :
+					[
+						"Too late!",
+						"Zu spät"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 3,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Too early!",
+						"Zu früh!"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 1,
+					"target" : true
+				}
+			],
+			"hintable" : false,
+			"hidden" : true,
+			"autoreset" : true,
+			"triggers" :
+			[
+				{
+					"name" : 
+					[
+						"Turning off light",
+						"Schalte Licht aus"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 3,
+					"target" : false
+				}
+				
+			]
+		},
+		{
+			"name" :
+			[
+				"Enable light l1",
+				"Schalte an Licht l1"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Wait for rising flank",
+						"Warte auf steigende Flanke"
+					],
+					"module" : "core",
+					"type" : "flank",
+					"high" : true,
+					"low" : false,
+					"dependency" :
+					{
+						"name" : 
+						[
+							"Light switch",
+							"Lichtschalter"
+						],
+						"module" : "ecp",
+						"device" : 0,
+						"register" : "L",
+						"bit" : 1
+					}
+				},
+				{
+					"name" :
+					[
+						"Too late!",
+						"Zu spät"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 3,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Too early!",
+						"Zu früh!"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 1,
+					"target" : true
+				}
+			],
+			"hintable" : false,
+			"hidden" : true,
+			"autoreset" : true,
+			"triggers" :
+			[
+				{
+					"name" : 
+					[
+						"Turning off light",
+						"Schalte Licht aus"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 3,
+					"target" : true
+				}
+				
+			]
+		},
+
+
+		{
+			"name" :
+			[
+				"Kill light l2",
+				"Deaktiviere Licht l2"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Wait for falling flank",
+						"Warte auf fallende Flanke"
+					],
+					"module" : "core",
+					"type" : "flank",
+					"high" : false,
+					"low" : true,
+					"dependency" :
+					{
+						"name" : 
+						[
+							"Light switch",
+							"Lichtschalter"
+						],
+						"module" : "ecp",
+						"device" : 0,
+						"register" : "L",
+						"bit" : 0
+					}
+				},
+				{
+					"name" :
+					[
+						"Too late!",
+						"Zu spät"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 3,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Too early!",
+						"Zu früh!"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 1,
+					"target" : true
+				}
+			],
+			"hintable" : false,
+			"hidden" : true,
+			"autoreset" : true,
+			"triggers" :
+			[
+				{
+					"name" : 
+					[
+						"Turning off light",
+						"Schalte Licht aus"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 5,
+					"target" : false
+				}
+				
+			]
+		},
+		{
+			"name" :
+			[
+				"Enable light l2",
+				"Schalte an Licht l2"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Wait for rising flank",
+						"Warte auf steigende Flanke"
+					],
+					"module" : "core",
+					"type" : "flank",
+					"high" : true,
+					"low" : false,
+					"dependency" :
+					{
+						"name" : 
+						[
+							"Light switch",
+							"Lichtschalter"
+						],
+						"module" : "ecp",
+						"device" : 0,
+						"register" : "L",
+						"bit" : 0
+					}
+				},
+				{
+					"name" :
+					[
+						"Too late!",
+						"Zu spät"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 3,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Too early!",
+						"Zu früh!"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 1,
+					"target" : true
+				}
+			],
+			"hintable" : false,
+			"hidden" : true,
+			"autoreset" : true,
+			"triggers" :
+			[
+				{
+					"name" : 
+					[
+						"Turning off light",
+						"Schalte Licht aus"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 5,
+					"target" : true
+				}
+				
+			]
+		},
+
+
+		{
+			"name" :
+			[
+				"Kill light l3",
+				"Deaktiviere Licht l3"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Wait for falling flank",
+						"Warte auf fallende Flanke"
+					],
+					"module" : "core",
+					"type" : "flank",
+					"high" : false,
+					"low" : true,
+					"dependency" :
+					{
+						"name" : 
+						[
+							"Light switch",
+							"Lichtschalter"
+						],
+						"module" : "ecp",
+						"device" : 0,
+						"register" : "B",
+						"bit" : 3
+					}
+				},
+				{
+					"name" :
+					[
+						"Too late!",
+						"Zu spät"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 3,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Too early!",
+						"Zu früh!"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 1,
+					"target" : true
+				}
+			],
+			"hintable" : false,
+			"hidden" : true,
+			"autoreset" : true,
+			"triggers" :
+			[
+				{
+					"name" : 
+					[
+						"Turning off light",
+						"Schalte Licht aus"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 5,
+					"target" : false
+				}
+				
+			]
+		},
+		{
+			"name" :
+			[
+				"Enable light l3",
+				"Schalte an Licht l3"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : 
+					[
+						"Wait for rising flank",
+						"Warte auf steigende Flanke"
+					],
+					"module" : "core",
+					"type" : "flank",
+					"high" : true,
+					"low" : false,
+					"dependency" :
+					{
+						"name" : 
+						[
+							"Light switch",
+							"Lichtschalter"
+						],
+						"module" : "ecp",
+						"device" : 0,
+						"register" : "B",
+						"bit" : 3
+					}
+				},
+				{
+					"name" :
+					[
+						"Too late!",
+						"Zu spät"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 3,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Too early!",
+						"Zu früh!"
+					],
+					"module" : "core",
+					"type" : "event",
+					"event" : 1,
+					"target" : true
+				}
+			],
+			"hintable" : false,
+			"hidden" : true,
+			"autoreset" : true,
+			"triggers" :
+			[
+				{
+					"name" : 
+					[
+						"Turning off light",
+						"Schalte Licht aus"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "E",
+					"bit" : 5,
+					"target" : true
+				}
+				
+			]
+		},
+
+		{
+			"name" :
+			[
+				"Light in picture off",
+				"Licht im Bild aus"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : "Event 2",
+					"module" : "core",
+					"type" : "event",
+					"event" : 2,
+					"target" : false
+				}
+			],
+			"hintable" : false,
+			"hidden" : true,
+			"autoreset" : true,
+			"triggers" :
+			[
+				{
+					"name" :  "Light in picture off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 3,
+					"target" : true
+				},
+				{
+					"name" : "Event 2",
+					"module" : "core",
+					"type" : "event",
+					"event" : 4,
+					"target" : false
+				}
+			]
+		},
+		{
+			"name" :
+			[
+				"Light in picture on",
+				"Licht im Bild an"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : "Event 2",
+					"module" : "core",
+					"type" : "event",
+					"event" : 2,
+					"target" : true
+				},
+				{
+					"name" : "Event 2",
+					"module" : "core",
+					"type" : "event",
+					"event" : 4,
+					"target" : false
+				}
+			],
+			"hintable" : false,
+			"hidden" : true,
+			"autoreset" : true,
+			"triggers" :
+			[
+				{
+					"name" :  "Light in picture on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 3,
+					"target" : false
+				}
+			]
+		},
+
+		{
+			"name" :
+			[
+				"Footsteps",
+				"Beine"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : "NEVER",
+					"module" : "core",
+					"type" : "never",
+					"event" : 3
+				}
+			],
+			"autoreset" : true,
+			"hintable" : false,
+			"triggers" :
+			[
+				{
+					"name" :  "Footstep 1 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 1 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 2 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 2 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "H",
+					"bit" : 0,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 3 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 3,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 3 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 3,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 4 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 2,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 4 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 2,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 5 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 5 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 0,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 6 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 7,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 6 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "D",
+					"bit" : 7,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 7 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 2,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 7 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 2,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 8 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 1,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 8 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 1,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 9 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 0,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					"name" :  "Footstep 9 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "G",
+					"bit" : 0,
+					"target" : true
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					
+					"name" :  "Footstep 10 on",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 7,
+					"target" : false
+				},
+				{
+					"name" :  "Standby",
+					"module" : "core",
+					"action" : "delay",
+					"delay" : 250
+				},
+				{
+					
+					"name" :  "Footstep 10 off",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 7,
+					"target" : true
+				}
+			]
+		},
+
+		{
+			"name" :
+			[
+				"Play music for director's face",
+				"Spiele Musik für Direktorsgesicht"
+			],
+			"dependencies" :
+			[
+				{
+					"name" : "OR",
+					"module" : "core",
+					"type" : "or",
+					"dependencies" :
+					[
+						{
+							"name" :
+							[
+								"Photoresistor",
+								"Photowiderstand"
+							],
+							"module" : "ecp",
+							"device" : 0,
+							"type" : "analog",
+							"value" : 244,
+							"threshold" : "below"
+						},
+						{
+							"name" : "Event 1",
+							"module" : "core",
+							"type" : "event",
+							"event" : 1,
+							"target" : true
+						}
+					]
+				}
+			],
+			"hintable" : false,
+			"hidden" : true,
+			"autoreset" : true,
+			"triggers" :
+			[
+				{
+					"name" :  "Playing horse",
+					"module" : "snd",
+					"action" : "effect",
+					"resource" : "http://127.0.0.1/storage/general/horse.ogg"
+				}
+			]
+		},
+		{
+			"name" :
+			[
+				"Stop play music for director's face",
+				"stoppe Musik für Direktorsgesicht"
+			],
+			"dependencies" :
+			[
+				{
+					"name" : "Event 1",
+					"module" : "core",
+					"type" : "event",
+					"event" : 1,
+					"target" : false
+				},
+				{
+					"name" :
+					[
+						"Photoresistor",
+						"Photowiderstand"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"type" : "analog",
+					"value" : 243,
+					"threshold" : "above"
+				}
+			],
+			"hintable" : false,
+			"hidden" : true,
+			"autoreset" : true,
+			"triggers" :
+			[
+				{
+					"name" :  "Playing nothing",
+					"module" : "snd",
+					"action" : "reset_effect"
+				}
+			]
+		},
+		{
+			"name" : "DUMMY",
+			"dependencies" : 
+			[
+				{
+					"name" : "NEVER",
+					"module" : "core",
+					"type" : "never",
+					"event" : 3
+				},
+				{
+					"name" : 
+					[
+						"Photopin",
+						"Photopin"
+					],
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "F",
+					"bit" : 0,
+					"target" : true,
+					"pulled" : false,
+					"hidden" : true
+				},
+				{
+					"name" : "Open hell gates finish",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 3,
+					"target" : true,
+					"isinput" : false,
+					"pulled" : true,
+					"hidden" : true
+				},
+				{
+					"name" : "fake door 1 close stop",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "B",
+					"bit" : 6,
+					"target" : true,
+					"isinput" : false,
+					"pulled" : true,
+					"hidden" : true
+				},
+				{
+					"name" : "fake door 2 close stop",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "B",
+					"bit" : 5,
+					"target" : true,
+					"isinput" : false,
+					"pulled" : true,
+					"hidden" : true
+				}
+			],
+			"autoreset" : true,
+			"hintable" : false,
+			"hidden" : true,
+			"triggers" :
+			[
+			]
+		},
+		{
+			"name" : "Notify Operator",
+			"dependencies" : 
+			[
+				{
+					"name" : "Call button pressed",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "L",
+					"bit" : 4,
+					"pulled" : true,
+					"target" : false
+				}
+			],
+			"autoreset" : true,
+			"hintable" : false,
+			"hidden" : true,
+			"triggers" :
+			[
+				{
+					"name" :  "ALARM",
+					"module" : "core",
+					"action" : "alarm"
+				}
+			]
+		},
+		{
+			"name" :
+			[
+				"Open Exit",
+				"Öffne Ausgang"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : "NEVER",
+					"module" : "core",
+					"type" : "never"
+				}
+			],
+			"autoreset" : true,
+			"hintable" : false,
+			"triggers" :
+			[
+				{
+					"name" :  "Close exit",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 1,
+					"target" : false
+				}
+			]
+		},
+		{
+			"name" :
+			[
+				"Close Exit",
+				"Schliesse Ausgang"
+			],
+			"dependencies" : 
+			[
+				{
+					"name" : "NEVER",
+					"module" : "core",
+					"type" : "never"
+				}
+			],
+			"autoreset" : true,
+			"triggers" :
+			[
+				{
+					"name" :  "Close exit",
+					"module" : "ecp",
+					"device" : 0,
+					"register" : "C",
+					"bit" : 1,
+					"target" : false
+				}
+			]
+		}
+	],
+	"hints" : 
+	[
+		[
+			{
+				"name" : "NICHT!",
+				"content" : "Es ist nicht notwendig, das zu tun!",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/01.ogg"
+					}
+					
+				]
+			},
+			{
+				"name" : "Kaminansage",
+				"content" : "Ihr schafft es aber nicht wegzugehen. Der Sumpfdämon, und das Rudel der Schwarzen Vögel werden die Schale mit eurem Blut ausfüllen.",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/Kaminansage.ogg"
+					}
+					
+				]
+			}
+		],
+		[
+			{
+				"name" : "Lichtstrahl!",
+				"content" : "Der Lichtstrahl kann mit der Laterne gelenkt werden. Schaue die Bilder an",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/02.ogg"
+					}
+					
+				]
+			},
+			{
+				"name" : "Beaobachtung!",
+				"content" : "Er beobachtet euch in der Dunkelheit",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/03.ogg"
+					}
+					
+				]
+			},
+			{
+				"name" : "Blenden",
+				"content" : "Blendet ihn",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/04.ogg"
+					}
+					
+				]
+			}
+		],
+		[
+			{
+				"name" : 
+				[
+					"Paintings!",
+					"Bilder"
+				],
+				"content" : 
+				[
+					"Check the paintings, there is a corridor",
+					"Schaue die Bilder an"
+				],
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://127.0.0.1/storage/english/hints/original/03.01.ogg",
+							"http://127.0.0.1/storage/deutsch/hints/06.ogg"
+						]
+					}
+					
+				]
+			},
+			{
+				"name" : 
+				[
+					"Same as there",
+					"Abbilden"
+				],
+				"content" : 
+				[
+					"You should do the same as there",
+					"Macht das Selbe wie dort"
+				],
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" :
+						[
+							"http://127.0.0.1/storage/english/hints/original/03.02.ogg",
+							"http://127.0.0.1/storage/deutsch/hints/08.ogg"
+						]
+					}
+					
+				]
+			},
+			{
+				"name" : "Korridor",
+				"content" : "Auf dem Bild ist der Korridor.",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/07.ogg"
+					}
+					
+				]
+			},
+			{
+				"name" : "Pferdchen!",
+				"content" : "Schaue das Pferdchen an. Es hat etwas für euch mitgebracht!",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/05.ogg"
+					}
+					
+				]
+			}
+
+		],
+		[
+			
+			{
+				"name" :
+				[
+					"Only from inside",
+					"Schlafzimmer"
+				],
+				"content" : 
+				[
+					"Our bedroom is on one of the paintings. It only opens from the inside.",
+					"Dort auf dem Bild ist unser Schalfzimmer."
+				],
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://127.0.0.1/storage/english/hints/original/04.01.ogg",
+							"http://127.0.0.1/storage/deutsch/hints/09.ogg"
+						]
+					}
+					
+				]
+			},
+			{
+				"name" : "Von innen",
+				"content" : "Kann man nur von innen öffnen.",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/10.ogg"
+					}
+					
+				]
+			},
+			{
+				"name" : 
+				[
+					"Door knob!",
+					"Türgriff!"
+				],
+				"content" :
+				[
+					"Press the doorknob!",
+					"Drückt den Türgriff!"
+				],
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://127.0.0.1/storage/english/hints/original/04.02.ogg",
+							"http://127.0.0.1/storage/deutsch/hints/11.ogg"
+						]
+					}
+					
+				]
+			}
+		],
+		[
+			{
+				"name" : "Woanders",
+				"content" : "Das Puzzle solltet ihr wohl woanders zusammenbauen",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/general/custom/puzzle.ogg"
+					}
+					
+				]
+			}
+		],
+		[
+			{
+				"name" : "Auge!",
+				"content" : "Wirf einen Blick auf das Auge!",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/14.ogg"
+					}
+					
+				]
+			},
+			{
+				"name" : 
+				[
+					"From the bed!",
+					"Vom Bett!"
+				],
+				"content" :
+				[
+					"Sit on the bed, and look around! Now you can see this place.",
+					"Setze dich auf das Bett, und schaue dir etwas an!"
+				],
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://127.0.0.1/storage/english/hints/original/05.01.ogg",
+							"http://127.0.0.1/storage/deutsch/hints/15.ogg"
+						]
+					}
+					
+				]
+			},
+			{
+				"name" : "Die Stelle!",
+				"content" : "Jetzt siehst du diese Stelle!",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/16.ogg"
+					}
+					
+				]
+			},
+			{
+				"name" : "Der Nagel!",
+				"content" : "Sie haben einen Nagel vergessen!",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/17.ogg"
+					}
+					
+				]
+			},
+			{
+				"name" : "Im Mund!",
+				"content" : "Micky versuchte etwas zu verschlucken",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/18.ogg"
+					}
+					
+				]
+			},
+			{
+				"name" : "Nachttisch!",
+				"content" : "Schaue in den Nachttisch hinein",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/19.ogg"
+					}
+					
+				]
+			},
+			{
+				"name" : "Geheimversteck!",
+				"content" : "Im Nachttisch hatte er ein Versteck!",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/20.ogg"
+					}
+					
+				]
+			},
+			{
+				"name" : 
+				[
+					"Kill!",
+					"Töten!"
+				],
+				"content" :
+				[
+					"The nightstand holds a secret! When everyone was asleep, he layed thinking, that he would kill him.",
+					"Wenn alle schliefen lag er, und träumte, dass er ihn töten wird."
+				],
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://127.0.0.1/storage/english/hints/original/05.02.ogg",
+							"http://127.0.0.1/storage/deutsch/hints/21.ogg"
+						]
+					}
+					
+				]
+			}
+		],
+		[
+			{
+				"name" : 
+				[
+					"Treasure!",
+					"Schätze!"
+				],
+				"content" :
+				[
+					"Micky will give you his treasure!",
+					"Micky hat euch seine Schätze mitgebracht!"
+				],
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://127.0.0.1/storage/english/hints/original/07.01.ogg",
+							"http://127.0.0.1/storage/deutsch/hints/22.ogg"
+						]
+					}
+					
+				]
+			},
+			{
+				"name" : 
+				[
+					"Bed!",
+					"Bett!"
+				],
+				"content" : 
+				[
+					"Look under the bed!",
+					"Schaue unter das Bett"
+				],
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://127.0.0.1/storage/english/hints/original/07.02.ogg",
+							"http://127.0.0.1/storage/deutsch/hints/23.ogg"
+						]
+					}
+					
+				]
+			}
+
+		],
+		[
+			{
+				"name" : 
+				[
+					"Three eyed demon",
+					"3 Augen Dämon!"
+				],
+				"content" :
+				[
+					"Micky sayed something about a three eyed demon. Can you find him?",
+					"Micky erzählte, dass er einen Dämon mit 3 Augen gesehen hat. Seht ihr ihn?"
+				],
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://127.0.0.1/storage/english/hints/original/08.01.ogg",
+							"http://127.0.0.1/storage/deutsch/hints/24.ogg"
+						]
+					}
+					
+				]
+			}
+		],
+		[
+			{
+				"name" : "Stimmen im Kamin!",
+				"content" : "Aus dem Kamin hört man Stimmen und dort brennt eine Kerze.",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/25.ogg"
+					}
+					
+				]
+			},
+			{
+				"name" : "Sie führt euch!",
+				"content" : "Die Stimme wird euch führen.",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/26.ogg"
+					}
+					
+				]
+			},
+			{
+				"name" : 
+				[
+					"Fixed place",
+					"Platz am Kamin!"
+				],
+				"content" : 
+				[
+					"On the firepace all items have their fixed place.",
+					"Alles hat seinen bestimmeten Platz auf dem Kamin."
+				],
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://127.0.0.1/storage/english/hints/original/09.02.ogg",
+							"http://127.0.0.1/storage/deutsch/hints/29.ogg"
+						]
+					}
+				]
+			}
+		],
+		[
+			{
+				"name" : 
+				[
+					"Table",
+					"Tisch!"
+				],
+				"content" :
+				[
+					"Check the table",
+					"Schaue den Tisch an"
+				],
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" :
+						[
+							"http://127.0.0.1/storage/english/hints/original/10.01.ogg",
+							"http://127.0.0.1/storage/deutsch/hints/30.ogg"
+						]
+					}
+					
+				]
+			},
+			{
+				"name" : 
+				[
+					"Key!",
+					"Schlüssel!"
+				],
+				"content" : 
+				[
+					"It is the table's key!",
+					"Es ist der Schlüssel vom Tisch"
+				],
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://127.0.0.1/storage/english/hints/original/10.02.ogg",
+							"http://127.0.0.1/storage/deutsch/hints/31.ogg"
+						]
+					}
+				]
+			},
+			{
+				"name" : "Druchgang!",
+				"content" : "Jetzt hat sich bei euch der Durchgang dorthin geöffnet, wohin bisher noch keiner von uns gelangen konnte",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/32.ogg"
+					}
+					
+				]
+			},
+			{
+				"name" : "Unterm Tisch!",
+				"content" : "Der Durchgang befindet sich unter dem Tisch!",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/33.ogg"
+					}
+					
+				]
+			}
+		],
+		[
+			{
+				"name" : 
+				[
+					"Seal",
+					"Siegel!"
+				],
+				"content" : 
+				[
+					"Start with the seal, take them. Rotate the pillar!",
+					"Beginne mit den Sigelen! Nimm sie heraus! Drehe Die Säule!"
+				],
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://127.0.0.1/storage/english/hints/original/11.01.ogg",
+							"http://127.0.0.1/storage/deutsch/hints/original/11.01.ogg"
+						]
+					}
+					
+				]
+			},
+			{
+				"name" :
+				[
+					"Book!",
+					"Buch!"
+				],
+				"content" :
+				[
+					"Everything is in the book you have found.",
+					"Alles ist in deimen Buch!"
+				],
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" :
+						[ 
+							"http://127.0.0.1/storage/english/hints/original/11.02.ogg",
+							"http://127.0.0.1/storage/deutsch/hints/34.ogg"
+						]
+					}
+				]
+			},
+			{
+				"name" : "Pyramide!",
+				"content" : "Du hast die Kraft der großen Pyramide vergessen",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/37.ogg"
+					}
+					
+				]
+			}
+		],
+		[
+			{
+				"name" :
+				[
+					"Symbols!",
+					"Zeichen!"
+				],
+				"content" : 
+				[
+					"Stay on the symbols and you will be able to enter!",
+					"Stell dich auf die Zeichen und komm herein"
+				],
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" :
+						[
+							"http://127.0.0.1/storage/english/hints/original/12.01.ogg",
+							"http://127.0.0.1/storage/deutsch/hints/38.ogg"
+						]
+					}
+					
+				]
+			},
+			{
+				"name" :
+				[
+					"Simultaneous",
+					"Gleichzeitig!"
+				],
+				"content" :
+				[
+					"They need to be pushed at the same time",
+					"Sie müssen gleichzeitig gedrückt werden."
+				],
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" :
+						[
+							"http://127.0.0.1/storage/english/hints/original/12.02.ogg",
+							"http://127.0.0.1/storage/deutsch/hints/original/12.02.ogg"
+						]
+					}
+				]
+			}
+		],
+		[
+			{
+				"name" :
+				[
+					"Arrange!",
+					"Einordnen!"
+				],
+				"content" :
+				[
+					"Every soul that seeks salvation should look to the sky. Arange the pillar correctly, the threads of loight belong together. The eye will help you to rise from hell.",
+					"Ordne die Säule richtig ein, die Fäden des lichts gehören zusammen"
+				],
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://127.0.0.1/storage/english/hints/original/13.01.ogg",
+							"http://127.0.0.1/storage/deutsch/hints/42.ogg"
+						]
+					}
+					
+				]
+			},
+			{
+				"name" :
+				[
+					"Make me laugh!",
+					"Bringt mich zum lachen!"
+				],
+				"content" :
+				[
+					"Only with the help of an amulet you will find the right incantation. Only when you know the right incantation make me laugh and start again",
+					"Nur mit Hilfe eines Amuletts könnt ihr die Beschwörung lösen. Sobald ihr meint die richtige Beschwörungsformel zu kennen bringt mich zum lachen und beginnt von vorne."
+				],
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : 
+						[
+							"http://127.0.0.1/storage/english/hints/original/13.02.ogg",
+							"http://127.0.0.1/storage/deutsch/hints/original/13.02.ogg"
+						]
+					}
+					
+				]
+			},
+			{
+				"name" : "Alle Runden!",
+				"content" : "Alle Runden sind vor dir!",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/39.ogg"
+					}
+					
+				]
+			},
+			{
+				"name" : "Medailion!",
+				"content" : "Nur mit Hilfe eines Medaillions kannst du die Beschwörung lösen.",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/40.ogg"
+					}
+					
+				]
+			},
+			{
+				"name" : "Auge!",
+				"content" : "Das Auge wird euch helfen, die einzig richtige Beschwörung zu finden.",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/deutsch/hints/41.ogg"
+					}
+					
+				]
+			},
+			{
+				"name" : "Auflösung",
+				"content" : "Es läuft so, einer stellt sich mit dem Medaillion an die Wand der andere vor die Säule wo das Auge ist. Der vor der Säule sagt dem an der Wand die Zeichen auf der Säule aufwärts vom Auge bis über die Decke an der andere berührt sie mit dem Medaillion.",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/general/custom/pillar.ogg"
+					}
+					
+				]
+			}
+		],
+		[],
+		[],
+		[],
+		[],
+		[
+			{
+				"name" : "Twelve o'clock",
+				"content" : "Music",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/general/custom/12oclock.ogg"
+					}
+				]
+			},
+			{
+				"name" : "Background",
+				"content" : "Music",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/general/custom/background.ogg"
+					}
+				]
+			},
+			{
+				"name" : "Spiel Mit mir",
+				"content" : "Spiel mit mir",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing  hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/general/custom/i_wanna_play.ogg"
+					}
+				]
+			},
+			{
+				"name" : "Evil laugh",
+				"content" : "Someone laughing",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/general/custom/evil_laug.ogg"
+					}
+				]
+			},
+			{
+				"name" : "Singing",
+				"content" : "Little demon girl singing",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/general/custom/killa_chipmunk.ogg"
+					}
+				]
+			},
+			{
+				"name" : "I wanna play",
+				"content" : "Ich mag spielen",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/general/custom/i_like_playing.ogg"
+					}
+				]
+			},
+			{
+				"name" : "Mockingbird",
+				"content" : "Hush little baby don't say a word. Moma's gonna buy you a mockingbird. And if that mockingbird won't sing. Mama's gonna buy you a diamond ring.",
+				"triggers" : 
+				[
+					{
+						"name" :  "Playing hint",
+						"module" : "snd",
+						"action" : "play",
+						"resource" : "http://127.0.0.1/storage/general/custom/mockingbird.ogg"
+					}
+				]
+			}
+		]
+
+	]
+}
