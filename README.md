@@ -1,5 +1,3 @@
-% Documentation for the Escape Game Innsbruck's Host
-
 # Host
 
 ## About
@@ -40,8 +38,7 @@ time to correctly configure autotools.
 
 #### LIBVLC
 
-
-The simplest way is to install the 'vlc', 'libvlc-core' and 'libvlc-dev'
+The simplest way is to install the 'vlc', 'libvlc-core' and 'libvlc-dev
 packages on a debian based system, or if you are running an ArchLinux
 based system, the package vlc does the same thing. The dependencies should
 allow the rest to work fine. You may need to install vlc's dependencies if you
@@ -58,7 +55,8 @@ it from scratch. The latest version can be downloaded at:
 
 https://s3.amazonaws.com/json-c_releases/releases/index.html
 
-Extract the downloaded tarball, go into the directory, execute the command
+Extract the downloaded tarball, go into the directory, it may be nescessary to 
+execute the command
 'autogen', then run './configure --prefix=/usr --enable-threading', 'make',
 'make check' and 'sudo make install'. This should install the nescessary
 librarys and headers in the rght directories, and should allow the linker to
@@ -73,11 +71,11 @@ which is written in GNU Make. The Makefile compiles all files in the src/
 directory and links them together to form an executable.
 
 The executable may be found at 'bin/host' afterwards, and should have been
-compiled for the hosts's architecture.. 
+compiled for the hosts's architecture..
 
 The executable itself is by default dynamically linked, so taking it from one
 computer to another should be possible, if the nescessary packages are installed
-and the libldlinux can find the libraries.
+and the loader can find the libraries.
 
 ## Links
 
@@ -92,14 +90,16 @@ a TODO.
 
 # Configuration
 
-The host is configured via a giant json object which will be located in the
-following order:
+The host is configured via one json object stored in a file. The file's location
+is determined in the following order:
 
  - the comand line paramter -c has been specified and points to a file
  - the working directory contains a file called "config.json"
 
-if none of the above exists or is a valid json, the host will return with exit
-code EXIT_FAILURE. 
+If none of the above exists or is a valid json, the host will return with exit
+code EXIT_FAILURE.
+
+A few example configurations may be found in examples/configurations/.
 
 ## General configuration
 
@@ -107,44 +107,46 @@ The following fields may be specified on the upper most level of the
 json file:
 
  - "name": The name of the game. It can be ommited and will be replaced with
-   "UNSPECIFIED" or NULL.
+   "UNSPECIFIED" or NULL. String value.
  - "duration": the normal duration of a game in seconds. it can be ommited and
-   will default to 3600s or 1h. **omitting this field is discouraged**
+   will default to 3600s or 1h. Integer value. **omitting this field is discouraged**
  - "boot_sound": A URL pointing to an audio file which is beeing played on
-   startup. Requires snd module.
+   startup. Requires snd module. String value.
  - "events": an array containing all events to be executed. more information
-   should follow this list.
+   should follow this list. Array of event objects.
  - "hints": an array containing hints in a special order. please consult the
-   chapter on hint configuration for further information.
+   chapter on hint configuration for further information. Array of arrays of
+   hint objects.
  - "hint_dependencies" : Dependencies used for auto hinting. Please consult the
-   the chapter on autohinting for more information.
+   the chapter on autohinting for more information. Array of dependency arrays.
  - "mtsp_device" : The mtsp device to which to connect. Can be ommitted and
-   will be replaced with "/dev/ttyUSB0".
+   will be replaced with "/dev/ttyUSB0". String value.
  - "mtsp_baud" : The mtsp baud rate with which to connect onto the bus. Can be
-   ommited and will be replaced with B460800
+   ommited and will be replaced with 460800. Integer value
  - "langs" : An array of strings representing the language. These values are
-   never touched inside of the host and only forwarded to the fronteds.
+   never used inside the host and only for frontends. Array of strings.
  - "default_lang" : An integer defining which language is used at startup.
  - "mtsp_device" : Defines the device of the mtsp connection. For further 
-   details please see the mtsp section further down.
+   details please see the mtsp section further down. String value.
  - "mtsp_baud" : Defines the baud rate of the mtsp connection. For further 
-   details please see the mtsp section further down.
+   details please see the mtsp section further down. Integer value.
  - "ecp_device" : Defines the device of the mecp connection. For further 
-   details please see the ecp section further down.
+   details please see the ecp section further down. String value
  - "ecp_baud" : Defines the baud rate of the ecp connection. For further 
-   details please see the ecp section further down.
+   details please see the ecp section further down. Integer value.
  - "log_level": Defines the level to which output is surpressed. Possible
    Values are (in order of output): DEBUG_ALL, DEBUG_MOST, DEBUG_MORE, DEBUG,
-   INFO, WARNING, ERROR;
+   INFO, WARNING, ERROR; String value.
 - "modules": Defines the modules that the ecp configuration wants. Is an array
-   of module identifier strings.
+   of module identifier strings. If ommitted ALL avaliable modules will be 
+   loaded. Array of strings.
 
-This is where it get's a bit more complicated. I will try to explain the
-construction of the "events" array now to you. The events array contains an
+This is where it get's a bit more complicated. I will now try to explain the
+construction of the "events" array to you. The events array contains an
 array of "events" or actions which have triggers and dependencies. If all
-dependencies of an action are fullfilled, the action will be triggered and all
-of it's triggers will be executed. So each element of the events array has to
-contain at least the following fields:
+dependencies of such an event are fullfilled, the action will be triggered and 
+all of it's triggers will be executed. So each element of the events array has 
+to contain at least the following fields:
 
  - "name": The event's name. Follows the regular handling for multilanguage
    name objects.
@@ -193,6 +195,15 @@ interval. It may be possible for a check to only occure from every few milli-
 seconds to every hour! If your backend module relies on checks in a certain
 interval, please build a cache.
 
+#### Internally used fields
+
+This may be important to you if you want to build your own modules or something
+like that. Inside of dependencies the event_id AND id fields are reserved and
+used internally. The event_id field is used to associate a given dependency with
+it's parent event and the id field is used internally and contains a unique id
+to differentiate dependencies from eachother. As saied before, PLEASE don't
+override these fields or specify them manually.
+
 ### Triggers
 
 Triggers are executed after all dependencys of an event are fullfilled, or if
@@ -207,13 +218,18 @@ values.
 All modules get their respective dependencies before initialisation to prepare
 them for further actions. Nested dependencies are possible, but the module has
 to initialize it's dependencies in order for them to work. Afterwards the
-modules get initialized. 
+modules get initialized, and then started. During module initialisation, the
+module should get all its needed information, initialize datastructures and
+prepare for regular operation. This step may take any time. During module
+start it should start caching threads, perform sanity checks and is now
+able to assume that other modules have had their data structures initialized
+as well.
 
 ### Interface
 
 The interface to anything wanting to communicate with the host is provided
 at /var/run/escape/socket. It takes queries in form of a json object and
-answers in form of a json object.
+answers in form of a json object. The request has the following parts:
 
 - An element called ´action´ which states what type of action the
   command is
@@ -221,7 +237,11 @@ answers in form of a json object.
 - Any other value(s) as defined by the parser for that specific action
 
 Documentation on how the commands are parsed and executed may be found in 
-src/interface.c. Further documentation is a TODO.
+src/interface.c, where they are parsed inside a switch statement.
+Further documentation is a TODO.
+
+It is currently not possible to configure the interface during runtime via
+triggers, or depend on internal state via dependencies.
 
 ### Core
 
@@ -303,6 +323,7 @@ what type of dependency it is. The following types have been defined as of now:
 	run at the end of a continuous forefillment, if it was forefilled at the
 	end of a continuous forefillment, if it was not forefilled, or if the
 	forefillment has started respectively.
+
 7. and:
 	This dependency represents a logical and. It requires a "dependencies"
 	field, of which it will check all dependencys, until it encounters one,
@@ -489,15 +510,27 @@ specified with the type field within the trigger:
 	built-in as secondary means of communication. The null-termination is 
 	not transmitted. The device field also needs to be poulated.
 
+- pwm: PWM triggers set the current PWM values of a device's counter. The
+	pwm dependency needs the device, counter, output and value fields to be
+	specified with integers. The counter specifies what counter is meant,
+	the output specifies what mux output is meant and the value what value
+	to set the PWM to. The counter and output fields are device specific,
+	the value field may no exceed 255.
+
 ## Hints
 
 Hints are, well obviously, meant to help the players. The global field "hints"
-is a 3-dimensional array. The first array contains hints correlating to the
+is a 2-dimensional array. The first array contains hints correlating to the
 events array. So each array in the second dimension, is directly linked to the
-corresponding event, in the event array. The second dimension contains arrays of
-triggers, with each array representing a hint, so an event may have any amount
-of hints, with each any amount of triggers. A specified "hidden" or "hintable"
-field doesn't change this behaviour.
+corresponding event, in the event array. The second dimension contains hint
+objects. Inside a hint object the name may be specified, as well as the 
+contents field, which is a multilanguage object defining what the hint "says".
+This was meant for audio hints to write the sentences spoken in the hints inside
+there. The hint object also contains a triggers field, which contains an array
+of trigger objects triggered in case the hint is executed.
+
+A hidden event does NOT change the game's behaviour of correlating hints to
+events as the hidden flag is only of interest to the interface.
 
 ### Auto hinting
 
@@ -569,7 +602,7 @@ known that it won't work, unless you change the following things:
 - Remove the uart parameter from the kernel command line
 
 If you forget to disable bluetooth you will be able to send stuff via uart, but
-you are unable to controll the clock speed and if bluetooth changes clock speed,
+you are unable to control the clock speed and if bluetooth changes clock speed,
 so does your connection. This is probably not what you want.
 
 ## Special device capabilities regression
@@ -583,11 +616,10 @@ updated. This is still under way...
 
 ## Postgresql
 
-It was requested, athat all data may be dumped into a postgresql database for
-later analysys. Maybe one day :D
+It was requested, that all data may be dumped into a postgresql database for
+later analysys.
 
 ## Camera
 
 Maybe a camera control interface would be a good idea to be able to control the
-entire room by one thing...
-
+entire room by one thing. Though most of that would fall to the the interface.
