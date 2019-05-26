@@ -33,7 +33,10 @@
 #include <string.h>
 #include <unistd.h>
 
-
+/*
+ * Initializes core gmae components and all dependencies. Trigger initialisation
+ * is as of now still a TODO
+ */
 int init_game(){
 
 	pthread_mutex_init(&game_trigger_lock, NULL);
@@ -53,14 +56,16 @@ int init_game(){
         memset(&game_thread, 0, sizeof(game_thread));
         
         /* Allocate space for states */
-        state_cnt = json_object_array_length(json_object_object_get(
+        event_cnt = json_object_array_length(json_object_object_get(
                 config_glob,"events"));
-        state_trigger_status = malloc(state_cnt * sizeof(bool));
-        memset(state_trigger_status, 0, state_cnt * sizeof(bool));
+        event_trigger_status = malloc(event_cnt * sizeof(uint8_t));
+        memset(event_trigger_status, EVENT_RESET, event_cnt * sizeof(uint8_t));
         
-        println("a total of %i states has been loaded", DEBUG, state_cnt);
+        println("a total of %i events has been loaded", DEBUG, event_cnt);
 
-	/* initialize all dependencys of all events */
+	/* initialize all dependencys of all events. Dependencies may have
+	 * sub-dependencies, which also need initilisation
+	 */
 	size_t depcnt = 0;
 	size_t* event_ids = NULL;
 	json_object** dependencies = get_root_dependencies(&depcnt, &event_ids);
@@ -75,10 +80,10 @@ int init_game(){
 
 		}
 	}
-	
+
 	/* Allocate the nescessary memory for the reset jobs and null it. */
-	reset_jobs = malloc(state_cnt * sizeof(bool*));
-	memset(reset_jobs, 0, state_cnt * sizeof(bool*));
+	reset_jobs = malloc(event_cnt * sizeof(bool*));
+	memset(reset_jobs, 0, event_cnt * sizeof(bool*));
 
 	free(dependencies);
 	free(event_ids);
@@ -123,7 +128,11 @@ int start_game(){
 		size_t trig = json_object_get_int(init_trigger);
 
 		println("initially triggering event no %i", DEBUG, trig);
-
+		
+		/* This doesn't use the trigger maybe function due to the fact
+		 * that the startup should only be considered finished if that
+		 * is finished. This method always triggers synchroneous.
+		 */
 		trigger_event(trig);
 	}
 
@@ -132,13 +141,15 @@ int start_game(){
 
 int patrol(){
 
-        for(size_t i = 0; i < state_cnt; i++){
+        for(size_t i = 0; i < event_cnt; i++){
 		/* Check all dependencys of all states and trigger
 		 * if nescessary.
 		 */
 
-		if(state_trigger_status[i] && !reset_jobs[i]){
-			/* Ommit already triggered events */
+		if(event_trigger_status[i] && !reset_jobs[i]){
+			/* Ommit already triggered events which dont have a
+			 * reset job 
+			 */
 			continue;
 		}
 		json_object* event = json_object_array_get_idx(
@@ -155,7 +166,7 @@ int patrol(){
 			/* I would consider this a bit stupid configured... */
 			println("event without dependencies!!! triggering", 
 				WARNING);
-			trigger_event(i);
+			trigger_event_maybe_blocking(i);
 		}
 		bool met = true;
 		for(size_t dep = 0; dep < json_object_array_length(
@@ -172,14 +183,14 @@ int patrol(){
 		if(met && !reset_jobs[i]){
 			println("All dependencies clear to execute event %i!",
 				 INFO, i);
-			trigger_event(i);
+			trigger_event_maybe_blocking(i);
 		}else if(!met && reset_jobs[i]){
 			/* If there is a reset job pending for this event,
 			 * reset it, and clear the reset job. 
 			 */
 			if(reset_jobs[i]){
 				reset_jobs[i] = false;
-				state_trigger_status[i] = false;
+				untrigger_event(i);
 				println("Reset job for event %i done!", DEBUG,
 					i);
 			}
@@ -216,7 +227,7 @@ void* loop_game(){
 
 int trigger_event(size_t event_id){
         
-        if((state_cnt <= event_id) | (state_trigger_status[event_id])){
+        if((event_cnt <= event_id) | (event_trigger_status[event_id] != EVENT_RESET)){
                 println("Tried to trigger invalid event %i", WARNING, event_id);
                 return -1;
         }
@@ -225,7 +236,7 @@ int trigger_event(size_t event_id){
 	/* Sleep 1 ms to prevent unintended collisions */
 	sleep_ms(1);
         
-        state_trigger_status[event_id] = 1;
+        event_trigger_status[event_id] = EVENT_TRIGGERED;
        
 	json_object* event = json_object_array_get_idx(json_object_object_get(
 		config_glob,"events"), event_id);
@@ -253,7 +264,7 @@ int trigger_event(size_t event_id){
 			if(execute_trigger(trigger, false) < 0){
 				println("FAILED TO EXECUTE TRIGGER! RESETTING!", 
 					ERROR);
-				state_trigger_status[event_id] = 0;
+				event_trigger_status[event_id] = 0;
 				/* untrigger event */
 				pthread_mutex_unlock(&game_trigger_lock);
 				return -1;
@@ -307,7 +318,7 @@ void* helper_async_trigger(void* event_id){
 void async_trigger_event(size_t event_id){
 
 	
-	if(state_trigger_status[event_id]){
+	if(event_trigger_status[event_id] != EVENT_RESET){
 		/* Shit happens */
 		return;
 	}
@@ -327,6 +338,73 @@ void async_trigger_event(size_t event_id){
 
 }
 
+/*
+ * This function triggers an event async if the async field in the event is set,
+ * synchroneusly if not. This function is needed for inline execution
+ *
+ */
+int trigger_event_maybe_blocking(size_t event_id){
+
+	json_object* event = 
+		json_object_array_get_idx(json_object_object_get(
+		config_glob, "events"), event_id);
+
+	if(event == 0){
+		println("Failed to get event by id [%i]. got NULL", 
+		ERROR, event_id);
+		return -1;
+	}
+
+	bool async = false;
+	json_object* async_field = json_object_object_get(event, "async");
+	if(async_field != NULL){
+		async = json_object_get_boolean(async_field);
+
+	}
+
+	if(async){
+		async_trigger_event(event_id);
+		return 0;
+	}else{
+		return trigger_event(event_id);
+	}
+
+	return 0;
+
+}
+
+int untrigger_event(size_t event_id){
+	json_object* event = 
+		json_object_array_get_idx(json_object_object_get(
+		config_glob, "events"), event_id);
+
+	if(event == 0){
+		println("Failed to get event by id [%i]. got NULL", 
+		ERROR, event_id);
+		return -1;
+	}
+	/* Execute the untrigger triggers in the event. */
+	json_object* untriggers = json_object_object_get(event, "untriggers");
+	if(untriggers != NULL){
+		if(trigger_array(untriggers) < 0){
+			println("Failed to execute untriggers field in event"
+				" [%i]! Dumping root:", ERROR, event_id);
+			
+			json_object_to_fd(STDOUT_FILENO,event, 
+				JSON_C_TO_STRING_PRETTY);
+			return -1;
+		}
+
+	}
+
+	event_trigger_status[event_id] = EVENT_RESET;
+
+	return 0;
+
+	
+}
+
+
 /* This returns an array with all dependencies as elements. It can be 
  * free'd afterwards */
 json_object** get_root_dependencies(size_t* depcnt, size_t** event_idsp){
@@ -339,7 +417,7 @@ json_object** get_root_dependencies(size_t* depcnt, size_t** event_idsp){
 	 * Iterate through events
 	 */
 
-	for(size_t event_i = 0; event_i < state_cnt; event_i++ ){
+	for(size_t event_i = 0; event_i < event_cnt; event_i++ ){
 		
 		json_object* event = json_object_array_get_idx(
 			json_object_object_get(config_glob, "events"),event_i);
@@ -397,8 +475,8 @@ size_t get_hint_event(){
 	
 	size_t highest = 0; 
 
-	for(size_t i = 0; i < state_cnt; i++){
-		if(state_trigger_status[i] == 1){
+	for(size_t i = 0; i < event_cnt; i++){
+		if(event_trigger_status[i] == 1){
 
 			json_object* evnt =  json_object_array_get_idx(
 				json_object_object_get(config_glob, "events"), 
@@ -460,7 +538,7 @@ json_object** get_root_triggers(size_t* trigcnt, size_t** event_idsp){
 	 * Iterate through events
 	 */
 
-	for(size_t event_i = 0; event_i < state_cnt; event_i++ ){
+	for(size_t event_i = 0; event_i < event_cnt; event_i++ ){
 		
 		json_object* event = json_object_array_get_idx(
 			json_object_object_get(config_glob, "events"),event_i);

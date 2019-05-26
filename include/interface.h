@@ -34,7 +34,7 @@ int unix_fd;
 pthread_t interface_thread; 
 
 size_t * printable_events;
-bool** printable_event_states;
+uint8_t** printable_event_states;
 size_t printable_event_cnt;
 
 int execute_command(int sock_fd,char* command);

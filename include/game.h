@@ -27,6 +27,11 @@
 #define PATROL_INTERVAL_NS 5000000
 #define DEFAULT_GAME_TIME 3600
 
+/* Execution states of events */
+#define EVENT_RESET        0
+#define EVENT_IN_EXECUTION 1
+#define EVENT_TRIGGERED    2
+
 int init_game();
 int init_dependency(json_object* dependency, int event_id);
 int start_game();
@@ -37,6 +42,8 @@ void* loop_game();
 
 int trigger_event(size_t event_id);
 void async_trigger_event(size_t event_id);
+int trigger_event_maybe_blocking(size_t event_id);
+int untrigger_event(size_t event_id);
 
 /* utility functions */
 
@@ -46,18 +53,20 @@ size_t get_hint_event();
 int trigger_array(json_object* triggers);
 json_object** get_root_triggers(size_t* trigcnt, size_t** event_idsp);
 
-
 json_object** dependency_list;
 size_t dependency_count;
 pthread_t game_thread;
 
-/* For historic reasons these 2 variables are still named state. TODO */
-bool * state_trigger_status;
-size_t state_cnt;
+/* Contains the amount of loaded events and wether they are executed, in 
+ * execution or something else. May contain any of the preprocessor definitions
+ * from the beginning of this file.
+ */
+uint8_t * event_trigger_status;
+size_t event_cnt;
 
 /* Pending autoresets. For events, which don't require a global reset, but are
  * autoresetting. I can't reset them immediately, but have to wait until it
- * should be possible to trigger it again.. */
+ * should be possible to trigger it again... This is done in the routine. */
 bool* reset_jobs;
 
 pthread_mutex_t game_trigger_lock;

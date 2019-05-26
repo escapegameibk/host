@@ -336,7 +336,7 @@ int core_check_dependency(json_object* dependency,float* percentage){
 
 		}
 
-		if(event >= (int32_t) state_cnt || event < 0){
+		if(event >= (int32_t) event_cnt || event < 0){
 			println("Invalid event specified in dependency.",
 				ERROR);
 			percent_ret = -2;
@@ -344,7 +344,15 @@ int core_check_dependency(json_object* dependency,float* percentage){
 		}else{
 
 
-			percent_ret =  (state_trigger_status[event] == target);
+			if(target){
+				percent_ret =  (event_trigger_status[event] >= 
+					EVENT_IN_EXECUTION);
+			}else{
+				percent_ret =  (event_trigger_status[event] <
+					EVENT_IN_EXECUTION);
+
+			}
+
 			goto ret_vals;
 		}
 
@@ -717,8 +725,14 @@ int core_trigger(json_object* trigger, bool dry){
 			return 0;
 		}
 
-		for(size_t i = 0; i < state_cnt; i++){
-                        state_trigger_status[i] = 0;
+		for(size_t i = 0; i < event_cnt; i++){
+                        if(untrigger_event(i) < 0){
+				println("Failed to reset event %i!! Reset "
+					"sequence considered failed!",
+					ERROR, i);
+
+				return -1;
+			}
                 }
 
 		/* Reset sequence states */

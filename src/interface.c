@@ -76,7 +76,7 @@ for %i/%s",
 		printable_event_states = realloc(printable_event_states, 
 			printable_event_cnt * sizeof(bool*));
 		printable_event_states[printable_event_cnt - 1] = 
-			&state_trigger_status[i];
+			&event_trigger_status[i];
 
 	}
 
@@ -392,7 +392,7 @@ int execute_command(int sock_fd, char* command){
 		 */
 
 		 if(json_object_get_int(json_object_object_get(
-			 parsed,"event")) >= (ssize_t)state_cnt){
+			 parsed,"event")) >= (ssize_t)event_cnt){
 			println("Received invalid event in interface"
 				"for action 4",
 				WARNING);
@@ -412,7 +412,7 @@ int execute_command(int sock_fd, char* command){
 		the triggers. */
 			 
 		 if(json_object_get_int(json_object_object_get(
-			 parsed,"event")) >= (ssize_t)state_cnt){
+			 parsed,"event")) >= (ssize_t)event_cnt){
 			println("Received invalid event in interface"
 				"for action 5",
 				WARNING);
@@ -422,10 +422,10 @@ int execute_command(int sock_fd, char* command){
 		println("Enforced un-trigger for event %i!", INFO, 
 			printable_events[json_object_get_int(
 			json_object_object_get(parsed,"event"))]);
-
+		
 		/* This is REALLY dirty, but does the trick.*/
-		state_trigger_status[printable_events[json_object_get_int(
-			json_object_object_get(parsed,"event"))]] = false;
+		untrigger_event(printable_events[json_object_get_int(
+			json_object_object_get(parsed,"event"))]);
 
                 break;
 	case 6:
