@@ -42,7 +42,11 @@ int println(const char* output, int type, ...){
         va_list arg;
         va_start (arg, type);
         char* pre = log_generate_prestring(type);
-        
+        if(pre == NULL){
+		/* I think we ran out of memory... Not good! */
+		vprintf(output,arg);
+		return 1;
+	}
         size_t len = strlen(output) + strlen(pre) + 2;
         len ++; // Me wants a newline!
 
@@ -88,6 +92,10 @@ char * log_generate_prestring(int type){
 
 #define BUFFERLENGTH 256
         pre = malloc(BUFFERLENGTH);
+	if(pre == NULL){
+		/* No memory left for me. I guess I'm gonna be silent then... */
+		return NULL;
+	}
         memset(pre,0,BUFFERLENGTH);
         
         /* Get time */
@@ -98,6 +106,10 @@ char * log_generate_prestring(int type){
         
 #define TIME_LEN 30
         char* datestr = malloc(TIME_LEN); 
+	if(datestr == NULL){
+		free(pre);
+		return NULL;
+	}
         strftime(datestr, TIME_LEN, "%FT%T%z", info);
         snprintf(pre, BUFFERLENGTH, "[ %s %s] ", datestr, log_typestr[type]);
         pre = realloc(pre,strlen(pre) + 1);

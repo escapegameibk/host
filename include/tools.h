@@ -37,6 +37,8 @@ int is_in_array(size_t element, size_t* arr, size_t arrlen);
 size_t get_arr_match_inverted(size_t* arr1, size_t* arr2, size_t len);
 
 char* printable_bytes(uint8_t* data, size_t len);
+char* printable_bytes_buf(uint8_t* data, size_t len, char* buffer, 
+	size_t buflen);
 
 ssize_t get_lines_in_string(const char* str);
 

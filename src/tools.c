@@ -167,6 +167,26 @@ char* printable_bytes(uint8_t* data, size_t len){
 
 }
 
+char* printable_bytes_buf(uint8_t* data, size_t len, char* buffer, 
+	size_t buflen){
+
+	if(data == NULL || buffer == NULL){
+		return NULL;
+	}
+
+	if(buflen < len * 4 + 1){
+		return NULL;
+	}
+	
+	for(size_t i = 0; i < len; i++){
+
+		sprintf(&buffer[strlen(buffer)], "<%x>", data[i]);
+	}
+
+	return buffer;
+
+}
+
 /* 
  * May return any time. Continuity should be given! May NOT return real
  * system time!

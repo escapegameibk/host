@@ -119,7 +119,7 @@ int mtsp_register_register(uint8_t device, uint8_t reg){
 		dev = &mtsp_devices[mtsp_device_count - 1];
 		dev->device_id = device;
 		dev->port_cnt = 0;
-		dev->ports = malloc(0);
+		dev->ports = NULL;
 
         }
 
@@ -314,6 +314,11 @@ int update_mtsp_states(){
                 struct mtsp_device_t *dev = &mtsp_devices[i];
 
 		uint8_t* regs = malloc(dev->port_cnt);
+		if(regs == NULL){
+			println("Failed to allocate memory for mtsp regs!",
+				ERROR);
+			return -1;
+		}
 		for(size_t prt = 0; prt < dev->port_cnt; prt++){
 			regs[prt] = dev->ports[prt].address;
 		}
@@ -345,7 +350,10 @@ uint8_t* mtsp_assemble_frame(uint8_t slave_id, uint8_t command_id,
         
         size_t lentot = payload_length + 6;
         uint8_t * frame = malloc(lentot * sizeof(uint8_t));
-
+	if(frame == NULL){
+		println("Failed to allocate ram for new mtsp frame!", ERROR);
+		return NULL;
+	}
         frame[0] = MTSP_START_BYTE;
         frame[1] = slave_id; /* The address of the slave to be addressed */
         frame[2] = lentot; /* The length of the entire frame */
@@ -423,6 +431,10 @@ uint8_t* mtsp_receive_message(){
         }
 
         uint8_t *frame = malloc(frame_length * sizeof(uint8_t));
+	if(frame == NULL){
+		println("Failed to allocate ram for MTSP frame recv!", ERROR);
+		return NULL;
+	}
         frame[0] = start;
         frame[1] = slave_id;
         frame[2] = frame_length;
@@ -520,6 +532,10 @@ int mtsp_send_request(uint8_t slave_id, uint8_t command_id, uint8_t* payload,
         /* Assemble a frame */
         uint8_t* request =  mtsp_assemble_frame(slave_id,command_id, payload, 
                 payload_length);
+	if(request == NULL){
+		println("Failed to generate MTSP request!!", ERROR);
+		return -1;
+	}
 	
 	pthread_mutex_lock(&mtsp_lock_transmission);
  

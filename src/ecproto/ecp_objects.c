@@ -117,6 +117,11 @@ int ecp_register_device(size_t id){
 		device->received_regcnt = 0;
 		device->regs = NULL;
 		device->analog = malloc(sizeof(struct ecproto_analog_t));
+		if(device->analog == NULL){
+			println("Failed to malloc memory for analog struct in "
+				"device!", ERROR);
+			return -1;
+		}
 		device->analog->used = false;
 		device->analog->value = 0;
 		

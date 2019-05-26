@@ -87,6 +87,11 @@ uint8_t* recv_ecp_frame(int fd, size_t* len){
 		}
 
 		frame = realloc(frame, ++frame_length);
+		if(frame == NULL){
+			println("Realloc failed in ecp receive frame!", ERROR);
+			frame = NULL;
+			break;
+		}
 		frame[frame_length - 1] = octet;
 
 		/* Frame finished */
@@ -110,15 +115,24 @@ uint8_t* recv_ecp_frame(int fd, size_t* len){
 
 
 	}
+	
+	char buffer[((256 * 4) + 1)];
+	memset(buffer, 0, sizeof(buffer));
 
-	char * prnt = printable_bytes(frame, *len);
-	println("ECP Received: %s", DEBUG_MOST, prnt);
-	free(prnt);
+	if(printable_bytes_buf(frame, *len, buffer, sizeof(buffer)) == NULL){
+		println("failed to get printable bytes for ecp frame!!",
+			WARNING);
+		pthread_mutex_unlock(&ecp_readlock);
+		return frame;
+	}else{
+	
+		println("ECP Received: %s", DEBUG_MOST, buffer);	
+
+	}
 
 	pthread_mutex_unlock(&ecp_readlock);
 	return frame;
 }
-
 
 bool validate_ecp_frame(uint8_t* frame, size_t len){
 
@@ -372,6 +386,11 @@ int write_ecp_msg(size_t dev_id, int fd, uint8_t action_id, uint8_t* payload,
 	if(frme != NULL){
 		*frame_length = frame[ECP_LEN_IDX] * sizeof(uint8_t);
 		*frme = malloc(frame[ECP_LEN_IDX] * sizeof(uint8_t));
+		if(*frme == NULL){
+			println("Failed to allocate memory for frame copy in "
+				"ecp write!", ERROR);
+			return -1;
+		}
 		memcpy(*frme, frame, sizeof(uint8_t) * *frame_length);
 	}
 

@@ -141,6 +141,11 @@ int core_init_dependency(json_object* dependency){
 
 		struct sequence_dependency_t* seq = malloc(sizeof(struct 
 			sequence_dependency_t));
+		if(seq == NULL){
+			println("Failed to allocate memory for sequential "
+				"dependency!", ERROR);
+			return -1;
+		}
 		memset(seq, 0, sizeof(struct sequence_dependency_t));
 		json_object* dep_cpy = NULL;
 		json_object_deep_copy(dependency, &dep_cpy, 
@@ -167,6 +172,11 @@ int core_init_dependency(json_object* dependency){
 		
 		/* Setup flanks */
 		seq->last_dependencies = malloc(sequence_length * sizeof(int));
+		if(seq->last_dependencies == NULL){
+			println("Failed to allocate memory for a sequence's "
+				"last dependency!", ERROR);
+			return -1;
+		}
 		memset(seq->last_dependencies, 0, 
 			sequence_length * sizeof(int));
 
@@ -185,6 +195,11 @@ int core_init_dependency(json_object* dependency){
 
 		struct flank_dependency_t* dep = malloc(sizeof(struct
 			flank_dependency_t));
+		if(dep == NULL){
+			println("Failed to allocate memory for flank "
+				"dependency!", ERROR);
+			return -1;
+		}
 		memset(dep, 0, sizeof(struct flank_dependency_t));
 
 		json_object* high = json_object_object_get(dependency,"high");
@@ -277,6 +292,11 @@ both below and above a certain threshold. Do you know what a threshold is?",
 		
 		struct length_dependency_t* dep = malloc(sizeof(struct 
 			length_dependency_t));
+		if(dep == NULL){
+			println("Failed to allocate memory for length "
+				"dependency!", ERROR);
+			return -1;
+		}
 
 		memset(dep, 0, sizeof(struct length_dependency_t));
 

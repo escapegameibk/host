@@ -393,7 +393,13 @@ int ecp_init_analog_channels(struct ecproto_device_t* device){
 
 	size_t len = (device->analog_channel_count + 1 ) * sizeof(uint8_t);
 
-	uint8_t* payload = malloc(len);
+	uint8_t* payload = malloc(len * sizeof(uint8_t));
+	if(payload == NULL){
+		println("Failed to allocate memory for ecp analog payload!",
+			ERROR);
+		return -1;
+	}
+
 	payload[0] = device->analog_channel_count;
 	
 	for(size_t i = 0; i < device->analog_channel_count; i++){
