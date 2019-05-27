@@ -102,7 +102,7 @@ int init_ecp_device(struct ecproto_device_t* device){
 	 device->fast_gpio_capable = false;
 
 	/* I'm sending it twice just to be sure it really did come through */
-	if(ecp_send_message(device->id, GET_PURPOSE, NULL, 0) >= 0){
+	if(ecp_send_message(device->id, GET_PURPOSE, NULL, 0) <= 0){
 		println("Failed to request ecp purpose! dev [%i]", ERROR,
 			device->id);
 		return -1;
