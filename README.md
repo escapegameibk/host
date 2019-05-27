@@ -6,11 +6,18 @@ This is the host for games at the escape game innsbruck. It's main purpose is,
 to control an escape room. Afterwars, it became apparent to me, that it would
 also be kinda suitable as a home-automation system.
 
+The main repository containing this file is stored at 
+
+https://gitea.escpe.net/escapegame/host.git
+
+Everything else is a mirror and may be out of date. Before opening any issues,
+please vie this repository and see if you can reproduce the error there.
+
 ## License
 
 This program is licensed under the GPLv3 or any later version of the license,
 which permits you to use it commercially, but requires you to give users the
-source code and the right to re-sell the program. in any case, we don't sell the
+source code and the right to re-sell the program. In any case, we don't sell the
 software itself any way, so it doesn't really matter, or at least that's the 
 idea.
 
@@ -44,14 +51,19 @@ based system, the package vlc does the same thing. The dependencies should
 allow the rest to work fine. You may need to install vlc's dependencies if you
 would like to use some of it's features.
 
+I recently found out that Linux mint has different names for the libvlc
+pacakges. I recommend looking into your distributions package list and
+installing the packages providing the libvlc library and it's header files.
+
 If the sound module is disabled via the NOSND option, this dependency may be 
 ignored.
 
 #### JSON-C
 
-The json-c version of the \*bian operating system is *heavily* outdated, as it
-is version 0.12. Therefore the regular package doesn't work. You have to build
-it from scratch. The latest version can be downloaded at:
+The json-c version of the \*bian operating system is somewhat outdated, as it
+is version 0.12. Therefore the regular package doesn't work, as the program was
+built around the 0.13 branch of json-c. You have to build it from scratch. 
+The latest version can be downloaded at:
 
 https://s3.amazonaws.com/json-c_releases/releases/index.html
 
@@ -63,6 +75,8 @@ librarys and headers in the rght directories, and should allow the linker to
 find them.
 
 Building json-c requires autotools, the gcc and libtool to be installed.
+
+ArchLinux based distros should ship the newer version of json-c.
 
 ### Building an executable
 
@@ -611,6 +625,15 @@ After I discovered that I created an regression where I basically had to
 assume that a device is GPIO capable, I made first steps to remove this
 regression from future versions, but first all installations need to be
 updated. This is still under way...
+
+## NORECOVER and Systemd
+
+For whatever reason (I have not yet found the time to really look into it)
+when the host is started in a systemd unit, a poll with a timeout of 0 on the
+ecp device file descriptor returns a non-zero value, but the read call returns
+nothing and times out. Adding a -D NORECOVER in the CUTOUTS section of the
+Makefile fixes this problem, though it also ignores any data in the
+file-descriptor present before a frame is pushed out.
 
 # TODO
 
