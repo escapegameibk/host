@@ -91,31 +91,21 @@ int ecp_bus_init(){
 
 int init_ecp_device(struct ecproto_device_t* device){
 	int n = 0;
-	bool old_fw = true;
+
+	/* RESET DEVICE CAPABILITIES
+	 * There was an error, because of which some device capabities were
+	 * accidentally received. The error was fixed, but it has occured to me
+	 * that this would probably be a good idea.
+	 */
+	 device->gpio_capable = false;
+	 device->mfrc522_capable = false;
+	 device->fast_gpio_capable = false;
 
 	/* I'm sending it twice just to be sure it really did come through */
-	for(size_t i = 0; i < 2; i++){
-		if(ecp_send_message(device->id, GET_PURPOSE, NULL, 0) >= 0){
-			old_fw = false;
-			break;
-		}
-
-	}
-
-	/* TODO update old firmware in currently used Escape Game System
-	 * installations so this is no longer neded!
-	 * Last installation left: Escape Game Munich Orphanage WESTPARK 3
-	 */
-	if(old_fw){
-		println("OUTDATED ECP MICROCONTROLLER VERSION ASSUMED!"
-			"PLEASE UPDATE YOUR FIRMWARE TO THE LATEST VERSION!",
-			WARNING);
-
-		println("The Above errors may be ignored. GPIO capability is"
-			"assumed by device %li from this point on.", WARNING,
+	if(ecp_send_message(device->id, GET_PURPOSE, NULL, 0) >= 0){
+		println("Failed to request ecp purpose! dev [%i]", ERROR,
 			device->id);
-		device->gpio_capable = true;
-
+		return -1;
 	}
 
 	if(device->analog->used){
