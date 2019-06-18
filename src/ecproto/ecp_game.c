@@ -43,10 +43,13 @@
 #include <math.h>
 
 int init_ecp(){
+	
+	/* Initialize mutextes */
 	pthread_mutex_init(&ecp_lock, NULL);
 	pthread_mutex_init(&ecp_readlock, NULL);
 	pthread_mutex_init(&ecp_state_lock, NULL);
 
+	/* Parse configuration file */
 
 	const char* device = ECP_DEF_DEV;
 
@@ -92,18 +95,69 @@ int init_ecp(){
 
 	json_object* decnt = json_object_object_get(config_glob,
 		"ecp_device_count");
-	size_t devn_cnt = 1;
-
-	if(decnt != NULL){
-		devn_cnt = json_object_get_int(decnt);
-	}
-	println("initially known device count: %i", DEBUG, devn_cnt);
-
-	for(size_t i = 0; i < devn_cnt; i++){
-		if(ecp_register_device(i) < 0){
-			println("FAILED TO ADD ECP DEVICE %i!!", ERROR, i);
+	
+	json_object* devlist = json_object_object_get(config_glob,
+		"ecp_device_list");
+	
+	if(devlist != NULL){
+		if(decnt != NULL){
+			println("Overspecification! ecp devcnt and list given!"
+				"Takeing the latter!", WARNING);
+		}
+		
+		if(!json_object_is_type(devlist ,json_type_array)){
+			println("wrong json type in ecp devlist!", ERROR);
 			return -1;
 		}
+
+		for(size_t i = 0; i < json_object_array_length(devlist); i++){
+			
+			json_object* devo = json_object_array_get_idx(devlist, 
+				i);
+			if(!json_object_is_type(devo, json_type_int)){
+				println("Device in ecp dev list not int!", 
+					ERROR);
+				
+				return -1;
+			}else{
+				int32_t devid = json_object_get_int(devo);
+			
+				if(ecp_register_device(devid) < 0){
+					println("FAILED TO ADD ECP DEVICE %i!!", 
+						ERROR, devid);
+					return -1;
+				}
+				
+				
+
+			}
+
+		}
+		
+
+
+	}else if(decnt != NULL){
+		uint64_t devncnt = json_object_get_int64(decnt);
+	
+		println("initially known device count: %i", DEBUG, devncnt);
+
+		
+		for(size_t i = 0; i < devncnt; i++){
+			if(ecp_register_device(i) < 0){
+				println("FAILED TO ADD ECP DEVICE %i!!", ERROR, 
+					i);
+				return -1;
+			}
+		}
+	}else{
+		println("Unspecified ECP device count! assumeing 1 with id 0",
+			WARNING);
+			
+		if(ecp_register_device(0) < 0){
+			println("FAILED TO ADD ECP DEVICE 0!!", ERROR);
+			return -1;
+		}
+
 	}
 
 	println("Initial ECP device map:", DEBUG);
