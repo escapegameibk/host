@@ -437,9 +437,11 @@ int trigger_event_maybe_blocking(size_t event_id){
 	}
 
 	if(async){
+		println("Triggering event %lu non-blocking!", DEBUG, event_id);
 		async_trigger_event(event_id);
 		return 0;
 	}else{
+		println("Triggering event %lu blocking!", DEBUG, event_id);
 		return trigger_event(event_id);
 	}
 

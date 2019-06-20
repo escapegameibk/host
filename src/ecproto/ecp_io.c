@@ -147,8 +147,10 @@ bool validate_ecp_frame(uint8_t* frame, size_t len){
 	if(crc_is != crc_should){
 		println("ECP crc missmatch!", WARNING);
 		println("SHOULD BE: %i is %i", WARNING, crc_should, crc_is);
+#ifdef AGGRESSIVE_RECOVER
 		println("Awaiting bus init due to CRC mismatch!!!!", WARNING);
 		ecp_initialized = false;
+#endif /* AGGRESSIVE_RECOVER */
 		return false;
 	}
 	/* The frame should be valid */
@@ -178,11 +180,13 @@ int ecp_receive_msgs(uint8_t* snd_frame, size_t snd_len){
 				free(prnt);
 			}
 
+#ifdef AGGRESSIVE_RECOVER
 			/* Asynchroneously gets all device states. Hope that
 			 * this solves stuff.. */
 			ecp_initialized = false;
 			println("Refreshing all ECP Devices as resul!",
 				WARNING);
+#endif
 			pthread_mutex_unlock(&ecp_lock);
 			return -1;
 		}
