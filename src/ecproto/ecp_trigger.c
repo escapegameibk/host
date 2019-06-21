@@ -50,27 +50,39 @@ int ecp_trigger(json_object* trigger, bool dry){
 	}else{
 		type_name = json_object_get_string(type);
 	}
+	
+	int status = 0;
+	for(size_t i = 0; i < 2; i++){
+		if(strcasecmp(type_name, "port") == 0){
+			status =  ecp_trigger_port(trigger, dry);
+		}else if(strcasecmp(type_name, "secondary_trans") == 0){
+			/* Send a specified string */
+			status = ecp_trigger_secondary_trans(trigger, dry);
 
-	if(strcasecmp(type_name, "port") == 0){
-		return ecp_trigger_port(trigger, dry);
-	}else if(strcasecmp(type_name, "secondary_trans") == 0){
-		/* Send a specified string */
-		return ecp_trigger_secondary_trans(trigger, dry);
+		}else if(strcasecmp(type_name, "pwm") == 0){
+			/* Set a PWM value */
+			status = ecp_trigger_pwm(trigger, dry);
 
-	}else if(strcasecmp(type_name, "pwm") == 0){
-		/* Set a PWM value */
-		return ecp_trigger_pwm(trigger, dry);
+		}else{
+			println("Failed to execute ECP trigger with invalid type! Dump:"
+				, ERROR);
 
-	}else{
-		println("Failed to execute ECP trigger with invalid type! Dump:"
-			, ERROR);
+			json_object_to_fd(STDOUT_FILENO, trigger,
+				JSON_C_TO_STRING_PRETTY);
+			return -1;
+		}
 
-		json_object_to_fd(STDOUT_FILENO, trigger,
-			JSON_C_TO_STRING_PRETTY);
-		return -1;
+		if(status < 0){
+			println("Failed to execute ecp trigger correctly!"
+				" Retry %i", ERROR, i);
+			continue;
+		}else{
+			break;
+		}
+		
 	}
 
-	return 0;
+	return status;
 }
 
 int ecp_trigger_secondary_trans(json_object* trigger, bool dry){
