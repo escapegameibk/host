@@ -567,12 +567,12 @@ int core_check_dependency(json_object* dependency,float* percentage){
 				deps,i), NULL);
 
 			if(val <= 0){
-				percent_ret = val;
+				percent_ret = 1/((float)i);
 				goto ret_vals;
 			}
 
 		}
-		percent_ret = false;
+		percent_ret = 1;
 		goto ret_vals;
 		
 	}else if(strcasecmp(type,"never") == 0){
