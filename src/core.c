@@ -372,9 +372,19 @@ both below and above a certain threshold. Do you know what a threshold is?",
 			++length_dependency_count);
 		length_dependencies[length_dependency_count-1] = dep;
 
-		/* Initialize the sub-dependency */
-		return init_dependency(sub_dependency, json_object_get_int(
-			json_object_object_get(dependency,"event_id")));
+		/* Initialize the sub-dependency accordingly */
+		if(json_object_object_get(dependency,"event_id")
+			!= NULL){
+			
+			return init_dependency(sub_dependency, 
+				json_object_get_int(
+				json_object_object_get(dependency,"event_id")));
+			
+
+		}else{
+			return init_general_dependency(
+				sub_dependency);
+		}
 
 	}else{
 		/* Ignore everything else */
