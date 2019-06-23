@@ -445,9 +445,11 @@ int execute_trigger(json_object* trigger, bool dry){
  * dependency function. */
 int init_general_dependency(json_object* dependency){
 	
+	static int32_t depid = 0;
+
 	/* Add metadata to dependency */
 	json_object_object_add(dependency, "id", json_object_new_int(
-		dependency_count - 1));
+		depid++));
 
 	const char* module_name = json_object_get_string(
 				json_object_object_get(dependency,"module"));
