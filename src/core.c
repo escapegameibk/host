@@ -237,7 +237,7 @@ int core_init_dependency(json_object* dependency){
 				JSON_C_TO_STRING_PRETTY);
 			return -1;
 		
-		}else if(json_object_is_type(deps, json_type_array)){
+		}else if(!json_object_is_type(deps, json_type_array)){
 			
 			println("Specified and|or dependency with dependencies "
 				"field containing wrong json type! Dumping:",
