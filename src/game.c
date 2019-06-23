@@ -552,7 +552,7 @@ size_t get_hint_event(){
 	size_t highest = 0; 
 
 	for(size_t i = 0; i < event_cnt; i++){
-		if(event_trigger_status[i] == 1){
+		if(event_trigger_status[i] == EVENT_TRIGGERED){
 
 			json_object* evnt =  json_object_array_get_idx(
 				json_object_object_get(config_glob, "events"), 
