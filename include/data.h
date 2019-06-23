@@ -20,14 +20,19 @@
 
 /* Relaeses are built like this:
  *      MAJOR:
+ *              Increased when majour rebuilds have occured.
  *              0...            ALPHA
  *              1...            BETA
  *		2ff...          RELEASE
+ *      MINOR:
+ *              Increased when features were added.
+ *      RELEASE:
+ *              Increased when bugs were fixed or performance increased.
  *
  */
 #define VERSION_MAJOR           0
 #define VERSION_MINOR           8
-#define VERSION_RELEASE         1
+#define VERSION_RELEASE         2
 
 #define SHUTDOWN_DELAY 3
 
