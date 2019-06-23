@@ -376,10 +376,13 @@ both below and above a certain threshold. Do you know what a threshold is?",
 		return init_dependency(sub_dependency, json_object_get_int(
 			json_object_object_get(dependency,"event_id")));
 
+	}else{
+		/* Ignore everything else */
+		println("Not initializeing core dependency with type [%s]", 
+			DEBUG_MORE, type);
+
 	}
-	/* Ignore everything else */
-	println("Not initializeing core dependency with type [%s]", DEBUG_MORE,
-		type);
+
 
 	return 0;
 }
