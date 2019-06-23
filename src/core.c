@@ -567,11 +567,17 @@ int core_check_dependency(json_object* dependency,float* percentage){
 				deps,i), NULL);
 
 			if(val <= 0){
-				percent_ret = 1/((float)i);
+				
+				/* and has finished at dependency no. i */
+				percent_ret = 
+					((double)i)/
+					json_object_array_length(deps);
+
 				goto ret_vals;
 			}
 
 		}
+
 		percent_ret = 1;
 		goto ret_vals;
 		
@@ -739,13 +745,14 @@ int core_check_dependency(json_object* dependency,float* percentage){
 		percent_ret = -4;
 		goto ret_vals;
 	}
+
 ret_vals:
 
 	if(percent_ret == NAN || percent_ret == INFINITY || 
 		percent_ret == -INFINITY){
 		println("Core dependency return value would be not \
-representable as integer: %f",
-			percent_ret);
+representable as integer: %F",
+			(double)percent_ret);
 		if(percentage != NULL){
 			*percentage = percent_ret;
 		}
