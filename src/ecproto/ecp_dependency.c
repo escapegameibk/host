@@ -245,7 +245,7 @@ float ecp_check_mfrc522_dependency(json_object* dependency){
 	struct ecproto_device_t* dev = ecp_get_dev_from_id(device_id);
 
 	if(dev == NULL){
-		println("ECP MFRC522 dependency with unknown dev %i! Dumping:",
+		println("ECP MFRC522 dependency with unknown device %i! Dumping:",
 			ERROR, device_id);
 		json_object_to_fd(STDOUT_FILENO, dependency,
 			JSON_C_TO_STRING_PRETTY);

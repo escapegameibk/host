@@ -223,13 +223,71 @@ int core_init_dependency(json_object* dependency){
 		return init_dependency(json_object_object_get(dependency,
 			"dependency"),json_object_get_int(
 			json_object_object_get(dependency,"event_id")));
-	}else if(strcasecmp(type,"or") == 0){
+
+	}else if(strcasecmp(type,"and") == 0 || strcasecmp(type,"or") == 0){
 		json_object* deps = json_object_object_get(dependency, 
 			"dependencies");
+		
+		if(deps == NULL){
+			println("Specified and|or dependency without "
+				"dependencies "
+				"field for sub-dependencies! Dumping:", ERROR);
+			
+			json_object_to_fd(STDOUT_FILENO, dependency,
+				JSON_C_TO_STRING_PRETTY);
+			return -1;
+		
+		}else if(json_object_is_type(deps, json_type_array)){
+			
+			println("Specified and|or dependency with dependencies "
+				"field containing wrong json type! Dumping:",
+					ERROR);
+			
+			json_object_to_fd(STDOUT_FILENO, dependency,
+				JSON_C_TO_STRING_PRETTY);
+			return -1;
+
+		}
+			
 		for(size_t i = 0; i < json_object_array_length(deps); i++){
-			init_dependency(json_object_array_get_idx(deps, i),
-				json_object_get_int(json_object_object_get(
-				dependency,"event_id")));
+			
+			if(json_object_object_get(dependency,"event_id")
+				!= NULL){
+				
+				int fail = init_dependency(
+					json_object_array_get_idx(deps, i),
+					json_object_get_int(
+					json_object_object_get(
+					dependency,"event_id")));
+				if(fail < 0){
+					println("Failed to init sub-dependency "
+						"for core dependency. Dumping:",
+						ERROR);
+					json_object_to_fd(STDOUT_FILENO, 
+						json_object_array_get_idx(
+						deps, i), 
+						JSON_C_TO_STRING_PRETTY);
+
+					return -1;
+				}
+
+			}else{
+				int fail = init_general_dependency(
+					json_object_array_get_idx(deps, i));
+				
+				if(fail < 0){
+					println("Failed to init sub-dependency "
+						"for core dependency. Dumping:",
+						ERROR);
+					json_object_to_fd(STDOUT_FILENO, 
+						json_object_array_get_idx(
+						deps, i), 
+						JSON_C_TO_STRING_PRETTY);
+					
+					return -1;
+
+				}
+			}
 		}
 
 	}else if(strcasecmp(type,"length") == 0){

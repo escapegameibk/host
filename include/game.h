@@ -35,6 +35,7 @@
 
 int init_game();
 int init_dependency(json_object* dependency, int event_id);
+/* The init_general_dependency funtion is in the modules section */
 int start_game();
 
 /* checks for changes and act accordingly */
