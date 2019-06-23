@@ -378,6 +378,8 @@ both below and above a certain threshold. Do you know what a threshold is?",
 
 	}
 	/* Ignore everything else */
+	println("Not initializeing core dependency with type [%s]", DEBUG_MORE,
+		type);
 
 	return 0;
 }
