@@ -65,6 +65,9 @@ pthread_t game_thread;
  */
 uint8_t * event_trigger_status;
 size_t event_cnt;
+/* This counts how many forced executions have been executed by the interface.*/
+size_t event_overrides;
+
 
 /* Pending autoresets. For events, which don't require a global reset, but are
  * autoresetting. I can't reset them immediately, but have to wait until it

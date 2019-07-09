@@ -42,6 +42,8 @@ char* printable_bytes_buf(uint8_t* data, size_t len, char* buffer,
 
 ssize_t get_lines_in_string(const char* str);
 
+char* append_to_first_string(const char* str1, const char* str2);
+
 /* Time related functions */
 time_t get_current_ec_time();
 time_t get_ec_time_unix_offset();

@@ -27,6 +27,7 @@
 #include "config.h"
 #include "video.h"
 #include "lolproto.h"
+#include "database.h"
 
 #include "modbus.h"
 
@@ -69,6 +70,10 @@ struct module_t modules[] = {
 	{NULL, init_interface, start_interface, NULL, NULL, NULL, true, false, 
 		"interface"},
 #endif /* HEADLESS */
+
+#ifndef NODATABASE
+	{NULL, init_database, NULL, NULL, NULL, NULL, true, false, "database"},
+#endif /* NODATABASE */
 
 	{core_init_dependency, init_core, start_core, core_check_dependency, 
 		core_trigger, NULL /* Does it itself! */, true, false, "core"}

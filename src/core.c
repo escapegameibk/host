@@ -52,6 +52,8 @@ int init_core(){
 	/* Initialize alarm */
 	alarm_on = false;
 #endif
+	/* initialy set override count */
+	event_overrides = 0;
 
         game_duration = json_object_get_int64(
                 json_object_object_get(config_glob,"duration"));
@@ -824,6 +826,8 @@ int core_trigger(json_object* trigger, bool dry){
 			println("Aborting because of dry run!", INFO);
 			return 0;
 		}
+		/* Clear overrides */
+		event_overrides = 0;
 
 		for(size_t i = 0; i < event_cnt; i++){
                         if(untrigger_event(i) < 0){
@@ -1204,7 +1208,7 @@ void core_release_alarm(){
 
 #endif
 
-time_t get_expired_game_time(){
+inline time_t get_expired_game_time(){
 
 	if(game_timer_end == 0 && game_timer_start != 0 ){
 		return get_current_ec_time() - game_timer_start;

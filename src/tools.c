@@ -187,6 +187,61 @@ char* printable_bytes_buf(uint8_t* data, size_t len, char* buffer,
 
 }
 
+ssize_t get_lines_in_string(const char* str){
+
+	if(str == NULL){
+		return -1;
+	}
+
+	ssize_t lncnt = 0;
+
+	for(size_t i = 0; str[i] != '\0'; i++){
+		lncnt += (str[i] == '\n');
+	}
+
+	return lncnt;
+
+}
+
+char* append_to_first_string(const char* str1, const char* str2){
+
+	size_t len = strlen(str1) + strlen(str2) + 1;
+
+	char* newstr = malloc(len);
+
+	if(newstr == NULL){
+		return NULL;
+	}
+	memset(newstr, 0, len);
+	
+	strncpy(newstr, str1, len);
+	
+	strncat(newstr, str2, len);
+	return newstr;
+}
+
+char* append_long_to_first_string(const char* str1, long long int num){
+
+	char[20] str2;
+	memset(str2, 0, sizeof(str2));
+	snprintf(str2, sizeof(str2), "%l", num);
+
+	size_t len = strlen(str1) + strlen(str2) + 1;
+
+	char* newstr = malloc(len);
+
+	if(newstr == NULL){
+		return NULL;
+	}
+	memset(newstr, 0, len);
+	
+	strncpy(newstr, str1, len);
+	
+	strncat(newstr, str2, len);
+
+	return newstr;
+}
+
 /* 
  * May return any time. Continuity should be given! May NOT return real
  * system time!
@@ -239,20 +294,4 @@ time_t ec_time_to_unix(time_t ec_tim){
 	}else{
 		return 0;
 	}
-}
-
-ssize_t get_lines_in_string(const char* str){
-
-	if(str == NULL){
-		return -1;
-	}
-
-	ssize_t lncnt = 0;
-
-	for(size_t i = 0; str[i] != '\0'; i++){
-		lncnt += (str[i] == '\n');
-	}
-
-	return lncnt;
-
 }

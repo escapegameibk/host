@@ -9,9 +9,11 @@
 	],
 	"mtsp_device" : "/dev/ttyUSB0",
 	"mtsp_baud" : 460800,
-	"ecp_device" : "/dev/ttyUSB0",
-	"ecp_device_count" : 3,
-	"log_level" : "DEBUG_ALL",
+	"ecp_device" : "/dev/ttyACM0",
+	"ecp_device_list" : [
+		0
+	],
+	"log_level" : "DEBUG_MORE",
 	"langs" :[
 		"english",
 		"deutsch"
@@ -20,8 +22,32 @@
 	[
 		"interface",
 		"core",
+		"database",
 		"video"
 	],
+	"database" : 
+	{
+		"type" : "postgresql",
+		"database" : "escapegame",
+		"username" : "statistics",
+		"password" : "ps0ke77E2EGRXP1G7SNn",
+		"host" : "megadeth.local.escpe.net",
+		"port" : 5432,
+		"statistics" :
+		{
+			"table" : "games_run",
+			"static_fields" :
+			{
+				"INSTALLATION_ID" : 0
+			},
+			"start_time" : "START_TIME",
+			"duration" : "DURATION",
+			"language" : "LANGUAGE",
+			"hint_count" : "HINT_COUNT",
+			"executed_events" : "EXECUTED_EVENTS",
+			"forced_executions" : "OPERATOR_OVERRIDES"
+		}
+	},
 	"default_lang" : 0,
 	"events":
 	[
