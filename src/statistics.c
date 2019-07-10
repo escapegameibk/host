@@ -31,7 +31,7 @@ struct statistics_t get_statistics(){
 		println("Statistics requested, game not yet finished!", 
 			WARNING);
 	}
-	stats.duration = game_timer_start - game_timer_end;
+	stats.duration = game_timer_end - game_timer_start;
 	stats.lang = language;
 	stats.hint_count = get_hint_exec_cnt();
 	stat_int exec_events = 0;
