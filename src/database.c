@@ -29,7 +29,11 @@ char* postgresql_uri = NULL;
 #include <string.h>
 #include <stdio.h>
 
+#ifdef DEBIAN
+#include <postgresql/libpq-fe.h>
+#else
 #include <libpq-fe.h>
+#endif
 
 #ifndef NODATABASE
 
