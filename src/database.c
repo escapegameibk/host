@@ -174,6 +174,60 @@ int init_database(){
 	return 0;
 }
 
+int database_trigger(json_object* trigger, bool dry){
+	
+	json_object* type = json_object_object_get(trigger, "type");
+	if(type == NULL){
+		println("Type not set in database trigger!! Dumping root:",
+			ERROR);
+		json_object_to_fd(STDOUT_FILENO, trigger, 
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+
+	}
+
+	const char* type_name = json_object_get_string(type);
+
+	if(strcasecmp(type_name, "statistics") == 0){
+		/* Upload statistics to the database */
+
+		struct statistics_t stats = get_statistics();
+		char* insert = sql_generate_stat_insert(stats);
+		if(insert == NULL){
+			println("Failed to generate database statistics insert "
+				"statement!", ERROR);
+			return -1;
+		}
+		if(dry){
+			println("Not performing real database connection due to"
+				" dry run!", DEBUG_MORE);
+			free(insert);
+			return 0;
+		}else{
+			if(postgresql_exec_insert(insert) < 0){
+				println("Database insert stamenet failed with"
+					"following query: [%s]", ERROR, insert);
+				free(insert);
+				return -1;
+			}else{
+				println("Successfully uploaded statistics to "
+					"database!", DEBUG);
+				free(insert);
+				return 0;
+			}
+		}
+	}else{
+		println("Unknown type specified in database trigger [%s]! "
+			"Dumping root:", ERROR, type_name);
+		json_object_to_fd(STDOUT_FILENO, trigger, 
+			JSON_C_TO_STRING_PRETTY);
+		return -1;
+
+	}
+
+	return 0;
+}
+
 char* sql_generate_stat_insert(struct statistics_t stats){
 
 	if(statistics_config == NULL){

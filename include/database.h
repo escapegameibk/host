@@ -21,6 +21,7 @@
 #ifndef NODATABASE
 
 #include <stddef.h>
+#include <stdbool.h>
 #include <json-c/json.h>
 
 #include "statistics.h"
@@ -35,6 +36,7 @@ char* postgresql_uri;
 json_object* statistics_config;
 
 int init_database();
+int database_trigger(json_object* trigger, bool dry);
 
 char* sql_generate_stat_insert(struct statistics_t stats);
 
@@ -45,5 +47,5 @@ char* sql_add_to_stmt(const char* str1, const char* str2);
 char* sql_add_long_to_stmt(const char* str1, long long int num);
 char* sql_add_str_to_stmt(const char* str1, const char* str2);
 
-#endif /* NODATABASE */
+#endif /* NODATABAS*/
 #endif /* DATABASE_H */

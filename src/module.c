@@ -72,7 +72,8 @@ struct module_t modules[] = {
 #endif /* HEADLESS */
 
 #ifndef NODATABASE
-	{NULL, init_database, NULL, NULL, NULL, NULL, true, false, "database"},
+	{NULL, init_database, NULL, NULL, database_trigger, NULL, true, false, 
+		"database"},
 #endif /* NODATABASE */
 
 	{core_init_dependency, init_core, start_core, core_check_dependency, 
