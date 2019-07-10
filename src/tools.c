@@ -214,7 +214,7 @@ char* append_to_first_string(const char* str1, const char* str2){
 	}
 	memset(newstr, 0, len);
 	
-	strncpy(newstr, str1, len);
+	strcpy(newstr, str1);
 	
 	strncat(newstr, str2, len);
 	return newstr;
@@ -222,9 +222,9 @@ char* append_to_first_string(const char* str1, const char* str2){
 
 char* append_long_to_first_string(const char* str1, long long int num){
 
-	char[20] str2;
+	char str2[200];
 	memset(str2, 0, sizeof(str2));
-	snprintf(str2, sizeof(str2), "%l", num);
+	snprintf(str2, sizeof(str2), "%lli", num);
 
 	size_t len = strlen(str1) + strlen(str2) + 1;
 
@@ -235,7 +235,7 @@ char* append_long_to_first_string(const char* str1, long long int num){
 	}
 	memset(newstr, 0, len);
 	
-	strncpy(newstr, str1, len);
+	strcpy(newstr, str1);
 	
 	strncat(newstr, str2, len);
 

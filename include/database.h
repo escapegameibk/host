@@ -23,6 +23,8 @@
 #include <stddef.h>
 #include <json-c/json.h>
 
+#include "statistics.h"
+
 #define DB_NOTYPE     0 /* Equivalent to beeing disabled */
 #define DB_POSTGRESQL 1
 
@@ -34,5 +36,14 @@ json_object* statistics_config;
 
 int init_database();
 
+char* sql_generate_stat_insert(struct statistics_t stats);
+
+int postgresql_exec_insert(const char* insert);
+
+/* HELPER FUNCTIONS */
+char* sql_add_to_stmt(const char* str1, const char* str2);
+char* sql_add_long_to_stmt(const char* str1, long long int num);
+char* sql_add_str_to_stmt(const char* str1, const char* str2);
+
 #endif /* NODATABASE */
-#endif
+#endif /* DATABASE_H */

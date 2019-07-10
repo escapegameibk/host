@@ -18,7 +18,7 @@ INCLUDEDIR := $(CWD)/include
 CUTOUTS :=
 OPTIMISATIONS := -O2
 CFLAGS := -I$(INCLUDEDIR) -D COLOR -Wall -ggdb3 -Wextra -std=gnu11 $(OPTIMISATIONS) $(CUTOUTS)
-LDFLAGS := -pthread -ljson-c -lvlc -lm
+LDFLAGS := -pthread -ljson-c -lvlc -lm -lpq
 
 # target files
 DIRS_TARGET := $(BINDIR) $(BUILDDIR)

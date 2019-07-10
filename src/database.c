@@ -29,6 +29,8 @@ char* postgresql_uri = NULL;
 #include <string.h>
 #include <stdio.h>
 
+#include <libpq-fe.h>
+
 #ifndef NODATABASE
 
 int init_database(){
@@ -150,17 +152,24 @@ int init_database(){
 			"performed!", DEBUG);
 		
 		return 0;
+	}else{
+		if(!json_object_is_type(statistics_config,json_type_object)){
+			println("Database statistics config has wrong type. "
+				"Dumping!", ERROR);
+			
+			json_object_to_fd(STDOUT_FILENO, database_config, 
+				JSON_C_TO_STRING_PRETTY);
+
+			return -1;
+		}
+		struct statistics_t stats;
+		memset(&stats, 0, sizeof(stats));
+		char* ins = sql_generate_stat_insert(stats);
+		println("Example insert statement for stats: \"%s\"",
+			DEBUG_MORE, ins);
+		free(ins);
 	}
 
-	if(!json_object_is_type(statistics_config,json_type_object)){
-		println("Database statistics config has wrong type. Dumping!",
-			ERROR);
-		
-		json_object_to_fd(STDOUT_FILENO, database_config, 
-			JSON_C_TO_STRING_PRETTY);
-
-		return -1;
-	}
 	
 	return 0;
 }
@@ -194,31 +203,125 @@ char* sql_generate_stat_insert(struct statistics_t stats){
 		statistics_config, "forced_executions");
 
 	if(start_time_column != NULL){
+		char *ncol = sql_add_to_stmt(columns, 
+			json_object_get_string(start_time_column));
 		
+		struct tm *info;
+		info = localtime( &stats.start_time );
+		char date_buffer[40];
+		strftime(date_buffer, sizeof(date_buffer), "%FT%T%z", info);
+		char *nvals = sql_add_str_to_stmt(values, date_buffer);
+		free(columns);
+		free(values);
+		columns = ncol;
+		values = nvals;
 	}
 	
 	if(duration_column != NULL){
 		
+		char *ncol = sql_add_to_stmt(columns, 
+			json_object_get_string(duration_column));
+		
+		char buffer[200];
+		snprintf(buffer, sizeof(buffer), "INTERVAL '%llis'", 
+			stats.duration);
+		char *nvals = sql_add_to_stmt(values, buffer);
+
+		free(columns);
+		free(values);
+		columns = ncol;
+		values = nvals;
+		
 	}
 
 	if(language_column != NULL){
+		char *ncol = sql_add_to_stmt(columns,
+			json_object_get_string(language_column));
+		
+		char *nvals = sql_add_long_to_stmt(values, stats.lang);
+
+		free(columns);
+		free(values);
+		columns = ncol;
+		values = nvals;
 		
 	}
 
 	if(hint_count_column != NULL){
 		
+		char *ncol = sql_add_to_stmt(columns, 
+			json_object_get_string(hint_count_column));
+		
+		char *nvals = sql_add_long_to_stmt(values, stats.hint_count);
+
+		free(columns);
+		free(values);
+		columns = ncol;
+		values = nvals;
+		
 	}
 
 	if(executed_events_column != NULL){
+		
+		char *ncol = sql_add_to_stmt(columns, 
+			json_object_get_string(executed_events_column));
+		
+		char *nvals = sql_add_long_to_stmt(values, 
+			stats.executed_events);
+
+		free(columns);
+		free(values);
+		columns = ncol;
+		values = nvals;
 		
 	}
 
 	if(forced_executions_column != NULL){
 
+		char *ncol = sql_add_to_stmt(columns, 
+			json_object_get_string(forced_executions_column));
+		
+		char *nvals = sql_add_long_to_stmt(values, 
+			stats.overriden_events);
+
+		free(columns);
+		free(values);
+		columns = ncol;
+		values = nvals;
 		
 	}
+	json_object* static_fields = json_object_object_get(statistics_config,
+		"static_fields");
+	if(static_fields != NULL){
+		if(!json_object_is_type(static_fields,json_type_object)){
+			println("static fields for statistics have wrong type!",
+				ERROR);
+			json_object_to_fd(STDOUT_FILENO, static_fields, 
+				JSON_C_TO_STRING_PRETTY);
+			return NULL;
+		}
 
+		json_object_object_foreach(static_fields, key, val){
+			
+			char *nvals;
+			
+			if(json_object_is_type(val, json_type_int)){
+				nvals = sql_add_long_to_stmt(values, 
+					json_object_get_int64(val));
+				
+			}else{
+				nvals = sql_add_str_to_stmt(columns,
+					json_object_get_string(val));
 
+			}
+			char *ncol = sql_add_to_stmt(columns, key);
+			
+			free(columns);
+			free(values);
+			columns = ncol;
+			values = nvals;
+		}
+	}
 
 	json_object* table_o = json_object_object_get(statistics_config,
 		"table");
@@ -236,7 +339,115 @@ char* sql_generate_stat_insert(struct statistics_t stats){
 	char* statement = malloc(len);
 	memset(statement, 0 , len);
 
-	snprintf(statement, len, statement_format, table, columns, values);
+	snprintf(statement, len, statement_format, table, &columns[1], 
+		&values[1]);
+	
+	free(values);
+	free(columns);
+
 	return statement;
 }
+
+int postgresql_exec_insert(const char* insert){
+
+	PGconn *conn;
+	PGresult *res;
+	
+	if(postgresql_uri == NULL){
+		println("Postgresql insert attempted without postgresql URI "
+			"defined!", ERROR);
+		return -1;
+	}
+
+	conn = PQconnectdb(postgresql_uri);
+	if (PQstatus(conn) != CONNECTION_OK){
+		println("Failed to connect to database: [%s]", ERROR,
+			PQerrorMessage(conn));
+		PQfinish(conn);
+		return -1;
+	}
+
+	res = PQexec(conn, insert);
+	if (PQresultStatus(res) != PGRES_COMMAND_OK){
+		
+		println("postgresql INSERT failed: %s", ERROR, 
+			PQerrorMessage(conn));
+		PQclear(res);
+		PQfinish(conn);
+		return -1;
+		
+	}
+	
+	PQclear(res);
+	PQfinish(conn);
+	return 0;
+}
+
+/* Appends a string to one given adding a comma in front */
+char* sql_add_to_stmt(const char* str1, const char* str2){
+	
+		char* com = append_to_first_string(str1, ",");
+		if(com == NULL){
+			println("No mem for sql string append!", ERROR);
+			return NULL;
+		}
+		char* fin = append_to_first_string(com, 
+			str2);
+		free(com);
+		if(fin == NULL){
+			println("No mem for sql string append!", ERROR);
+			return NULL;
+		}
+		return fin;
+}
+
+/* Appends a long to the string given adding a comma in front */
+char* sql_add_long_to_stmt(const char* str1, long long int num){
+	
+		char* com = append_to_first_string(str1, ",");
+		if(com == NULL){
+			println("No mem for sql string append!", ERROR);
+			return NULL;
+		}
+		
+		char* fin = append_long_to_first_string(com, 
+			num);
+
+		free(com);
+		if(fin == NULL){
+			println("No mem for sql string append!", ERROR);
+			return NULL;
+		}
+		return fin;
+}
+
+/* Same as sql_add_to_stmt but appending a ' in front of and behind the second 
+ * string */
+char* sql_add_str_to_stmt(const char* str1, const char* str2){
+	
+		char* com = append_to_first_string(str1, ",'");
+		if(com == NULL){
+			println("No mem for sql string append!", ERROR);
+			return NULL;
+		}
+		char* val = append_to_first_string(com, 
+			str2);
+		free(com);
+		if(val == NULL){
+			println("No mem for sql string append!", ERROR);
+			return NULL;
+		}
+		
+		char* fin = append_to_first_string(val, 
+			"'");
+		free(val);
+		if(fin == NULL){
+			println("No mem for sql string append!", ERROR);
+			return NULL;
+		}
+		
+		return fin;
+}
+
+
 #endif /* NODATABASE */
