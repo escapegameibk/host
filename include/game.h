@@ -28,10 +28,11 @@
 #define DEFAULT_GAME_TIME 3600
 
 /* Execution states of events */
-#define EVENT_RESET            0
-#define EVENT_IN_PREPARATION   1 /* Needed for async event triggers */
-#define EVENT_IN_EXECUTION     2
-#define EVENT_TRIGGERED        3
+#define EVENT_RESET                 0
+#define EVENT_IN_PREPARATION        1 /* Needed for async event triggers */
+#define EVENT_IN_EXECUTION          2
+#define EVENT_TRIGGERED             3
+#define EVENT_TRIGGERED_ENFORCED    4 /* Needed for statistics */
 
 int init_game();
 int init_dependency(json_object* dependency, int event_id);
@@ -42,9 +43,9 @@ int start_game();
 int patrol();
 void* loop_game();
 
-int trigger_event(size_t event_id);
-void async_trigger_event(size_t event_id);
-int trigger_event_maybe_blocking(size_t event_id);
+int trigger_event(size_t event_id, bool enforced);
+void async_trigger_event(size_t event_id, bool enforced);
+int trigger_event_maybe_blocking(size_t event_id, bool enforced);
 int untrigger_event(size_t event_id);
 
 /* utility functions */

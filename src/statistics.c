@@ -28,18 +28,25 @@ struct statistics_t get_statistics(){
 	struct statistics_t stats;
 	stats.start_time = ec_time_to_unix(game_timer_start);
 	if(game_timer_end < game_timer_start){
-		println("Statistics requested, game not yet finished!", 
-			WARNING);
+		println("Statistics requested, game not yet finished!"
+			" Partially returning nonsense...", WARNING);
+
+		stats.duration = 0;
+	}else{
+		stats.duration = game_timer_end - game_timer_start;
+
 	}
 	stats.duration = game_timer_end - game_timer_start;
 	stats.lang = language;
 	stats.hint_count = get_hint_exec_cnt();
 	stat_int exec_events = 0;
+
 	for(size_t i = 0; i < event_cnt; i++){
 		if(event_trigger_status[i] >= EVENT_IN_EXECUTION){
 			exec_events++;
 		}
 	}
+
 	stats.executed_events = exec_events;
 	stats.overriden_events = event_overrides;
 

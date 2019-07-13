@@ -202,6 +202,23 @@ int database_trigger(json_object* trigger, bool dry){
 				"statement!", ERROR);
 			return -1;
 		}
+		println("Inserting the following statistics into the database:",
+			DEBUG_MORE);
+		
+		println("\tstart time:%li", DEBUG_MORE, stats.start_time);
+		
+		println("\tduration:%li", DEBUG_MORE, stats.duration);
+		
+		println("\tlanguage:%li", DEBUG_MORE, stats.lang);
+		
+		println("\thint count:%li", DEBUG_MORE, stats.hint_count);
+		
+		println("\texecuted events:%li", DEBUG_MORE, 
+			stats.executed_events);
+		
+		println("\toverriden events:%li", DEBUG_MORE, 
+			stats.overriden_events);
+		
 		if(dry){
 			println("Not performing real database connection due to"
 				" dry run!", DEBUG_MORE);

@@ -405,7 +405,7 @@ int execute_command(int sock_fd, char* command){
 
 		async_trigger_event(printable_events[
 			json_object_get_int(json_object_object_get(
-			parsed,"event"))]);
+			parsed,"event"))], true);
 		/* Increment the amount of event overrides which have occured.*/
 		event_overrides++;
 		break;
@@ -636,6 +636,21 @@ int print_info_interface(int sock_fd){
 		json_object_object_add(obj, "langs",  langs);
 	}
 	
+        
+	json_object* event_states = json_object_new_object();
+	
+		
+	json_object_object_add(event_states, "triggered",
+		json_object_new_int(EVENT_TRIGGERED));
+	json_object_object_add(event_states, "forcefully_triggered",
+		json_object_new_int(EVENT_TRIGGERED_ENFORCED));
+	json_object_object_add(event_states, "executeing",
+		json_object_new_int(EVENT_IN_EXECUTION));
+	json_object_object_add(event_states, "reset",
+		json_object_new_int(EVENT_RESET));
+	json_object_object_add(obj, "event_states",
+		event_states);
+
 	
 	json_object* ctrls = json_object_object_get(config_glob, "controls");
 	if(ctrls != NULL){

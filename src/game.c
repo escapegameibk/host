@@ -152,7 +152,7 @@ int start_game(){
 		 * that the startup should only be considered finished if that
 		 * is finished. This method always triggers synchroneous.
 		 */
-		trigger_event(trig);
+		trigger_event(trig, false);
 	}
 
         return 0;
@@ -185,7 +185,7 @@ int patrol(){
 			/* I would consider this a bit stupid configured... */
 			println("event without dependencies!!! triggering", 
 				WARNING);
-			trigger_event_maybe_blocking(i);
+			trigger_event_maybe_blocking(i, false);
 		}
 		bool met = true;
 		for(size_t dep = 0; dep < json_object_array_length(
@@ -202,7 +202,8 @@ int patrol(){
 		if(met && !reset_jobs[i]){
 			println("All dependencies clear to execute event %i!",
 				 INFO, i);
-			trigger_event_maybe_blocking(i);
+			trigger_event_maybe_blocking(i, false);
+
 		}else if(!met && reset_jobs[i]){
 			/* If there is a reset job pending for this event,
 			 * reset it, and clear the reset job. 
@@ -244,7 +245,7 @@ void* loop_game(){
         return NULL;
 }
 
-int trigger_event(size_t event_id){
+int trigger_event(size_t event_id, bool enforced){
         
         if(event_cnt <= event_id){
 
@@ -282,10 +283,10 @@ int trigger_event(size_t event_id){
 		pthread_mutex_lock(&game_trigger_lock);
 
 	}
+	event_trigger_status[event_id] = EVENT_IN_EXECUTION;
 	/* Sleep 1 ms to prevent unintended collisions */
 	sleep_ms(1);
         
-        event_trigger_status[event_id] = EVENT_TRIGGERED;
        
        
         /* Iterate through triggers */
@@ -336,8 +337,25 @@ int trigger_event(size_t event_id){
 		}
 	}
 
-	println("Done triggering event!", DEBUG);
-	
+	if(event_trigger_status[event_id] != EVENT_IN_EXECUTION){
+		println("Event execution status has changed during execution."
+			" Leaving the execution status unchanged",
+			DEBUG);
+	}else{
+		if(enforced){
+		
+			println("Event %li has been executed FORCEFULLY", 
+				DEBUG_MORE,  event_id);
+			event_trigger_status[event_id] = 
+				EVENT_TRIGGERED_ENFORCED;
+
+		}else{
+			println("Event %li has been executed peacefully", 
+				DEBUG_MORE, event_id);
+			event_trigger_status[event_id] = EVENT_TRIGGERED;
+		}
+	}
+
 	if(!async){
 		pthread_mutex_unlock(&game_trigger_lock);
 	}
@@ -345,24 +363,29 @@ int trigger_event(size_t event_id){
         return 0;
 }
 
+struct event_trigger_parameter_t {
+	size_t event_id;
+	bool enforced;
+};
 
 /*
  * This is a helper function used to execute the triggers and return afterwards.
  */
-void* helper_async_trigger(void* event_id){
+void* helper_async_trigger(void* params){
 
-	size_t* ev = event_id;
+	struct event_trigger_parameter_t *pa = params;
 
-	if(trigger_event(*ev) < 0){
+
+	if(trigger_event(pa->event_id, pa->enforced) < 0){
 
 		println("Failed to asynchroneously execute event. Not handling"
 			,ERROR);
-		free(event_id);
+		free(pa);
 		return NULL;
 	
 	}
 
-	free(event_id);
+	free(pa);
 	return NULL;
 }
 
@@ -370,7 +393,7 @@ void* helper_async_trigger(void* event_id){
  * Spawns a new posix thread which executes an event's triggers.
  */
 
-void async_trigger_event(size_t event_id){
+void async_trigger_event(size_t event_id, bool enforced){
 
 	
 	if(event_trigger_status[event_id] != EVENT_RESET){
@@ -390,26 +413,29 @@ void async_trigger_event(size_t event_id){
 	 */
 	event_trigger_status[event_id] = EVENT_IN_PREPARATION;
 
-	size_t *event_idp = malloc(sizeof(size_t));
-	if(event_idp == NULL){
-		println("Failed to allocate memory for async event_id buffer!",
+	struct event_trigger_parameter_t *event_params = 
+		malloc(sizeof(struct event_trigger_parameter_t));
+	
+	if(event_params == NULL){
+		println("Failed to allocate memory for async ev param buffer!",
 			ERROR);
 		println("WOW, I can't even allocate 8 byte of ram... da fuck?",
 			ERROR);
 		return;
 	}
-	*event_idp = event_id;
+
+	event_params->event_id = event_id;
+	event_params->enforced = enforced;
 
 	pthread_t executing_thread;
 
         if(pthread_create(&executing_thread, NULL, helper_async_trigger, 
-		event_idp)){
+		event_params)){
                 println("failed to create asynchroneous trigger thread",ERROR);
                 return;
         }
 
 	return;
-
 }
 
 /*
@@ -417,7 +443,7 @@ void async_trigger_event(size_t event_id){
  * synchroneusly if not. This function is needed for inline execution
  *
  */
-int trigger_event_maybe_blocking(size_t event_id){
+int trigger_event_maybe_blocking(size_t event_id, bool enforced){
 
 	json_object* event = 
 		json_object_array_get_idx(json_object_object_get(
@@ -425,7 +451,7 @@ int trigger_event_maybe_blocking(size_t event_id){
 
 	if(event == NULL){
 		println("Failed to get event by id [%i]. got NULL", 
-		ERROR, event_id);
+			ERROR, event_id);
 		return -1;
 	}
 
@@ -438,11 +464,11 @@ int trigger_event_maybe_blocking(size_t event_id){
 
 	if(async){
 		println("Triggering event %lu non-blocking!", DEBUG, event_id);
-		async_trigger_event(event_id);
+		async_trigger_event(event_id, enforced);
 		return 0;
 	}else{
 		println("Triggering event %lu blocking!", DEBUG, event_id);
-		return trigger_event(event_id);
+		return trigger_event(event_id, enforced);
 	}
 
 	return 0;
@@ -652,6 +678,12 @@ json_object** get_root_triggers(size_t* trigcnt, size_t** event_idsp){
 		*event_idsp = event_ids;
 	}else{
 		free(event_ids);
+	}
+
+	if(trigs == NULL){
+		println("Not a single regular tirgger was found! WTF are you "
+			"doing with me?", ERROR);
+		return NULL;
 	}
 
 	return trigs;
