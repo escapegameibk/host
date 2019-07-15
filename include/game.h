@@ -66,8 +66,6 @@ pthread_t game_thread;
  */
 uint8_t * event_trigger_status;
 size_t event_cnt;
-/* This counts how many forced executions have been executed by the interface.*/
-size_t event_overrides;
 
 
 /* Pending autoresets. For events, which don't require a global reset, but are
@@ -76,5 +74,8 @@ size_t event_overrides;
 bool* reset_jobs;
 
 pthread_mutex_t game_trigger_lock;
+
+/* HELPER FUNCTIONS */
+json_object* get_event_by_id(size_t event_id);
 
 #endif

@@ -40,15 +40,37 @@ struct statistics_t get_statistics(){
 	stats.lang = language;
 	stats.hint_count = get_hint_exec_cnt();
 	stat_int exec_events = 0;
+	stat_int exec_overrides = 0;
 
 	for(size_t i = 0; i < event_cnt; i++){
+		bool relevant = true;
+
+		json_object* event = get_event_by_id(i);
+		if(event == NULL){
+			println("Failed to get event no. %i! Continueing "
+				"statistics collection anyways", ERROR,i);
+			continue;
+		}
+		json_object* rel = json_object_object_get(event, "statistics");
+		if(json_object_is_type(rel, json_type_boolean)){
+			relevant = json_object_get_boolean(rel);
+		}
+
+		if(!relevant){
+			continue;
+		}
+
 		if(event_trigger_status[i] >= EVENT_IN_EXECUTION){
 			exec_events++;
+		}
+		
+		if(event_trigger_status[i] == EVENT_TRIGGERED_ENFORCED){
+			exec_overrides++;
 		}
 	}
 
 	stats.executed_events = exec_events;
-	stats.overriden_events = event_overrides;
+	stats.overriden_events = exec_overrides;
 
 	return stats;
 

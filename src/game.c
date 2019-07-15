@@ -476,15 +476,14 @@ int trigger_event_maybe_blocking(size_t event_id, bool enforced){
 }
 
 int untrigger_event(size_t event_id){
-	json_object* event = 
-		json_object_array_get_idx(json_object_object_get(
-		config_glob, "events"), event_id);
+	json_object* event =  get_event_by_id(event_id);
 
-	if(event == 0){
+	if(event == NULL){
 		println("Failed to get event by id [%i]. got NULL", 
 		ERROR, event_id);
 		return -1;
 	}
+
 	/* Execute the untrigger triggers in the event. */
 	json_object* untriggers = json_object_object_get(event, "untriggers");
 	if(untriggers != NULL){
@@ -520,9 +519,11 @@ json_object** get_root_dependencies(size_t* depcnt, size_t** event_idsp){
 	 */
 
 	for(size_t event_i = 0; event_i < event_cnt; event_i++ ){
-		
-		json_object* event = json_object_array_get_idx(
-			json_object_object_get(config_glob, "events"),event_i);
+		json_object* event = get_event_by_id(event_i);
+		if(event == NULL){
+			println("Failed to get event %i!", ERROR, event_i);
+			return NULL;
+		}
 		
 		for(size_t dep_i = 0; dep_i < json_object_array_length(
 			json_object_object_get(event,"dependencies")); 
@@ -687,4 +688,29 @@ json_object** get_root_triggers(size_t* trigcnt, size_t** event_idsp){
 	}
 
 	return trigs;
+}
+
+json_object* get_event_by_id(size_t event_id){
+	
+	json_object* events = json_object_object_get(config_glob, "events");
+	if(events == NULL){
+		println("Failed to get events from global config!!", ERROR);
+		return NULL;
+	}
+
+	if(!json_object_is_type(events, json_type_array)){
+		
+		println("Events has wrong type!! Dumping root:", ERROR);
+		json_object_to_fd(STDIN_FILENO, events,
+			JSON_C_TO_STRING_PRETTY);
+		return NULL;
+	}
+
+	if(event_id >= json_object_array_length(events)){
+		
+		println("Event id out of range!", ERROR);
+		return NULL;
+	}
+
+	return json_object_array_get_idx(events, event_id);
 }

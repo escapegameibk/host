@@ -406,8 +406,6 @@ int execute_command(int sock_fd, char* command){
 		async_trigger_event(printable_events[
 			json_object_get_int(json_object_object_get(
 			parsed,"event"))], true);
-		/* Increment the amount of event overrides which have occured.*/
-		event_overrides++;
 		break;
 	case 5:
 		/* Forced untrigger the incoming event. Does NOT reset

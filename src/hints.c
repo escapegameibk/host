@@ -241,32 +241,21 @@ int execute_hint(size_t event_id, size_t hint_id){
 		return -1;
 	}
 
-	json_object* hints = get_hints_root();
-
-	if(json_object_array_length(hints) <= event_id){
-		println("Got too high event id for hints! %i", ERROR, event_id);
-		return -2;
-	}
-	
-	json_object* event_hints = json_object_array_get_idx(hints, event_id);
-	
-	if(json_object_array_length(event_hints) <= hint_id){
-		println("Got too high hint id for hints! Event %i Hint %i", 
-			ERROR, event_id, hint_id);
-		return -3;
-	}
-
-	json_object* hint = json_object_array_get_idx(event_hints, hint_id);
-
+	json_object* hint = get_hint_by_id(event_id, hint_id);
+	bool counts = true;
 	if(hint == NULL){
-		println("Failed to address hint! event %i, hint %i", ERROR, 
+		println("Failed to get hint by id event %i und hint %i", ERROR,
 			event_id, hint_id);
-		return -4;
+		return -1;
 	}
-	/* By this time, it should have been verified that the hint in question
-	 * exists. Now mark it as executed.
-	 */
-	hint_exec_states[event_id][hint_id] = true;
+
+	json_object* cnts = json_object_object_get(hint,  "counts");
+	if(json_object_is_type(cnts, json_type_boolean)){
+		counts = json_object_get_boolean(cnts);
+	}
+
+	hint_exec_states[event_id][hint_id] = counts;
+	
 	const char* name = get_name_from_object(hint);
 
 	println("Executing Hint %s", DEBUG, name);
@@ -286,7 +275,9 @@ size_t get_hint_exec_cnt(){
 	size_t cnt = 0;
 	for(size_t evnt = 0; evnt < hint_lvl_amount; evnt++){
 		for(size_t hnt = 0; hnt < hints_lvled[evnt]; hnt++){
-			cnt += hint_exec_states[evnt][hnt];
+			
+			cnt += !!(hint_exec_states[evnt][hnt]);
+
 		}
 	}
 	return cnt;
@@ -298,6 +289,39 @@ int reset_hints(){
 			sizeof(bool));
 	}
 	return 0;
+}
+
+json_object* get_hint_by_id(size_t event_id, size_t hint_id){
+	
+	json_object* hints = get_hints_root();
+	if(hints == NULL){
+		println("Failed to get hints root!", ERROR);
+		return NULL;
+	}
+
+	if(json_object_array_length(hints) <= event_id){
+		println("Got too high event id for hints! %i", ERROR, event_id);
+		return NULL;
+	}
+	
+	json_object* event_hints = json_object_array_get_idx(hints, event_id);
+	
+	if(json_object_array_length(event_hints) <= hint_id){
+		println("Got too high hint id for hints! Event %i Hint %i", 
+			ERROR, event_id, hint_id);
+		return NULL;
+	}
+
+	json_object* hint = json_object_array_get_idx(event_hints, hint_id);
+
+	if(hint == NULL){
+		println("Failed to address hint! event %i, hint %i", ERROR, 
+			event_id, hint_id);
+		
+		return NULL;
+	}
+
+	return hint;
 }
 
 #endif /* NOHINTS */

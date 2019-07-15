@@ -44,9 +44,12 @@ size_t hint_lvl_amount;
 /* Contains the amount of hints per level */
 extern size_t *hints_lvled;
 
-/* Returns the amount of already executed hints */
+/* Returns the amount of already executed hints with the exception of those who
+ * don't count due to the counts field */
 size_t get_hint_exec_cnt();
 int reset_hints();
+
+json_object* get_hint_by_id(size_t event_id, size_t hint_id);
 
 #endif /* HINTS_H */
 #endif /* NOHINTS */
