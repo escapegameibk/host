@@ -1348,6 +1348,9 @@ json_object** get_printables_dependencies(size_t *depcntp){
 	for(size_t i = 0; i < dependency_count; i++){
 
 		json_object* dep = dependency_list[i];
+		
+		bool hid = false;
+
 #ifndef ALLDEPENDS
 		if(strcasecmp(json_object_get_string(json_object_object_get(dep,
 			"module")), "core") == 0){
@@ -1355,33 +1358,32 @@ json_object** get_printables_dependencies(size_t *depcntp){
 			if(strcasecmp(json_object_get_string(
 				json_object_object_get(dep,"type")), 
 				"event") == 0){
-				continue;
+				hid = true;
 			}
 			if(strcasecmp(json_object_get_string(
 				json_object_object_get(dep,"type")), 
 				"never") == 0){
-				continue;
+				hid = true;
 			}
 			if(strcasecmp(json_object_get_string(
 				json_object_object_get(dep,"type")), 
 				"flank") == 0){
-				continue;
+				hid = true;
 			}
 			if(strcasecmp(json_object_get_string(
 				json_object_object_get(dep,"type")), 
 				"or") == 0){
-				continue;
+				hid = true;
 			}
 			if(strcasecmp(json_object_get_string(
 				json_object_object_get(dep,"type")), 
 				"and") == 0){
-				continue;
+				hid = true;
 			}
 		}
 
-		json_object* hidden = json_object_object_get(dep, "hidden");
-		bool hid = false;
 
+		json_object* hidden = json_object_object_get(dep, "hidden");
 		if(hidden != NULL){
 			hid = json_object_get_boolean(hidden);
 		}
